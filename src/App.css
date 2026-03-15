@@ -1,0 +1,1465 @@
+/* =============== LAYOUT =============== */
+.app-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* =============== HEADER =============== */
+.main-header {
+  padding: 14px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--separator);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-title {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-header-logo {
+  height: 42px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+.refresh-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--separator);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.refresh-btn:active {
+  background: var(--bg-card-hover);
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =============== CONTENT =============== */
+.content-area {
+  flex: 1;
+  padding: 20px 16px 100px;
+}
+
+/* =============== HOME VIEW =============== */
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 8px;
+}
+
+.home-greeting {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.home-subtitle {
+  font-size: 15px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  margin-top: -16px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cat-card {
+  aspect-ratio: 1;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+.cat-card:active {
+  transform: scale(0.94);
+}
+
+.f1-card {
+  background: linear-gradient(145deg, #1a0810 0%, #2d0a15 50%, #1a0810 100%);
+  border-color: rgba(232, 0, 45, 0.2);
+}
+
+.wrc-card {
+  background: linear-gradient(145deg, #0a1520 0%, #0d1e30 50%, #0a1520 100%);
+  border-color: rgba(0, 102, 204, 0.2);
+}
+
+.tc-card {
+  background: linear-gradient(145deg, #1a1a1a 0%, #333333 50%, #1a1a1a 100%);
+  border-color: rgba(255, 255, 0, 0.2);
+}
+
+.tcp-card {
+  background: linear-gradient(145deg, #0f0f0f 0%, #2a2a2a 50%, #0f0f0f 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tcm-card {
+  background: linear-gradient(145deg, #200a0a 0%, #401010 50%, #200a0a 100%);
+  border-color: rgba(204, 0, 0, 0.2);
+}
+
+.tcpm-card {
+  background: linear-gradient(145deg, #2a0a0a 0%, #501515 50%, #2a0a0a 100%);
+  border-color: rgba(153, 0, 0, 0.2);
+}
+
+.tcpk-card {
+  background: linear-gradient(145deg, #0a1a0f 0%, #103015 50%, #0a1a0f 100%);
+  border-color: rgba(0, 204, 102, 0.2);
+}
+
+.tcppk-card {
+  background: linear-gradient(145deg, #051a0a 0%, #0d3a15 50%, #051a0a 100%);
+  border-color: rgba(0, 102, 51, 0.2);
+}
+
+.indycar-card {
+  background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  border-color: rgba(0, 161, 222, 0.2);
+}
+
+.nascar-card {
+  background: linear-gradient(145deg, #1a1a0a 0%, #333110 50%, #1a1a0a 100%);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+.tc2000-card {
+  background: linear-gradient(145deg, #2a0505 0%, #801010 50%, #2a0505 100%);
+  border-color: rgba(224, 32, 32, 0.2);
+}
+
+.cat-card-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.cat-logo {
+  height: 40px;
+  width: auto;
+  max-width: 80%;
+  object-fit: contain;
+}
+
+.wrc-logo {
+  height: 80px; /* Much bigger specifically for WRC */
+  max-width: 100%;
+}
+
+.tc2000-logo {
+  height: 65px;
+  max-width: 95%;
+}
+
+.cat-event-category-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cat-event-expanded-details {
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.1);
+}
+
+.cat-event-expanded-details .circuit-image {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.expand-chevron {
+  transition: transform 0.3s ease;
+  opacity: 0.6;
+}
+
+.expand-chevron.open {
+  transform: rotate(90deg);
+}
+
+.cat-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.cat-arrow {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  color: var(--text-tertiary);
+}
+
+/* =============== CALENDARIO VIEW =============== */
+.calendario-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 4px;
+  border: 1px solid var(--separator);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  transition: all 0.25s;
+  text-align: center;
+}
+
+.toggle-btn.active {
+  background: var(--accent-blue);
+  color: white;
+  box-shadow: 0 2px 12px rgba(10, 132, 255, 0.3);
+}
+
+/* Weekly cards */
+.weekly-list { display: flex; flex-direction: column; gap: 12px; }
+
+.weekly-card {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--separator);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.weekly-card:active { background: var(--bg-card-hover); }
+.weekly-color-bar { width: 4px; flex-shrink: 0; }
+
+.weekly-body {
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weekly-top { display: flex; align-items: center; gap: 8px; }
+.weekly-cat-img { height: 18px; width: auto; object-fit: contain; }
+
+.weekly-cat-badge {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.weekly-event-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+}
+
+.weekly-circuit { font-size: 13px; color: var(--text-secondary); }
+
+.weekly-circuit-img-wrap {
+  margin-top: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(0,0,0,0.3);
+}
+
+.weekly-circuit-img-v2 {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 200px;
+  object-fit: contain;
+  padding: 10px;
+}
+
+.weekly-details-footer {
+  margin-top: 4px;
+}
+
+.weekly-schedules {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--separator);
+}
+
+.schedule-row-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.sched-name { font-size: 13px; color: var(--text-secondary); }
+
+.sched-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.weekly-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.watch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: rgba(10, 132, 255, 0.12);
+  color: var(--accent-blue);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.watch-chip:active { background: rgba(10, 132, 255, 0.25); }
+
+.ticket-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 100px;
+  background: rgba(48, 209, 88, 0.12);
+  color: var(--accent-green);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+/* Category calendar cards */
+.category-calendar-list { display: flex; flex-direction: column; gap: 16px; }
+
+.cat-event-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--separator);
+  overflow: hidden;
+}
+
+.cat-event-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 4px solid;
+}
+
+.cat-event-logo { height: 28px; width: auto; object-fit: contain; }
+.cat-event-title-block { flex: 1; }
+
+.cat-event-category {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.cat-event-circuit { font-size: 12px; color: var(--text-secondary); }
+
+.cat-event-body {
+  padding: 12px 16px;
+  border-top: 1px solid var(--separator);
+}
+
+.cat-event-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.cat-event-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* =============== NOTICIAS VIEW =============== */
+.noticias-view { display: flex; flex-direction: column; gap: 16px; }
+
+.section-heading {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.news-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+}
+
+.news-card-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  text-decoration: none;
+  transition: all 0.15s;
+  gap: 12px;
+}
+
+.news-card-item:not(:last-child) { border-bottom: 1px solid var(--separator); }
+.news-card-item:active { background: var(--bg-card-hover); }
+.news-card-body { flex: 1; }
+
+.news-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 4px;
+  color: var(--accent-red);
+}
+
+.news-headline {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.news-ext-icon { color: var(--text-tertiary); flex-shrink: 0; }
+
+/* =============== CATEGORY VIEW =============== */
+.category-view { display: flex; flex-direction: column; gap: 0; }
+
+.cat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 20px;
+}
+
+.back-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--separator);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.back-btn:active { transform: scale(0.9); background: var(--bg-card-hover); }
+.cat-header-logo { height: 28px; width: auto; object-fit: contain; }
+
+.cat-header-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+/* Category sub-tabs */
+.cat-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 4px;
+  border: 1px solid var(--separator);
+  margin-bottom: 20px;
+}
+
+.cat-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  transition: all 0.25s;
+}
+
+.cat-tab.active {
+  background: var(--accent-blue);
+  color: white;
+  box-shadow: 0 2px 12px rgba(10, 132, 255, 0.3);
+}
+
+.cat-content { display: flex; flex-direction: column; gap: 12px; }
+
+/* =============== F1 CALENDAR =============== */
+.f1-calendar-list, /* === Standings Unified Layout === */
+.standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 5px;
+}
+
+.stand-row {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid transparent;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.stand-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.stand-pos {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  width: 35px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.stand-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.stand-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.stand-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stand-pts {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Category Accent Borders */
+.f1-stand-row { border-left-color: #e10600; }
+.wrc-stand-row { border-left-color: #ffd200; }
+.tc-stand-row { border-left-color: #005599; }
+.tc2000-stand-row { border-left-color: #e02020; }
+
+/* Podium Highlights */
+.stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
+.stand-row.top-1 .stand-pos { color: #ffd700; }
+.stand-row.top-2 { background: rgba(192, 192, 192, 0.05); }
+.stand-row.top-2 .stand-pos { color: #c0c0c0; }
+.stand-row.top-3 { background: rgba(205, 127, 50, 0.05); }
+.stand-row.top-3 .stand-pos { color: #cd7f32; }
+
+/* Existing legacy classes for backward compatibility during transition if needed */
+.wrc-standings-list, .tc-standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.race-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--separator);
+  transition: all 0.15s;
+  margin-bottom: 8px; /* Added separation */
+}
+
+.tcp-calendar-list, .tcpk-calendar-list, .indy-calendar-list, .nascar-calendar-list, .wrc-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Increased consistent gap */
+  padding: 4px 0;
+}
+
+.race-row.live { border-color: rgba(255, 69, 58, 0.4); background: rgba(255, 69, 58, 0.06); }
+.race-row.next { border-color: rgba(10, 132, 255, 0.4); background: rgba(10, 132, 255, 0.06); }
+
+.race-round-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+}
+
+.race-round-num.finished { background: rgba(48, 209, 88, 0.12); color: var(--accent-green); }
+.race-round-num.next { background: var(--accent-blue); color: white; }
+.race-round-num.live { background: var(--accent-red); color: white; }
+
+.race-info-block { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.race-name-label { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.race-date-label { font-size: 12px; color: var(--text-tertiary); }
+
+.race-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.race-status-badge.live {
+  background: var(--accent-red);
+  color: white;
+  animation: pulse-glow 2s infinite;
+}
+
+.race-status-badge.next { background: rgba(10, 132, 255, 0.15); color: var(--accent-blue); }
+
+/* =============== WEEKLY CALENDAR SECTIONS =============== */
+.weekly-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+  padding-bottom: 24px;
+}
+
+.weekly-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-header-btn {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--separator);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.section-header-btn:active {
+  transform: scale(0.98);
+  background: var(--bg-card-hover);
+}
+
+.section-header-btn.active {
+  background: rgba(10, 132, 255, 0.08);
+  border-color: rgba(10, 132, 255, 0.4);
+  color: var(--accent-blue);
+}
+
+.finished-section .section-header-btn.active {
+  background: rgba(48, 209, 88, 0.08);
+  border-color: rgba(48, 209, 88, 0.4);
+  color: var(--accent-green);
+}
+
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.section-chevron {
+  color: var(--text-tertiary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-chevron.open {
+  transform: rotate(90deg);
+  color: currentColor;
+}
+
+.section-content-overflow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.weekly-card.finished {
+  opacity: 0.85;
+  filter: grayscale(0.2);
+}
+
+.weekly-card.finished .weekly-color-bar {
+  opacity: 0.6;
+}
+
+/* =============== LOADING SCREEN =============== */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.loading-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.loading-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 8px;
+}
+
+.loading-logo {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+}
+
+.loading-logo.f1 { height: 34px; }
+.loading-logo.wrc { height: 46px; }
+
+.loading-progress-container {
+  width: 100%;
+  height: 4px;
+  background: var(--separator);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.loading-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #e10600, #00aff0);
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(10, 132, 255, 0.4);
+}
+
+.loading-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-tertiary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.loading-bg-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, rgba(10, 132, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Existing styles below */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 69, 58, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 69, 58, 0); }
+}
+
+/* =============== WRC RALLY RESULTS =============== */
+.rally-result-card {
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--separator);
+  overflow: hidden;
+}
+
+.rally-header-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: all 0.15s;
+}
+
+.rally-header-btn:active { background: var(--bg-card-hover); }
+.rally-name { flex: 1; }
+.rally-chevron { color: var(--text-tertiary); transition: transform 0.25s; }
+.rally-chevron.open { transform: rotate(90deg); }
+
+.rally-results-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--separator);
+}
+
+.rally-results-table {
+  width: 100%;
+  min-width: 500px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.rally-results-table th {
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+  background: var(--bg-elevated);
+  position: sticky;
+  top: 0;
+}
+
+.rally-results-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--separator);
+  color: var(--text-primary);
+}
+
+.rally-results-table tr:last-child td { border-bottom: none; }
+
+.pos-cell {
+  font-weight: 800;
+  color: var(--text-tertiary);
+  width: 36px;
+}
+
+.empty-msg-sm {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* =============== STANDINGS =============== */
+.standings-section-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.standings-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--separator);
+  border-radius: 14px;
+  background: var(--bg-card);
+}
+
+.standings-full-table {
+  min-width: 450px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.standings-full-table thead { position: sticky; top: 0; z-index: 10; }
+
+.standings-full-table th {
+  padding: 10px 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--separator);
+  white-space: nowrap;
+}
+
+.standings-full-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--separator);
+  text-align: center;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.standings-full-table tr:last-child td { border-bottom: none; }
+
+.standings-full-table .sticky-col {
+  position: sticky;
+  background: var(--bg-card);
+  z-index: 5;
+}
+
+.standings-full-table .sticky-col:first-child,
+.standings-full-table th.sticky-col:first-child {
+  left: 0;
+  text-align: center;
+  width: 36px;
+  min-width: 36px;
+}
+
+.standings-full-table .col2,
+.standings-full-table th.col2 {
+  left: 36px;
+  text-align: left;
+  min-width: 90px;
+  border-right: 1px solid var(--separator);
+}
+
+.standings-full-table thead .sticky-col { background: var(--bg-elevated); }
+
+.standings-full-table .pos-cell { font-weight: 800; font-size: 14px; }
+
+.standings-full-table .driver-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.driver-name-text { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.driver-team-text { font-size: 10px; color: var(--text-tertiary); white-space: nowrap; }
+
+.team-name-cell {
+  font-weight: 700;
+  text-align: left !important;
+  white-space: nowrap;
+}
+
+.race-pts-cell { font-size: 12px; min-width: 36px; }
+
+.total-cell {
+  font-weight: 900;
+  font-size: 14px;
+  color: var(--accent-blue);
+  min-width: 50px;
+}
+
+.standings-full-table .top-1 .pos-cell { color: var(--accent-yellow); }
+.standings-full-table .top-2 .pos-cell { color: var(--accent-teal); }
+.standings-full-table .top-3 .pos-cell { color: var(--accent-orange); }
+
+.race-col { min-width: 40px; }
+.total-col { min-width: 50px; }
+
+/* WRC Standings — tight layout */
+.wrc-standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+}
+
+/* === Standings Unified Layout === */
+.standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 5px;
+}
+
+.stand-row {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid transparent;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.stand-row:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.stand-pos {
+  font-family: 'Inter', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  width: 35px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.stand-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.stand-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.stand-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stand-pts {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 10px;
+  border-radius: 6px;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Category Accent Borders */
+.f1-stand-row { border-left-color: #e10600; }
+.wrc-stand-row { border-left-color: #ffd200 !important; }
+.tc-stand-row { border-left-color: #005BAC !important; }
+
+/* Podium Highlights */
+.stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
+.stand-row.top-1 .stand-pos { color: #ffd700; }
+.stand-row.top-2 { background: rgba(192, 192, 192, 0.05); }
+.stand-row.top-2 .stand-pos { color: #c0c0c0; }
+.stand-row.top-3 { background: rgba(205, 127, 50, 0.05); }
+.stand-row.top-3 .stand-pos { color: #cd7f32; }
+
+/* =============== TAB BAR =============== */
+.tab-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  height: calc(64px + env(safe-area-inset-bottom, 0px));
+  background: rgba(10, 10, 10, 0.9);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--separator);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+  z-index: 1000;
+}
+
+.tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  transition: color 0.2s;
+  flex: 1;
+  position: relative;
+  padding: 4px 0;
+  min-height: 48px;
+  justify-content: center;
+}
+
+.tab-btn.active { color: var(--accent-blue); }
+
+.tab-btn.active::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--accent-blue);
+  border-radius: 2px;
+}
+
+.tab-btn svg,
+.tab-btn span { pointer-events: none; }
+
+/* =============== UTILS =============== */
+.empty-msg {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.section-padded { padding: 16px 0; }
+
+/* =============== LOADING =============== */
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+}
+
+.loading-spinner-ring {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--separator);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.weekly-sched-time-right {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.expand-event-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  background: rgba(10, 132, 255, 0.08);
+  transition: all 0.2s;
+}
+
+.expand-event-btn:active { background: rgba(10, 132, 255, 0.18); }
+
+.expand-chevron { transition: transform 0.25s; }
+.expand-chevron.open { transform: rotate(90deg); }
+
+.expanded-event-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--separator);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.circuit-image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  padding: 8px;
+}
+
+/* =============== TC SPECIFIC =============== */
+.tc-card {
+  background: linear-gradient(145deg, #051c2c 0%, #08304a 50%, #051c2c 100%) !important;
+  border-color: rgba(0, 91, 172, 0.3) !important;
+}
+
+.tc-logo {
+  height: 55px !important;
+  max-width: 90%;
+  filter: drop-shadow(0 0 10px rgba(0, 91, 172, 0.4));
+}
+
+.tc-calendar-link-view {
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--bg-card);
+  border-radius: 28px;
+  border: 1px solid var(--separator);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-top: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.tc-calendar-link-view::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(0, 91, 172, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.tc-calendar-msg {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 80%;
+}
+
+.tc-calendar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 32px;
+  border-radius: 16px;
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 91, 172, 0.4);
+  background: #005BAC;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tc-calendar-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 10px rgba(0, 91, 172, 0.3);
+}
+
+.tc-calendar-btn:hover {
+  background: #006acc;
+  box-shadow: 0 6px 24px rgba(0, 91, 172, 0.6);
+}
+
+.tc-stand-row {
+  border-left: 3px solid #005BAC !important;
+}
+
+.tc-standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* =============== TCPK SPECIFIC =============== */
+.tcpk-card {
+  background: linear-gradient(145deg, #1a0a05 0%, #2d140a 50%, #1a0a05 100%) !important;
+  border-color: rgba(255, 69, 0, 0.3) !important;
+}
+
+.tcpk-logo {
+  height: 45px !important;
+  max-width: 90%;
+  filter: drop-shadow(0 0 10px rgba(255, 69, 0, 0.4));
+}
+
+.tcpk-stand-row {
+  border-left: 3px solid #FF4500 !important;
+}
+
+.tcpk-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tcpk-standings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =============== INDYCAR SPECIFIC =============== */
+.indycar-card {
+  background: linear-gradient(145deg, #003a70 0%, #005696 50%, #003a70 100%) !important;
+  border-color: rgba(228, 0, 43, 0.3) !important;
+}
+
+.indycar-logo {
+  height: 40px !important;
+  max-width: 85%;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+}
+
+.indy-stand-row {
+  border-left: 3px solid #E4002B !important;
+}
+
+.indy-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.indy-standings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* =============== NASCAR SPECIFIC =============== */
+.nascar-card {
+  background: linear-gradient(145deg, #ffd659 0%, #ffcc33 50%, #ffd659 100%) !important;
+  border-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.nascar-card .cat-label {
+  color: #000 !important;
+}
+
+.nascar-card .cat-arrow {
+  color: #000 !important;
+}
+
+.nascar-logo {
+  height: 35px !important;
+  max-width: 90%;
+  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.2));
+}
+
+.nascar-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.nascar-tab-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nascar-tab-btn.active {
+  background: #FFD659;
+  color: #000;
+  border-color: #FFD659;
+  font-weight: 600;
+}
+
+.f1-tabs .nascar-tab-btn.active {
+  background: #e10600;
+  border-color: #e10600;
+  color: #fff;
+}
+
+.nascar-stand-row {
+  border-left: 3px solid #FFD659 !important;
+}
+
+.nascar-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

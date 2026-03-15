@@ -1,0 +1,11 @@
+node_modules
+dist
+.vercel
+.vscode
+.DS_Store
+*.local
+.env*
+build
+dev-dist
+public/logos
+*.log

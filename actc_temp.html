@@ -1,0 +1,2458 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAMPEONATO DE TC — Campeonato | ACTC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --racing-red: #e10600;
+            --carbon-dark: #0B0E14;
+            --carbon-light: #151a24;
+            --timing-green: #00ff88;
+            --timing-yellow: #ffd000;
+            --accent-gold: #ffb300;
+            --accent-silver: #c0c0c0;
+            --accent-bronze: #cd7f32;
+            --glass-bg: rgba(21, 26, 36, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--carbon-dark);
+            color: #fff;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px),
+                radial-gradient(ellipse at top right, rgba(225,6,0,0.1), transparent 50%),
+                radial-gradient(ellipse at bottom left, rgba(0,212,255,0.05), transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            background: linear-gradient(180deg, rgba(21,26,36,0.95) 0%, rgba(11,14,20,0.98) 100%);
+            border-bottom: 3px solid var(--racing-red);
+            padding: 20px 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--racing-red) 0%, transparent 40%, transparent 60%, var(--racing-red) 100%);
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(16px, 3vw, 24px);
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+
+        .header h1 .trophy { margin-right: 10px; }
+
+        .header .subtitle {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .btn-back {
+            padding: 10px 20px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            color: #aaa;
+            text-decoration: none;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            border-color: #fff;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        /* Podium */
+        .podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: clamp(10px, 3vw, 30px);
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .podium-item {
+            text-align: center;
+            padding: 20px 15px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            min-width: clamp(100px, 20vw, 180px);
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .podium-item:hover { transform: translateY(-4px); }
+
+        .podium-item.gold {
+            border-color: var(--accent-gold);
+            background: linear-gradient(180deg, rgba(255,179,0,0.12) 0%, var(--glass-bg) 60%);
+            order: 2;
+            padding-bottom: 30px;
+        }
+
+        .podium-item.silver {
+            border-color: var(--accent-silver);
+            background: linear-gradient(180deg, rgba(192,192,192,0.08) 0%, var(--glass-bg) 60%);
+            order: 1;
+        }
+
+        .podium-item.bronze {
+            border-color: var(--accent-bronze);
+            background: linear-gradient(180deg, rgba(205,127,50,0.08) 0%, var(--glass-bg) 60%);
+            order: 3;
+        }
+
+        .podium-pos {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .gold .podium-pos { color: var(--accent-gold); }
+        .silver .podium-pos { color: var(--accent-silver); }
+        .bronze .podium-pos { color: var(--accent-bronze); }
+
+        .podium-name {
+            font-size: clamp(13px, 2vw, 16px);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            word-break: break-word;
+        }
+
+        .podium-pts {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(16px, 3vw, 22px);
+            font-weight: 700;
+            color: var(--timing-green);
+        }
+
+        .podium-pts span {
+            font-size: 11px;
+            color: #888;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* Standings table */
+        .standings-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .standings-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .standings-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: #ccc;
+        }
+
+        .standings-header .pilot-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .standings-table thead th {
+            position: sticky;
+            top: 0;
+            background: rgba(11,14,20,0.95);
+            padding: 10px 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            text-align: center;
+            white-space: nowrap;
+            border-bottom: 2px solid var(--racing-red);
+        }
+
+        .standings-table thead th.fecha-group {
+            border-left: 1px solid rgba(255,255,255,0.1);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: var(--timing-yellow);
+        }
+
+        .standings-table thead th.sub-header {
+            font-size: 9px;
+            color: #555;
+            padding: 5px 6px;
+            border-bottom: 1px solid #333;
+        }
+
+        .standings-table thead th.sub-header.fecha-border {
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .standings-table thead th:first-child,
+        .standings-table thead th:nth-child(2),
+        .standings-table thead th:nth-child(3) {
+            text-align: left;
+        }
+
+        .standings-table tbody td {
+            padding: 10px 8px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .standings-table tbody td.fecha-border {
+            border-left: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .standings-table tbody tr {
+            transition: background 0.2s;
+        }
+
+        .standings-table tbody tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .standings-table tbody tr.top-3 {
+            background: rgba(255,179,0,0.03);
+        }
+
+        .standings-table tbody tr.top-3:hover {
+            background: rgba(255,179,0,0.06);
+        }
+
+        .col-pos {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            text-align: center !important;
+            width: 50px;
+        }
+
+        .col-pos.p1 { color: var(--accent-gold); }
+        .col-pos.p2 { color: var(--accent-silver); }
+        .col-pos.p3 { color: var(--accent-bronze); }
+
+        .col-name {
+            text-align: left !important;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.3px;
+            min-width: 160px;
+        }
+
+        .col-total {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--timing-green);
+            text-align: center !important;
+            min-width: 70px;
+        }
+
+        .col-pts {
+            font-size: 13px;
+            color: #aaa;
+            min-width: 40px;
+        }
+
+        .col-pts.has-value { color: #ddd; }
+        .col-pts.zero { color: #333; }
+
+        .col-fecha-total {
+            font-weight: 700;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            color: #333;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .podium { flex-direction: column; align-items: center; }
+            .podium-item { order: unset !important; min-width: 80%; }
+            .podium-item.gold { padding-bottom: 20px; }
+            .header { padding: 15px; }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <div>
+                <h1><span class="trophy">🏆</span>CAMPEONATO DE TC</h1>
+                <div class="subtitle">CAMPEONATO — POSICIONES</div>
+            </div>
+            <a href="/" class="btn-back">← INICIO</a>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="podium">
+            
+            <div class="podium-item gold">
+                <div class="podium-pos">1</div>
+                <div class="podium-name">JONATAN CASTELLANO</div>
+                <div class="podium-pts">70.0<span> PTS</span></div>
+            </div>
+            
+            <div class="podium-item silver">
+                <div class="podium-pos">2</div>
+                <div class="podium-name">MAURICIO  LAMBIRIS</div>
+                <div class="podium-pts">64.5<span> PTS</span></div>
+            </div>
+            
+            <div class="podium-item bronze">
+                <div class="podium-pos">3</div>
+                <div class="podium-name">LUIS JOSE DI PALMA</div>
+                <div class="podium-pts">63.5<span> PTS</span></div>
+            </div>
+            
+        </div>
+        
+
+        <div class="standings-card">
+            <div class="standings-header">
+                <h2>TABLA DE POSICIONES</h2>
+                <span class="pilot-count">61 pilotos</span>
+            </div>
+            <div class="table-scroll">
+                <table class="standings-table">
+                    <thead>
+                        <tr>
+                            <th>POS</th>
+                            <th>PILOTO</th>
+                            <th>TOTAL</th>
+                            
+                            <th colspan="4" class="fecha-group">15/02 Fecha 1 CALAFATE</th>
+                            
+                            <th colspan="4" class="fecha-group">Fecha 2 VIEDMA 8/03</th>
+                            
+                        </tr>
+                        
+                        <tr>
+                            <th class="sub-header"></th>
+                            <th class="sub-header"></th>
+                            <th class="sub-header"></th>
+                            
+                            <th class="sub-header fecha-border">CLAS</th>
+                            <th class="sub-header">SER</th>
+                            <th class="sub-header">FIN</th>
+                            <th class="sub-header">TOT</th>
+                            
+                            <th class="sub-header fecha-border">CLAS</th>
+                            <th class="sub-header">SER</th>
+                            <th class="sub-header">FIN</th>
+                            <th class="sub-header">TOT</th>
+                            
+                        </tr>
+                        
+                    </thead>
+                    <tbody>
+                        
+                        <tr class="top-3">
+                            <td class="col-pos p1">
+                                1
+                            </td>
+                            <td class="col-name">JONATAN CASTELLANO</td>
+                            <td class="col-total">70.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">34.0</td>
+                            <td class="col-fecha-total has-value">39.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">27.0</td>
+                            <td class="col-fecha-total has-value">31.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="top-3">
+                            <td class="col-pos p2">
+                                2
+                            </td>
+                            <td class="col-name">MAURICIO  LAMBIRIS</td>
+                            <td class="col-total">64.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">20.0</td>
+                            <td class="col-fecha-total has-value">23.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">37.0</td>
+                            <td class="col-fecha-total has-value">41.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="top-3">
+                            <td class="col-pos p3">
+                                3
+                            </td>
+                            <td class="col-name">LUIS JOSE DI PALMA</td>
+                            <td class="col-total">63.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">24.0</td>
+                            <td class="col-fecha-total has-value">27.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">31.0</td>
+                            <td class="col-fecha-total has-value">36.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                4
+                            </td>
+                            <td class="col-name">JOSE MANUEL URCERA</td>
+                            <td class="col-total">58.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">30.0</td>
+                            <td class="col-fecha-total has-value">34.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">21.0</td>
+                            <td class="col-fecha-total has-value">24.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                5
+                            </td>
+                            <td class="col-name">MARCOS QUIJADA</td>
+                            <td class="col-total">57.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">29.0</td>
+                            <td class="col-fecha-total has-value">33.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">20.0</td>
+                            <td class="col-fecha-total has-value">23.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                6
+                            </td>
+                            <td class="col-name">FACUNDO CHAPUR</td>
+                            <td class="col-total">53.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">19.0</td>
+                            <td class="col-fecha-total has-value">20.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">30.0</td>
+                            <td class="col-fecha-total has-value">33.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                7
+                            </td>
+                            <td class="col-name">MATIAS ROSSI</td>
+                            <td class="col-total">53.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">27.0</td>
+                            <td class="col-fecha-total has-value">30.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">22.0</td>
+                            <td class="col-fecha-total has-value">23.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                8
+                            </td>
+                            <td class="col-name">NICOLAS MOSCARDINI</td>
+                            <td class="col-total">52.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border has-value">2.0</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">40.0</td>
+                            <td class="col-fecha-total has-value">47.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-fecha-total has-value">5.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                9
+                            </td>
+                            <td class="col-name">ELIO CRAPARO</td>
+                            <td class="col-total">50.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">11.0</td>
+                            <td class="col-fecha-total has-value">11.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">34.0</td>
+                            <td class="col-fecha-total has-value">39.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                10
+                            </td>
+                            <td class="col-name">MARCOS  LANDA</td>
+                            <td class="col-total">49.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">28.0</td>
+                            <td class="col-fecha-total has-value">32.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">17.0</td>
+                            <td class="col-fecha-total has-value">17.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                11
+                            </td>
+                            <td class="col-name">JULIAN SANTERO</td>
+                            <td class="col-total">47.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border has-value">2.0</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">40.0</td>
+                            <td class="col-fecha-total has-value">47.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                12
+                            </td>
+                            <td class="col-name">TOBIAS  MARTINEZ</td>
+                            <td class="col-total">46.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">31.0</td>
+                            <td class="col-fecha-total has-value">35.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">6.0</td>
+                            <td class="col-fecha-total has-value">10.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                13
+                            </td>
+                            <td class="col-name">HERNAN PALAZZO</td>
+                            <td class="col-total">45.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">25.0</td>
+                            <td class="col-fecha-total has-value">29.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">15.0</td>
+                            <td class="col-fecha-total has-value">16.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                14
+                            </td>
+                            <td class="col-name">SANTIAGO  MANGONI</td>
+                            <td class="col-total">44.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">18.0</td>
+                            <td class="col-fecha-total has-value">19.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">24.0</td>
+                            <td class="col-fecha-total has-value">25.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                15
+                            </td>
+                            <td class="col-name">JUAN T  CATALAN MAGNI</td>
+                            <td class="col-total">43.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">23.0</td>
+                            <td class="col-fecha-total has-value">25.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">18.0</td>
+                            <td class="col-fecha-total has-value">18.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                16
+                            </td>
+                            <td class="col-name">AGUSTIN MARTINEZ</td>
+                            <td class="col-total">41.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">37.0</td>
+                            <td class="col-fecha-total has-value">41.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                17
+                            </td>
+                            <td class="col-name">DIEGO AZAR</td>
+                            <td class="col-total">38.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">22.0</td>
+                            <td class="col-fecha-total has-value">24.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">14.0</td>
+                            <td class="col-fecha-total has-value">14.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                18
+                            </td>
+                            <td class="col-name">ANDRES JAKOS</td>
+                            <td class="col-total">37.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">4.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.5</td>
+                            <td class="col-pts has-value">29.0</td>
+                            <td class="col-fecha-total has-value">33.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                19
+                            </td>
+                            <td class="col-name">VALENTIN AGUIRRE</td>
+                            <td class="col-total">34.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">14.0</td>
+                            <td class="col-fecha-total has-value">14.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">19.0</td>
+                            <td class="col-fecha-total has-value">19.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                20
+                            </td>
+                            <td class="col-name">IGNACIO FAIN</td>
+                            <td class="col-total">33.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">28.0</td>
+                            <td class="col-fecha-total has-value">31.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                21
+                            </td>
+                            <td class="col-name">OTTO FRITZLER</td>
+                            <td class="col-total">32.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">7.0</td>
+                            <td class="col-fecha-total has-value">8.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">23.0</td>
+                            <td class="col-fecha-total has-value">24.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                22
+                            </td>
+                            <td class="col-name">KEVIN  CANDELA</td>
+                            <td class="col-total">31.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">3.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts has-value">25.0</td>
+                            <td class="col-fecha-total has-value">27.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                23
+                            </td>
+                            <td class="col-name">RICARDO  RISATTI</td>
+                            <td class="col-total">31.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">26.0</td>
+                            <td class="col-fecha-total has-value">29.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                24
+                            </td>
+                            <td class="col-name">NICOLÁS TROSSET</td>
+                            <td class="col-total">28.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">26.0</td>
+                            <td class="col-fecha-total has-value">28.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                25
+                            </td>
+                            <td class="col-name">JUAN JOSE EBARLIN</td>
+                            <td class="col-total">25.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">13.0</td>
+                            <td class="col-fecha-total has-value">13.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">12.0</td>
+                            <td class="col-fecha-total has-value">12.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                26
+                            </td>
+                            <td class="col-name">MARCELO  AGRELO</td>
+                            <td class="col-total">24.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">16.0</td>
+                            <td class="col-fecha-total has-value">16.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">8.0</td>
+                            <td class="col-fecha-total has-value">8.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                27
+                            </td>
+                            <td class="col-name">MARCO DIANDA</td>
+                            <td class="col-total">23.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts has-value">17.0</td>
+                            <td class="col-fecha-total has-value">19.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">4.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                28
+                            </td>
+                            <td class="col-name">GERMAN  TODINO</td>
+                            <td class="col-total">23.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">21.0</td>
+                            <td class="col-fecha-total has-value">21.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                29
+                            </td>
+                            <td class="col-name">JEREMIAS OLMEDO</td>
+                            <td class="col-total">20.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">16.0</td>
+                            <td class="col-fecha-total has-value">17.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                30
+                            </td>
+                            <td class="col-name">GASTON  FERRANTE</td>
+                            <td class="col-total">20.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">10.0</td>
+                            <td class="col-fecha-total has-value">10.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">10.0</td>
+                            <td class="col-fecha-total has-value">10.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                31
+                            </td>
+                            <td class="col-name">MARIANO WERNER</td>
+                            <td class="col-total">19.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">6.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">9.0</td>
+                            <td class="col-fecha-total has-value">13.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                32
+                            </td>
+                            <td class="col-name">NICOLAS COTIGNOLA</td>
+                            <td class="col-total">18.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">12.0</td>
+                            <td class="col-fecha-total has-value">12.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">6.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                33
+                            </td>
+                            <td class="col-name">JUAN B DE BENEDICTIS</td>
+                            <td class="col-total">18.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">7.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">4.0</td>
+                            <td class="col-pts has-value">7.0</td>
+                            <td class="col-fecha-total has-value">11.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                34
+                            </td>
+                            <td class="col-name">JUAN MARTIN  TRUCCO</td>
+                            <td class="col-total">18.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.0</td>
+                            <td class="col-pts has-value">15.0</td>
+                            <td class="col-fecha-total has-value">16.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                35
+                            </td>
+                            <td class="col-name">RODRIGO LUGON</td>
+                            <td class="col-total">16.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-pts has-value">11.0</td>
+                            <td class="col-fecha-total has-value">13.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                36
+                            </td>
+                            <td class="col-name">GASPAR CHANSARD</td>
+                            <td class="col-total">15.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">13.0</td>
+                            <td class="col-fecha-total has-value">13.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                37
+                            </td>
+                            <td class="col-name">NICOLAS BONELLI</td>
+                            <td class="col-total">12.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">8.0</td>
+                            <td class="col-fecha-total has-value">9.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                38
+                            </td>
+                            <td class="col-name">MARCOS CASTRO</td>
+                            <td class="col-total">11.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">9.0</td>
+                            <td class="col-fecha-total has-value">9.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                39
+                            </td>
+                            <td class="col-name">CHRISTIAN  LEDESMA</td>
+                            <td class="col-total">9.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.5</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">6.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                40
+                            </td>
+                            <td class="col-name">MATIAS CANAPINO</td>
+                            <td class="col-total">8.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">5.0</td>
+                            <td class="col-fecha-total has-value">5.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                41
+                            </td>
+                            <td class="col-name">EMILIANO SPATARO</td>
+                            <td class="col-total">8.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">4.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                42
+                            </td>
+                            <td class="col-name">JERONIMO TETI</td>
+                            <td class="col-total">8.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">6.0</td>
+                            <td class="col-fecha-total has-value">6.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                43
+                            </td>
+                            <td class="col-name">FACUNDO  ARDUSSO</td>
+                            <td class="col-total">8.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">5.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                44
+                            </td>
+                            <td class="col-name">JUAN CRUZ BENVENUTTI</td>
+                            <td class="col-total">7.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">4.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                45
+                            </td>
+                            <td class="col-name">MARTIN  VAZQUEZ</td>
+                            <td class="col-total">6.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">1.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">3.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                46
+                            </td>
+                            <td class="col-name">AUGUSTO CARINELLI</td>
+                            <td class="col-total">6.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                47
+                            </td>
+                            <td class="col-name">LUCAS CARABAJAL</td>
+                            <td class="col-total">5.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">5.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                48
+                            </td>
+                            <td class="col-name">JEREMIAS  SCIALCHI</td>
+                            <td class="col-total">5.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.5</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                49
+                            </td>
+                            <td class="col-name">LUCAS VALLE</td>
+                            <td class="col-total">5.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                50
+                            </td>
+                            <td class="col-name">THOMAS RICCIARDI</td>
+                            <td class="col-total">5.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                51
+                            </td>
+                            <td class="col-name">SANTIAGO ALVAREZ</td>
+                            <td class="col-total">5.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                52
+                            </td>
+                            <td class="col-name">AGUSTIN  CANAPINO</td>
+                            <td class="col-total">4.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">0.5</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                53
+                            </td>
+                            <td class="col-name">JORGE BARRIO</td>
+                            <td class="col-total">4.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts has-value">2.5</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total has-value">2.5</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                54
+                            </td>
+                            <td class="col-name">JUAN JOSE TOMASELLO</td>
+                            <td class="col-total">4.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                55
+                            </td>
+                            <td class="col-name">JOAQUIN OCHOA</td>
+                            <td class="col-total">4.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                56
+                            </td>
+                            <td class="col-name">JUAN PABLO GIANINI</td>
+                            <td class="col-total">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                57
+                            </td>
+                            <td class="col-name">DIEGO DE CARLO</td>
+                            <td class="col-total">3.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">3.0</td>
+                            <td class="col-fecha-total has-value">3.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                58
+                            </td>
+                            <td class="col-name">TOMAS ABDALA</td>
+                            <td class="col-total">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                59
+                            </td>
+                            <td class="col-name">MARTIN  SERRANO</td>
+                            <td class="col-total">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                60
+                            </td>
+                            <td class="col-name">NORBERTO FONTANA</td>
+                            <td class="col-total">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                        <tr class="">
+                            <td class="col-pos ">
+                                61
+                            </td>
+                            <td class="col-name">NICOLÁS IMPIOBATO</td>
+                            <td class="col-total">2.0</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-fecha-total zero">-</td>
+                            
+                            
+                            
+                                
+                                
+                                
+                                
+                            
+                            <td class="col-pts fecha-border zero">-</td>
+                            <td class="col-pts zero">-</td>
+                            <td class="col-pts has-value">2.0</td>
+                            <td class="col-fecha-total has-value">2.0</td>
+                            
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        ACTC — PARCIALERA LIVE TIMING SYSTEM
+    </footer>
+</body>
+
+</html>

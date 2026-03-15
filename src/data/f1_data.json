@@ -1,0 +1,79 @@
+{
+  "drivers": [
+    {"name": "Lando Norris", "team": "McLaren", "number": "1", "engine": "Mercedes"},
+    {"name": "Pierre Gasly", "team": "Alpine", "number": "10", "engine": "Renault"},
+    {"name": "Sergio Perez", "team": "Cadillac", "number": "11", "engine": "Ferrari"},
+    {"name": "Kimi Antonelli", "team": "Mercedes", "number": "12", "engine": "Mercedes"},
+    {"name": "Fernando Alonso", "team": "Aston Martin", "number": "14", "engine": "Mercedes"},
+    {"name": "Charles Leclerc", "team": "Ferrari", "number": "16", "engine": "Ferrari"},
+    {"name": "Lance Stroll", "team": "Aston Martin", "number": "18", "engine": "Mercedes"},
+    {"name": "Alexander Albon", "team": "Williams", "number": "23", "engine": "Mercedes"},
+    {"name": "Nico Hulkenberg", "team": "Audi", "number": "27", "engine": "Audi"},
+    {"name": "Max Verstappen", "team": "Red Bull", "number": "3", "engine": "Red Bull"},
+    {"name": "Liam Lawson", "team": "Racing Bulls", "number": "30", "engine": "Red Bull"},
+    {"name": "Esteban Ocon", "team": "Haas", "number": "31", "engine": "Ferrari"},
+    {"name": "Arvid Lindblad", "team": "Racing Bulls", "number": "41", "engine": "Red Bull"},
+    {"name": "Franco Colapinto", "team": "Alpine", "number": "43", "engine": "Renault"},
+    {"name": "Lewis Hamilton", "team": "Ferrari", "number": "44", "engine": "Ferrari"},
+    {"name": "Gabriel Bortoleto", "team": "Audi", "number": "5", "engine": "Audi"},
+    {"name": "Carlos Sainz", "team": "Williams", "number": "55", "engine": "Mercedes"},
+    {"name": "Isack Hadjar", "team": "Red Bull", "number": "6", "engine": "Red Bull"},
+    {"name": "George Russell", "team": "Mercedes", "number": "63", "engine": "Mercedes"},
+    {"name": "Valtteri Bottas", "team": "Cadillac", "number": "77", "engine": "Ferrari"},
+    {"name": "Oscar Piastri", "team": "McLaren", "number": "81", "engine": "Mercedes"},
+    {"name": "Oliver Bearman", "team": "Haas", "number": "87", "engine": "Ferrari"}
+  ],
+  "standings": {
+    "drivers": [
+      {"rank": 1, "name": "George Russell", "points": 25},
+      {"rank": 2, "name": "Kimi Antonelli", "points": 18},
+      {"rank": 3, "name": "Charles Leclerc", "points": 15},
+      {"rank": 4, "name": "Lewis Hamilton", "points": 12},
+      {"rank": 5, "name": "Lando Norris", "points": 10},
+      {"rank": 6, "name": "Max Verstappen", "points": 8},
+      {"rank": 7, "name": "Oliver Bearman", "points": 6},
+      {"rank": 8, "name": "Arvid Lindblad", "points": 4},
+      {"rank": 10, "name": "Pierre Gasly", "points": 1}
+    ],
+    "constructors": [
+      {"rank": 1, "name": "Mercedes", "points": 43},
+      {"rank": 2, "name": "Ferrari", "points": 27},
+      {"rank": 3, "name": "McLaren", "points": 10},
+      {"rank": 4, "name": "Red Bull", "points": 8},
+      {"rank": 5, "name": "Haas", "points": 6},
+      {"rank": 6, "name": "Racing Bulls", "points": 4},
+      {"rank": 7, "name": "Audi", "points": 2},
+      {"rank": 8, "name": "Alpine", "points": 1}
+    ]
+  },
+  "calendar": [
+    {"race": "GP de Australia", "dates": "5-8 Mar", "status": "Finished", "winner": "George Russell"},
+    {"race": "GP de China", "dates": "13-15 Mar", "status": "Upcoming", "start_time": "Mar 15, 4:00 AM"},
+    {"race": "GP de Japón", "dates": "26-29 Mar", "status": "Upcoming"},
+    {"race": "GP de Baréin", "dates": "10-12 Abr", "status": "Upcoming"},
+    {"race": "GP de Arabia Saudí", "dates": "17-19 Abr", "status": "Upcoming"},
+    {"race": "GP de Miami", "dates": "1-3 May", "status": "Upcoming"},
+    {"race": "GP de Canadá", "dates": "22-24 May", "status": "Upcoming"},
+    {"race": "GP de Mónaco", "dates": "5-7 Jun", "status": "Upcoming"}
+  ],
+  "news": [
+    {
+      "title": "\"La situación es difícil\"",
+      "summary": "F1 | China: El nivel de frustración es más alto para los pilotos.",
+      "link": "https://as.com/motor/formula_1/el-nivel-de-frustracion-es-mas-alto-para-los-pilotos-f202603-n/",
+      "source": "AS"
+    },
+    {
+      "title": "Ferrari estrena un nuevo invento",
+      "summary": "Las novedades técnicas de la Scuderia para la temporada 2026.",
+      "link": "https://as.com/motor/formula_1/",
+      "source": "AS"
+    },
+    {
+      "title": "“Decían que estaba loco y ahora me dan la razón”",
+      "summary": "Fernando Alonso habla sobre su continuidad en Aston Martin.",
+      "link": "https://as.com/motor/formula_1/",
+      "source": "AS"
+    }
+  ]
+}

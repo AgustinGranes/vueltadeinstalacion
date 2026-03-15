@@ -1,0 +1,61 @@
+[
+  {
+    "category": "Fórmula 1",
+    "categoryShort": "F1",
+    "event": "China - Shanghai",
+    "circuit": "Shanghai International Circuit",
+    "platforms": ["Disney+", "F1 TV"],
+    "schedules": [
+      {"name": "Práctica libre 1", "time": "Viernes 13, 00:30"},
+      {"name": "Sprint Shootout", "time": "Viernes 13, 04:30"},
+      {"name": "Sprint", "time": "Sábado 14, 00:00"},
+      {"name": "Clasificación", "time": "Sábado 14, 04:00"},
+      {"name": "Carrera", "time": "Domingo 15, 04:00"}
+    ]
+  },
+  {
+    "category": "WRC",
+    "categoryShort": "WRC",
+    "event": "Rally Kenya",
+    "circuit": "Kenya Safari",
+    "platforms": ["Rally TV"],
+    "schedules": [
+      {"name": "Etapa 1", "time": "Jueves 12, 08:00"},
+      {"name": "Etapa Final", "time": "Domingo 15, 10:00"}
+    ]
+  },
+  {
+    "category": "IndyCar",
+    "categoryShort": "Indy",
+    "event": "Texas - Arlington",
+    "circuit": "Arlington Street Circuit",
+    "platforms": ["Disney+"],
+    "schedules": [
+      {"name": "Práctica 1", "time": "Viernes 13, 16:00"},
+      {"name": "Clasificación", "time": "Sábado 14, 14:00"},
+      {"name": "Carrera", "time": "Domingo 15, 13:00"}
+    ]
+  },
+  {
+    "category": "NASCAR Cup",
+    "categoryShort": "NASCAR",
+    "event": "Las Vegas",
+    "circuit": "Las Vegas Motor Speedway",
+    "platforms": ["YouTube (Somos Fox)"],
+    "schedules": [
+      {"name": "Carrera", "time": "Domingo 15, 16:30"}
+    ]
+  },
+  {
+    "category": "Turismo Nacional",
+    "categoryShort": "TN",
+    "event": "Buenos Aires",
+    "circuit": "Autódromo Oscar y Juan Gálvez",
+    "platforms": ["TV Pública", "Deportv"],
+    "schedules": [
+      {"name": "Series C2", "time": "Sábado 14, 14:00"},
+      {"name": "Final C2", "time": "Domingo 15, 11:00"},
+      {"name": "Final C3", "time": "Domingo 15, 13:30"}
+    ]
+  }
+]
