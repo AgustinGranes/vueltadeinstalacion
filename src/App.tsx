@@ -182,78 +182,140 @@ const App = () => {
   };
 
   // ==================== RENDER: HOME ====================
-  const renderHome = () => (
-    <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="home-view">
-      <div className="categories-grid">
-        <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')}>
-          <div className="cat-card-glow" />
-          <img src={F1_LOGO} alt="F1" className="cat-logo" />
-          <span className="cat-label">Formula 1</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
-          <div className="cat-card-glow" />
-          <img src={WRC_LOGO} alt="WRC" className="cat-logo wrc-logo" />
-          <span className="cat-label">WRC</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
-          <div className="cat-card-glow" />
-          <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
-          <span className="cat-label">TC</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tcp-card" onClick={() => handleCategoryClick('TCP')}>
-          <div className="cat-card-glow" />
-          <img src={TCP_LOGO} alt="TCP" className="cat-logo tcp-logo" />
-          <span className="cat-label">TC Pista</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
-          <div className="cat-card-glow" />
-          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
-          <span className="cat-label">TC Pick Up</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
-          <div className="cat-card-glow" />
-          <img src={INDYCAR_LOGO} alt="IndyCar" className="cat-logo indycar-logo" />
-          <span className="cat-label">IndyCar</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
-          <div className="cat-card-glow" />
-          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
-          <span className="cat-label">NASCAR Cup</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tcm-card" onClick={() => handleCategoryClick('TCM')}>
-          <div className="cat-card-glow" />
-          <img src="/TCM.png" alt="TCM" className="cat-logo tcm-logo" />
-          <span className="cat-label">TC Mouras</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tcpm-card" onClick={() => handleCategoryClick('TCPM')}>
-          <div className="cat-card-glow" />
-          <img src="/TCPM.png" alt="TCPM" className="cat-logo tcpm-logo" />
-          <span className="cat-label">TC Pista Mouras</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tcppk-card" onClick={() => handleCategoryClick('TCPPK')}>
-          <div className="cat-card-glow" />
-          <img src="/TCPPK.png" alt="TCPPK" className="cat-logo tcppk-logo" />
-          <span className="cat-label">TC Pista Pick Up</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
-          <div className="cat-card-glow" />
-          <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
-          <span className="cat-label">TC2000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-      </div>
-    </motion.div>
-  );
+  const renderHome = () => {
+    const flatSchedules = weeklyRaces.flatMap(race =>
+      (race.schedules || []).map(s => ({
+        ...s,
+        category: race.category,
+        categoryImage: race.categoryImage,
+        categoryColor: getCategoryColor(race.category),
+        event: race.event,
+        circuit: race.circuit,
+        circuitImage: race.circuitImage,
+        watchLinks: race.watchLinks,
+        ticketLink: race.ticketLink,
+        raceId: race.id,
+      }))
+    ).sort((a, b) => a.startAt - b.startAt);
+
+    const allNewsList = [
+      ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
+      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews
+    ].sort(() => Math.random() - 0.5).slice(0, 10);
+
+    return (
+      <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="home-view">
+        <div className="home-hero">
+          <h2 className="home-greeting">¡Hola!</h2>
+          <p className="home-subtitle">Esto es lo que corre esta semana</p>
+        </div>
+
+        {/* PROXIMAS CARRERAS (Home Mini Version) */}
+        {flatSchedules.length > 0 ? (
+          <div className="home-section">
+            <div className="section-header-mini">
+              <Calendar size={18} />
+              <span>Agenda Semanal</span>
+            </div>
+            <div className="home-weekly-scroll">
+              {flatSchedules.filter(s => s.startAt >= Date.now()).slice(0, 5).map((item, idx) => (
+                <div key={idx} className="home-weekly-card">
+                   <div className="weekly-color-bar" style={{ background: item.categoryColor || '#555' }} />
+                   <div className="home-weekly-body">
+                      <div className="home-weekly-cat">
+                         {item.categoryImage && <img src={item.categoryImage} alt="" className="home-cat-img" />}
+                         <span style={{ color: item.categoryColor || '#fff' }}>{item.category}</span>
+                      </div>
+                      <h4 className="home-race-name">{item.name}</h4>
+                      <p className="home-race-time">{item.time}</p>
+                   </div>
+                </div>
+              ))}
+              {flatSchedules.filter(s => s.startAt >= Date.now()).length === 0 && (
+                <p className="empty-msg">No hay más carreras programadas para hoy.</p>
+              )}
+            </div>
+            <button className="view-all-btn" onClick={() => setMainTab('calendario')}>
+              Ver calendario completo
+            </button>
+          </div>
+        ) : !isLoading && (
+          <div className="home-section">
+            <p className="empty-msg">No se pudieron cargar los datos de Vueltarapida.</p>
+          </div>
+        )}
+
+        <div className="home-section">
+          <div className="section-header-mini">
+            <Trophy size={18} />
+            <span>Categorías</span>
+          </div>
+          <div className="categories-grid">
+            <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')}>
+              <div className="cat-card-glow" />
+              <img src={F1_LOGO} alt="F1" className="cat-logo" />
+              <span className="cat-label">Formula 1</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+            <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
+              <div className="cat-card-glow" />
+              <img src={WRC_LOGO} alt="WRC" className="cat-logo wrc-logo" />
+              <span className="cat-label">WRC</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+            <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
+              <div className="cat-card-glow" />
+              <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
+              <span className="cat-label">TC</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+            <button className="cat-card tcp-card" onClick={() => handleCategoryClick('TCP')}>
+              <div className="cat-card-glow" />
+              <img src={TCP_LOGO} alt="TCP" className="cat-logo tcp-logo" />
+              <span className="cat-label">TC Pista</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+            <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
+              <div className="cat-card-glow" />
+              <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
+              <span className="cat-label">TC Pick Up</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+            <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
+              <div className="cat-card-glow" />
+              <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
+              <span className="cat-label">TC2000</span>
+              <ChevronRight size={18} className="cat-arrow" />
+            </button>
+          </div>
+        </div>
+
+        {/* NEWS SECTION (Home Mini Version) */}
+        {allNewsList.length > 0 && (
+          <div className="home-section">
+            <div className="section-header-mini">
+              <Newspaper size={18} />
+              <span>Últimas Noticias</span>
+            </div>
+            <div className="home-news-list">
+              {allNewsList.map((item, idx) => (
+                <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
+                  <div className="news-card-body">
+                    <span className="news-badge">{item.category} | {item.source}</span>
+                    <h3 className="news-headline">{item.title}</h3>
+                  </div>
+                  <ExternalLink size={16} className="news-ext-icon" />
+                </a>
+              ))}
+            </div>
+            <button className="view-all-btn" onClick={() => setMainTab('noticias')}>
+              Ver todas las noticias
+            </button>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
 
   // ==================== RENDER: CALENDARIO ====================
   const renderCalendario = () => {

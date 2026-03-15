@@ -260,7 +260,49 @@ export const dataService = {
         };
       }));
 
-      return racesWithImages;
+      if (racesWithImages.length > 0) return racesWithImages;
+
+      // FALLBACK: Scrape the HTML if API returns empty
+      console.log('[DataService] JSON API empty, attempting to scrape HTML...');
+      const html = await this.fetchWithProxy('https://vueltarapida.com/calendario');
+      if (!html || !html.includes('<div class="rd-calendar-event"')) return [];
+
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const eventEls = doc.querySelectorAll('.rd-calendar-event');
+      const scrapedRaces: Race[] = [];
+
+      eventEls.forEach((el, idx) => {
+        const category = el.querySelector('.rd-cat-name')?.textContent?.trim() || 'Otros';
+        const eventName = el.querySelector('.rd-event-name')?.textContent?.trim() || '';
+        const circuitName = el.querySelector('.rd-circuit-name')?.textContent?.trim() || '';
+        const logoUrl = el.querySelector('.rd-cat-logo')?.getAttribute('src') || '';
+        const circuitImg = el.querySelector('.rd-track-layout')?.getAttribute('src') || '';
+
+        const schedules: any[] = [];
+        el.querySelectorAll('.rd-schedule-item').forEach((s, sidx) => {
+           const sName = s.querySelector('.rd-s-name')?.textContent?.trim() || '';
+           const sTime = s.querySelector('.rd-s-time')?.textContent?.trim() || '';
+           schedules.push({ id: `s-${idx}-${sidx}`, name: sName, time: sTime, startAt: Date.now() });
+        });
+
+        scrapedRaces.push({
+          id: `scraped-${idx}`,
+          category,
+          categoryShort: category,
+          categoryId: '',
+          categoryColor: getCategoryColor(category),
+          categoryImage: logoUrl.startsWith('/') ? `https://vueltarapida.com${logoUrl}` : logoUrl,
+          event: eventName,
+          circuit: circuitName,
+          circuitImage: circuitImg.startsWith('/') ? `https://vueltarapida.com${circuitImg}` : circuitImg,
+          platforms: [],
+          schedules,
+          time: schedules.length > 0 ? schedules[0].time : '',
+          watchLinks: [],
+        });
+      });
+
+      return scrapedRaces;
     } catch (e) {
       console.error('[DataService] Weekly calendar error:', e);
       return [];
