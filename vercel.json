@@ -5,6 +5,10 @@
       "destination": "https://api.vueltarapida.com/api/$1"
     },
     {
+      "source": "/api/vueltarapida-html/(.*)",
+      "destination": "https://vueltarapida.com/$1"
+    },
+    {
       "source": "/api/espn-json/(.*)",
       "destination": "https://site.api.espn.com/$1"
     },

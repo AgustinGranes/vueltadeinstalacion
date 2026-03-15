@@ -1961,7 +1961,7 @@ export const dataService = {
         .replace('https://campeones.com.ar', '/api/campeones')
         .replace('https://www.nascar.com', '/api/nascar')
         .replace('https://latino.nascar.com', '/api/nascar-latino')
-        .replace('https://vueltarapida.com', '/api/espn-html');
+        .replace('https://vueltarapida.com', '/api/vueltarapida-html');
 
       if (proxyPath !== targetUrl) {
         const cacheBuster = `t=${Date.now()}`;
