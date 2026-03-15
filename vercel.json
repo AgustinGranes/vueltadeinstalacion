@@ -65,8 +65,11 @@
       "destination": "https://latino.nascar.com/$1"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/"
+      "destination": "/index.html"
     }
   ]
 }
