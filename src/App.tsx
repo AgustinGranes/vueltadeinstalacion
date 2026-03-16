@@ -73,6 +73,8 @@ const App = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+  const [isHomeLoading, setIsHomeLoading] = useState(false);
+  const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
@@ -194,7 +196,7 @@ const App = () => {
 
   const fetchGlobalNews = useCallback(async () => {
     if (loadedData.has('globalNews')) return;
-    setIsLoading(true);
+    setIsGlobalNewsLoading(true);
     try {
       const results = await Promise.allSettled([
         dataService.getF1News(),
@@ -214,12 +216,12 @@ const App = () => {
     } catch (e) {
       console.error('Global news fetch error:', e);
     } finally {
-      setIsLoading(false);
+      setIsGlobalNewsLoading(false);
     }
   }, [loadedData]);
 
   const fetchHomeData = useCallback(async () => {
-    setIsLoading(true);
+    setIsHomeLoading(true);
     try {
       const weekly = await dataService.getWeeklyCalendar();
       setWeeklyRaces(weekly);
@@ -227,7 +229,7 @@ const App = () => {
     } catch (e) {
       console.error('Home fetch error:', e);
     } finally {
-      setIsLoading(false);
+      setIsHomeLoading(false);
       setIsRefreshing(false);
     }
   }, []);
@@ -376,7 +378,11 @@ const App = () => {
           </button>
         </div>
 
-        {calendarViewMode === 'semanal' ? (
+        {isHomeLoading ? (
+          <div className="tab-loading-wrap">
+            {renderLoadingCircle()}
+          </div>
+        ) : calendarViewMode === 'semanal' ? (
           <div className="weekly-list">
             {flatSchedules.length === 0 && !isLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
             
@@ -572,7 +578,12 @@ const App = () => {
     ].sort(() => Math.random() - 0.5);
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
-        <div className="news-feed">
+        {isGlobalNewsLoading ? (
+          <div className="tab-loading-wrap">
+            {renderLoadingCircle()}
+          </div>
+        ) : (
+          <div className="news-feed">
           {allNewsList.map((item, idx) => (
             <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
               <div className="news-card-body">
@@ -582,8 +593,9 @@ const App = () => {
               <ExternalLink size={16} className="news-ext-icon" />
             </a>
           ))}
-          {allNewsList.length === 0 && !isLoading && <p className="empty-msg">No hay noticias disponibles.</p>}
-        </div>
+          {allNewsList.length === 0 && !isGlobalNewsLoading && <p className="empty-msg">No hay noticias disponibles.</p>}
+          </div>
+        )}
       </motion.div>
     );
   };
