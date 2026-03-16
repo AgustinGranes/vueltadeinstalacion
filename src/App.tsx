@@ -572,7 +572,7 @@ const App = () => {
                       <div className={`race-status-badge ${race.status.toLowerCase()}`}>
                         {race.status === 'Live' ? '🔴 En curso' :
                           race.status === 'Finished' ? (race.winner || '✅ Finalizado') :
-                            race.status === 'Next' ? '➡️ Próximo' : '—'}
+                            (race.status === 'Next' || race.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
                   ))}
@@ -590,7 +590,7 @@ const App = () => {
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Live' ? '🔴 En curso' :
                           ev.status === 'Finished' ? '✅ Finalizado' :
-                            ev.status === 'Next' ? '➡️ Próximo' : '—'}
+                            (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
                   )) : (
