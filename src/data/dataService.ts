@@ -206,11 +206,14 @@ export const dataService = {
           const d = new Date(s.startAt || s.start);
           const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
           const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
-          const timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+          // If time is invalid or undefined in source, show nothing or dash
+          const timeStr = (s.time === '-' || s.time === '' || isNaN(d.getTime())) ? '' : rawTime;
+          
           return {
             id: s._id || s.id || Math.random().toString(),
             name: s.name || s.title || '',
-            time: `${dayStr}, ${timeStr}`,
+            time: timeStr ? `${dayStr}, ${timeStr}` : dayStr,
             startAt: s.startAt || s.start || d.getTime()
           };
         });
@@ -267,7 +270,7 @@ export const dataService = {
           category: r.category || r.name || '',
           categoryShort: r.categoryShort || r.name || '',
           event: r.completeName || r.name || '',
-          circuit: r.circuit || '',
+          circuit: (r.circuit || '').replace(/\s*[\u2013\u2014-]\s*$/, '').trim(),
           circuitId: r.circuitId,
           circuitImage,
           platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
@@ -559,24 +562,37 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy(`https://lat.motorsport.com/wrc/standings/${year}/`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const tables = doc.querySelectorAll('.ms-table, table');
-      const keys: (keyof WRCStandings)[] = ['drivers', 'codrivers', 'manufacturers', 'teams'];
+      
+      // Select all tables and their preceding titles/headers to identify them
+      const tableContainers = doc.querySelectorAll('.ms-table, table');
 
-      tables.forEach((table, idx) => {
-        if (idx >= keys.length) return;
-        const key = keys[idx];
+      tableContainers.forEach((table, idx) => {
+        // Identify table type by nearby text or index
+        let key: keyof WRCStandings | null = null;
+        const pageText = table.parentElement?.textContent?.toLowerCase() || '';
+        
+        if (pageText.includes('pilotos') || pageText.includes('driver')) key = 'drivers';
+        else if (pageText.includes('copilotos') || pageText.includes('co-driver')) key = 'codrivers';
+        else if (pageText.includes('fabricantes') || pageText.includes('manufacturer')) key = 'manufacturers';
+        else if (pageText.includes('equipos') || pageText.includes('team')) key = 'teams';
+        
+        // Fallback to index if heuristic fails
+        if (!key) {
+          const keys: (keyof WRCStandings)[] = ['drivers', 'codrivers', 'manufacturers', 'teams'];
+          key = keys[idx];
+        }
+        if (!key || standings[key].length > 0) return;
+
         table.querySelectorAll('tbody tr').forEach(row => {
           const cells = row.querySelectorAll('td');
           if (cells.length >= 3) {
-            const pos = cells[0]?.textContent?.trim() || '';
-            const nameWrap = cells[1]?.querySelector('a.info-wrapper, a');
-            const name = nameWrap?.querySelector('span:first-child')?.textContent?.trim()
-              || nameWrap?.textContent?.trim()
-              || cells[1]?.textContent?.trim() || '';
-            const sub = nameWrap?.querySelector('span:last-child')?.textContent?.trim() || '';
-            const pts = cells[2]?.textContent?.trim() || '0';
-            if (name && pos) {
-              standings[key].push({ pos, driver: name, codriverOrTeam: sub, points: pts });
+            const pos = cells[0]?.textContent?.trim()?.replace('.', '') || '';
+            const nameEl = cells[1]?.querySelector('.info-wrapper, a');
+            const name = nameEl?.querySelector('span:first-child')?.textContent?.trim() || nameEl?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
+            const sub = nameEl?.querySelector('.sub-info')?.textContent?.trim() || nameEl?.querySelector('span:last-child')?.textContent?.trim() || '';
+            const pts = cells[cells.length - 1]?.textContent?.trim() || '0';
+            if (name && pos && /^\d+$/.test(pos)) {
+              standings[key!].push({ pos, driver: name, codriverOrTeam: sub, points: pts });
             }
           }
         });
@@ -625,60 +641,34 @@ export const dataService = {
       const parseHtml = (html: string | null, isPast: boolean) => {
         if (!html) return;
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cards = doc.querySelectorAll('.event-feed-card, .event-list__row, .rally-card, article[class*="event"], tr:has(td)');
+        // Find main event cards - usually .event-feed-card or .event-list__row
+        const cards = doc.querySelectorAll('.event-feed-card, .event-list__row, .rally-card, .event-card');
         
         cards.forEach((el) => {
           const text = el.textContent || '';
           if (!text.toLowerCase().includes('rally')) return;
 
+          // Extract round
           let round = 0;
           const roundMatch = text.match(/Round\s+(\d+)/i) || text.match(/^(\d+)\s/);
           if (roundMatch) round = parseInt(roundMatch[1]);
 
-          const titleEl = el.querySelector('.event-feed-card__title, .event-list__rally-name, [class*="title"], h3, h2, td:nth-child(2)');
+          // Extract title
+          const titleEl = el.querySelector('.event-feed-card__title, .event-list__rally-name, h3, h2, .title');
           let rallyName = titleEl?.textContent?.trim() || '';
-          if (!rallyName || rallyName.length < 5) {
-            const possibleTitle = text.split('\n').find(s => s.toLowerCase().includes('rally'));
-            if (possibleTitle) rallyName = possibleTitle.trim();
+          if (!rallyName) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+            rallyName = lines.find(l => l.toLowerCase().includes('rally') && !l.toLowerCase().includes('shakedown') && !l.toLowerCase().includes('día') && !/^\d+[:]\d+/.test(l)) || '';
           }
-
           if (!rallyName) return;
-          rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').replace(/ROUND\s+\d+\s+/i, '').trim();
 
-          const dateEl = el.querySelector('.event-feed-card__date-text, .event-list__date, .date, [class*="date"], td:nth-child(3)');
+          // Clean rally name
+          rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').replace(/ROUND\s+\d+\s+/i, '').trim();
+          if (rallyName.toLowerCase().includes('shakedown') || rallyName.toLowerCase().includes('día') || /^\d+[:]\d+/.test(rallyName)) return;
+
+          const dateEl = el.querySelector('.event-feed-card__date-text, .event-list__date, .date, .event-card__date');
           const dates = dateEl?.textContent?.trim() || '';
           
-          const parseWRCDate = (dateStr: string): { start: Date; end: Date } | null => {
-            try {
-              const months: Record<string, number> = {
-                'jan': 0, 'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'apr': 3, 'may': 4,
-                'jun': 5, 'jul': 6, 'aug': 7, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11, 'dic': 11
-              };
-              const cleanStr = dateStr.toLowerCase().replace(/\s+/g, ' ').replace(/[\u2013\u2014]/g, '-').trim();
-              let startDay = 0, startMonth = -1, endDay = 0, endMonth = -1, year = today.getFullYear();
-
-              const simpleMatch = cleanStr.match(/(\d+)\s*[-]\s*(\d+)\s+([a-z]{3,})/);
-              if (simpleMatch) {
-                startDay = parseInt(simpleMatch[1]);
-                endDay = parseInt(simpleMatch[2]);
-                startMonth = endMonth = months[simpleMatch[3].substring(0, 3)] ?? -1;
-              } else {
-                const crossMonthMatch = cleanStr.match(/(\d+)\s+([a-z]{3,})\s*[-]\s*(\d+)\s+([a-z]{3,})/);
-                if (crossMonthMatch) {
-                  startDay = parseInt(crossMonthMatch[1]);
-                  startMonth = months[crossMonthMatch[2].substring(0, 3)] ?? -1;
-                  endDay = parseInt(crossMonthMatch[3]);
-                  endMonth = months[crossMonthMatch[4].substring(0, 3)] ?? -1;
-                }
-              }
-
-              if (startDay && endDay && startMonth !== -1) {
-                return { start: new Date(year, startMonth, startDay), end: new Date(year, endMonth, endDay, 23, 59, 59) };
-              }
-            } catch (e) {}
-            return null;
-          };
-
           let status: WRCCalendarEvent['status'] = isPast ? 'Finished' : 'Upcoming';
           const cardText = text.toLowerCase();
           
@@ -686,20 +676,29 @@ export const dataService = {
             status = 'Upcoming';
           } else if (cardText.includes('happening now') || cardText.includes('live') || cardText.includes('en curso')) {
             status = 'Live';
-          } else {
-            const range = parseWRCDate(dates);
-            if (range) {
-              if (today >= range.start && today <= range.end) status = 'Live';
-              else if (today > range.end) status = 'Finished';
+          } else if (!isPast) {
+            // Check dates for current/upcoming
+            const dateMatch = dates.match(/(\d+)\s*-\s*(\d+)\s+([a-z]+)/i);
+            if (dateMatch) {
+              const months: Record<string, number> = {
+                jan:0,ene:0,feb:1,mar:2,abr:3,apr:3,may:4,jun:5,jul:6,aug:7,ago:7,sep:8,oct:9,nov:10,dec:11,dic:11
+              };
+              const month = months[dateMatch[3].toLowerCase().substring(0, 3)];
+              if (month !== undefined) {
+                const start = new Date(today.getFullYear(), month, parseInt(dateMatch[1]));
+                const end = new Date(today.getFullYear(), month, parseInt(dateMatch[2]), 23, 59, 59);
+                if (today >= start && today <= end) status = 'Live';
+                else if (today > end) status = 'Finished';
+              }
             }
           }
           
           const existingIdx = events.findIndex(e => e.rallyName.toLowerCase() === rallyName.toLowerCase());
           if (existingIdx >= 0) {
-            // Priority: Live > Finished > Upcoming
             const existing = events[existingIdx];
-            const statusPriority: Record<string, number> = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
-            if ((statusPriority[status] || 0) > (statusPriority[existing.status] || 0)) {
+            // Prefer Live > Finished > Upcoming
+            const p = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
+            if ((p[status] || 0) > (p[existing.status] || 0)) {
               events[existingIdx] = { round: round || existing.round, rallyName, dates: dates || existing.dates, status };
             }
           } else {
@@ -711,22 +710,22 @@ export const dataService = {
       parseHtml(pastHtml, true);
       parseHtml(upcomingHtml, false);
 
-      // Final sorting and round assignment
+      // Final sorting: Finished -> Live -> Upcoming
       events.sort((a, b) => {
+        const order = { 'Finished': 0, 'Live': 1, 'Upcoming': 2, 'Next': 2 };
+        if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
         if (a.round && b.round) return a.round - b.round;
-        return 0; // Keep current order if rounds are missing
+        return a.rallyName.localeCompare(b.rallyName);
       });
 
-      // Sequential rounds if missing
-      events.forEach((ev, idx) => {
-        if (!ev.round) ev.round = idx + 1;
-      });
+      // Recalculate rounds
+      events.forEach((ev, idx) => ev.round = idx + 1);
 
-      // Handle "Next" logic
-      let foundNext = false;
+      // Ensure at least one "Next" or handle it based on status
+      let foundActive = false;
       return events.map(ev => {
-        if (ev.status === 'Upcoming' && !foundNext) {
-          foundNext = true;
+        if (ev.status === 'Upcoming' && !foundActive) {
+          foundActive = true;
           return { ...ev, status: 'Next' as const };
         }
         return ev;

@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'IndyCar' | 'NASCAR';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'calendar' | 'standings' | 'news';
@@ -20,6 +20,8 @@ const INDYCAR_LOGO = '/INDYCAR.png';
 const ALL_LOGOS = [
   { name: 'F1', url: 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg', class: 'f1' },
   { name: 'WRC', url: '/WRC.png', class: 'wrc' },
+  { name: 'NASCAR', url: '/NASCAR.png', class: 'nascar' },
+  { name: 'IndyCar', url: '/INDYCAR.png', class: 'indycar' },
   { name: 'TC', url: '/TC.png', class: 'tc' },
   { name: 'TCP', url: '/TCP.png', class: 'tcp' },
   { name: 'TCM', url: '/TCM.png', class: 'tcm' },
@@ -27,8 +29,6 @@ const ALL_LOGOS = [
   { name: 'TCPK', url: '/TCPK.png', class: 'tcpk' },
   { name: 'TCPPK', url: '/TCPPK.png', class: 'tcppk' },
   { name: 'TC2000', url: '/TC2000.png', class: 'tc2000' },
-  { name: 'IndyCar', url: '/INDYCAR.png', class: 'indycar' },
-  { name: 'NASCAR', url: '/NASCAR.png', class: 'nascar' },
 ];
 
 const App = () => {
@@ -198,6 +198,18 @@ const App = () => {
           <span className="cat-label">WRC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
+          <div className="cat-card-glow" />
+          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
+          <span className="cat-label">NASCAR Cup</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
+          <div className="cat-card-glow" />
+          <img src={INDYCAR_LOGO} alt="IndyCar" className="cat-logo indycar-logo" />
+          <span className="cat-label">IndyCar</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
           <div className="cat-card-glow" />
           <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
@@ -210,24 +222,6 @@ const App = () => {
           <span className="cat-label">TC Pista</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
-          <div className="cat-card-glow" />
-          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
-          <span className="cat-label">TC Pick Up</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
-          <div className="cat-card-glow" />
-          <img src={INDYCAR_LOGO} alt="IndyCar" className="cat-logo indycar-logo" />
-          <span className="cat-label">IndyCar</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
-          <div className="cat-card-glow" />
-          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
-          <span className="cat-label">NASCAR Cup</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
         <button className="cat-card tcm-card" onClick={() => handleCategoryClick('TCM')}>
           <div className="cat-card-glow" />
           <img src="/TCM.png" alt="TCM" className="cat-logo tcm-logo" />
@@ -238,6 +232,12 @@ const App = () => {
           <div className="cat-card-glow" />
           <img src="/TCPM.png" alt="TCPM" className="cat-logo tcpm-logo" />
           <span className="cat-label">TC Pista Mouras</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
+          <div className="cat-card-glow" />
+          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
+          <span className="cat-label">TC Pick Up</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcppk-card" onClick={() => handleCategoryClick('TCPPK')}>
@@ -574,7 +574,7 @@ const App = () => {
               {isF1 ? (
                 <div className="f1-calendar-list">
                   {f1Calendar.map((race, idx) => (
-                    <div key={idx} className={`race-row ${race.status.toLowerCase()}`}>
+                    <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${race.status.toLowerCase()}`}>{race.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{race.race}</span>
@@ -592,7 +592,7 @@ const App = () => {
               ) : isWRC ? (
                 <div className="wrc-calendar-list">
                   {wrcCalendar.length > 0 ? wrcCalendar.map((ev, idx) => (
-                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.rallyName}</span>
@@ -749,7 +749,7 @@ const App = () => {
               ) : isTC2000 ? (
                 <div className="tc2000-calendar-list">
                   {tc2000Calendar.length > 0 ? tc2000Calendar.map((ev, idx) => (
-                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.race}</span>

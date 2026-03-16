@@ -686,7 +686,7 @@
 }
 
 .race-round-num.finished { background: rgba(48, 209, 88, 0.12); color: var(--accent-green); }
-.race-round-num.next { background: var(--accent-blue); color: white; }
+.race-round-num.next { background: var(--bg-elevated); color: var(--text-tertiary); }
 .race-round-num.live { background: var(--accent-red); color: white; }
 
 .race-info-block { flex: 1; display: flex; flex-direction: column; gap: 2px; }
