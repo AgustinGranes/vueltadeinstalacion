@@ -177,6 +177,10 @@ export const dataService = {
       
       let data;
       try {
+        if (!racesResText.trim().startsWith('{') && !racesResText.trim().startsWith('[')) {
+          console.error('[DataService] Races response is not JSON:', racesResText.substring(0, 100));
+          return [];
+        }
         data = JSON.parse(racesResText);
       } catch (e) {
         console.error('[DataService] Failed to parse races JSON:', e);
@@ -186,6 +190,9 @@ export const dataService = {
       let categoriesMap: Record<string, any> = {};
       if (catResText && catResText.trim() !== '') {
         try {
+          if (!catResText.trim().startsWith('{') && !catResText.trim().startsWith('[')) {
+            throw new Error('Not JSON');
+          }
           const catData = JSON.parse(catResText);
           if (Array.isArray(catData)) {
             catData.forEach((c: any) => {
@@ -234,6 +241,7 @@ export const dataService = {
             try {
               const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
               if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
+                if (!circuitRes.trim().startsWith('{')) throw new Error('Not JSON');
                 const circuitData = JSON.parse(circuitRes);
                 const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
                 if (imgUrl) {
@@ -269,13 +277,13 @@ export const dataService = {
           categoryImage: catInfo.categoryImage || r.categoryImage,
           category: r.category || r.name || '',
           categoryShort: r.categoryShort || r.name || '',
-          event: r.completeName || r.name || '',
-          circuit: (r.circuit || '').replace(/\s*[\u2013\u2014-]\s*$/, '').trim(),
+          event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+          circuit: (r.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
           circuitId: r.circuitId,
           circuitImage,
           platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
           schedules: schedulesList,
-          time: schedulesList.length > 0 ? schedulesList[0].time : '',
+          time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
           ticketLink: r.ticketLink || '',
           watchLinks,
         };
@@ -557,56 +565,47 @@ export const dataService = {
   // === WRC CHAMPIONSHIP STANDINGS (lat.motorsport.com — dynamic, year-aware, drivers only) ===
   async getWRCStandings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
-    const year = new Date().getFullYear();
+    const seasonId = 47; // 2026 season ID found via research
 
-    try {
-      const html = await this.fetchWithProxy(`https://lat.motorsport.com/wrc/standings/${year}/`);
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      // Select all tables and their preceding titles/headers to identify them
-      const tableContainers = doc.querySelectorAll('.ms-table, table');
-
-      tableContainers.forEach((table, idx) => {
-        // Identify table type by nearby text or index
-        let key: keyof WRCStandings | null = null;
-        const pageText = table.parentElement?.textContent?.toLowerCase() || '';
-        
-        if (pageText.includes('pilotos') || pageText.includes('driver')) key = 'drivers';
-        else if (pageText.includes('copilotos') || pageText.includes('co-driver')) key = 'codrivers';
-        else if (pageText.includes('fabricantes') || pageText.includes('manufacturer')) key = 'manufacturers';
-        else if (pageText.includes('equipos') || pageText.includes('team')) key = 'teams';
-        
-        // Fallback to index if heuristic fails
-        if (!key) {
-          const keys: (keyof WRCStandings)[] = ['drivers', 'codrivers', 'manufacturers', 'teams'];
-          key = keys[idx];
+    const fetchTable = async (championshipId: number, key: keyof WRCStandings) => {
+      try {
+        const url = `https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=${championshipId}&seasonId=${seasonId}`;
+        const resText = await this.fetchWithProxy(url);
+        if (!resText || resText.trim() === '' || (!resText.trim().startsWith('{') && !resText.trim().startsWith('['))) {
+          console.warn(`[DataService] Invalid JSON response for WRC ${key}`);
+          return;
         }
-        if (!key || standings[key].length > 0) return;
-
-        table.querySelectorAll('tbody tr').forEach(row => {
-          const cells = row.querySelectorAll('td');
-          if (cells.length >= 3) {
-            const pos = cells[0]?.textContent?.trim()?.replace('.', '') || '';
-            const nameEl = cells[1]?.querySelector('.info-wrapper, a');
-            const name = nameEl?.querySelector('span:first-child')?.textContent?.trim() || nameEl?.textContent?.trim() || cells[1]?.textContent?.trim() || '';
-            const sub = nameEl?.querySelector('.sub-info')?.textContent?.trim() || nameEl?.querySelector('span:last-child')?.textContent?.trim() || '';
-            const pts = cells[cells.length - 1]?.textContent?.trim() || '0';
-            if (name && pos && /^\d+$/.test(pos)) {
-              standings[key!].push({ pos, driver: name, codriverOrTeam: sub, points: pts });
+        
+        const data = JSON.parse(resText);
+        if (data && Array.isArray(data.entryResults)) {
+          data.entryResults.forEach((entry: any) => {
+            const pos = String(entry.rank || '');
+            const driver = entry.driverName || entry.manufacturerName || entry.teamName || '';
+            const sub = entry.teamName || entry.coDriverName || '';
+            const points = String(entry.totalPoints || '0');
+            if (driver && pos) {
+              standings[key].push({ pos, driver, codriverOrTeam: sub, points });
             }
-          }
-        });
-      });
-    } catch (e) {
-      console.error('[DataService] WRC standings error:', e);
-    }
+          });
+        }
+      } catch (e) {
+        console.error(`[DataService] WRC standings error for ${key}:`, e);
+      }
+    };
+
+    await Promise.all([
+      fetchTable(333, 'drivers'),
+      fetchTable(334, 'codrivers'),
+      fetchTable(335, 'manufacturers'),
+      fetchTable(336, 'teams')
+    ]);
+
     return standings;
   },
 
   // === WRC CALENDAR (Official wrc.com — dynamic scraping) ===
   async getWRCCalendar(): Promise<WRCCalendarEvent[]> {
     const events: WRCCalendarEvent[] = [];
-    const today = new Date();
     
     try {
       // 1. Try to fetch from official WRC site
@@ -641,24 +640,20 @@ export const dataService = {
       const parseHtml = (html: string | null, isPast: boolean) => {
         if (!html) return;
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Find main event cards - usually .event-feed-card or .event-list__row
+        // Find main event cards - confirmed via research: a.event-feed-card
         const cards = doc.querySelectorAll('.event-feed-card, .event-list__row, .rally-card, .event-card');
         
         cards.forEach((el) => {
           const text = el.textContent || '';
-          if (!text.toLowerCase().includes('rally')) return;
-
-          // Extract round
-          let round = 0;
-          const roundMatch = text.match(/Round\s+(\d+)/i) || text.match(/^(\d+)\s/);
-          if (roundMatch) round = parseInt(roundMatch[1]);
+          const cardText = text.toLowerCase();
+          if (!cardText.includes('rally')) return;
 
           // Extract title
           const titleEl = el.querySelector('.event-feed-card__title, .event-list__rally-name, h3, h2, .title');
           let rallyName = titleEl?.textContent?.trim() || '';
           if (!rallyName) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-            rallyName = lines.find(l => l.toLowerCase().includes('rally') && !l.toLowerCase().includes('shakedown') && !l.toLowerCase().includes('día') && !/^\d+[:]\d+/.test(l)) || '';
+            rallyName = lines.find(l => l.toLowerCase().includes('rally') && !l.toLowerCase().includes('shakedown') && !l.toLowerCase().includes('día')) || '';
           }
           if (!rallyName) return;
 
@@ -666,43 +661,32 @@ export const dataService = {
           rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').replace(/ROUND\s+\d+\s+/i, '').trim();
           if (rallyName.toLowerCase().includes('shakedown') || rallyName.toLowerCase().includes('día') || /^\d+[:]\d+/.test(rallyName)) return;
 
-          const dateEl = el.querySelector('.event-feed-card__date-text, .event-list__date, .date, .event-card__date');
+          const dateEl = el.querySelector('.event-feed-card__date-text, .event-list__date, .date, .event-card__date, time');
           const dates = dateEl?.textContent?.trim() || '';
           
           let status: WRCCalendarEvent['status'] = isPast ? 'Finished' : 'Upcoming';
-          const cardText = text.toLowerCase();
           
-          if (cardText.includes('upcoming event')) {
-            status = 'Upcoming';
-          } else if (cardText.includes('happening now') || cardText.includes('live') || cardText.includes('en curso')) {
-            status = 'Live';
-          } else if (!isPast) {
-            // Check dates for current/upcoming
-            const dateMatch = dates.match(/(\d+)\s*-\s*(\d+)\s+([a-z]+)/i);
-            if (dateMatch) {
-              const months: Record<string, number> = {
-                jan:0,ene:0,feb:1,mar:2,abr:3,apr:3,may:4,jun:5,jul:6,aug:7,ago:7,sep:8,oct:9,nov:10,dec:11,dic:11
-              };
-              const month = months[dateMatch[3].toLowerCase().substring(0, 3)];
-              if (month !== undefined) {
-                const start = new Date(today.getFullYear(), month, parseInt(dateMatch[1]));
-                const end = new Date(today.getFullYear(), month, parseInt(dateMatch[2]), 23, 59, 59);
-                if (today >= start && today <= end) status = 'Live';
-                else if (today > end) status = 'Finished';
-              }
+          if (!isPast) {
+            // According to user: if in upcoming list but NO "Upcoming event" label, it's live/happening
+            if (!cardText.includes('upcoming event')) {
+              status = 'Live';
             }
+          }
+
+          // Special case for past tab explicitly
+          if (isPast || cardText.includes('past event')) {
+            status = 'Finished';
           }
           
           const existingIdx = events.findIndex(e => e.rallyName.toLowerCase() === rallyName.toLowerCase());
           if (existingIdx >= 0) {
             const existing = events[existingIdx];
-            // Prefer Live > Finished > Upcoming
             const p = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
             if ((p[status] || 0) > (p[existing.status] || 0)) {
-              events[existingIdx] = { round: round || existing.round, rallyName, dates: dates || existing.dates, status };
+              events[existingIdx] = { round: existing.round, rallyName, dates: dates || existing.dates, status };
             }
           } else {
-            events.push({ round, rallyName, dates, status });
+            events.push({ round: 0, rallyName, dates, status });
           }
         });
       };
@@ -1375,8 +1359,7 @@ export const dataService = {
           if (now >= startDate && now <= endDate) {
             status = 'Live';
           } else if (now > endDate) {
-            const diff = (now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24);
-            status = (diff >= 5) ? 'Finished' : 'Live';
+            status = 'Finished';
           }
           
           const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];

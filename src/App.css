@@ -668,8 +668,7 @@
   padding: 4px 0;
 }
 
-.race-row.live { border-color: rgba(255, 69, 58, 0.4); background: rgba(255, 69, 58, 0.06); }
-.race-row.next { border-color: rgba(10, 132, 255, 0.4); background: rgba(10, 132, 255, 0.06); }
+
 
 .race-round-num {
   width: 32px;
@@ -709,7 +708,7 @@
   animation: pulse-glow 2s infinite;
 }
 
-.race-status-badge.next { background: rgba(10, 132, 255, 0.15); color: var(--accent-blue); }
+.race-status-badge.next { background: var(--bg-elevated); color: var(--text-secondary); }
 
 /* =============== WEEKLY CALENDAR SECTIONS =============== */
 .weekly-list { 
