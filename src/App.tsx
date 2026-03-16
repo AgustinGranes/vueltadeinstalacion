@@ -71,7 +71,8 @@ const App = () => {
   const [nascarNews, setNascarNews] = useState<NewsItem[]>([]);
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
@@ -80,7 +81,7 @@ const App = () => {
 
   const fetchCategoryData = useCallback(async (cat: CategoryType) => {
     if (loadedData.has(cat)) return;
-    setIsLoading(true);
+    setIsCategoryLoading(true);
     try {
       if (cat === 'F1') {
         const [cal, news, stand] = await Promise.all([
@@ -187,7 +188,7 @@ const App = () => {
     } catch (e) {
       console.error(`Fetch error for ${cat}:`, e);
     } finally {
-      setIsLoading(false);
+      setIsCategoryLoading(false);
     }
   }, [loadedData]);
 
@@ -250,8 +251,10 @@ const App = () => {
   }, [view, mainTab, selectedCategory, fetchCategoryData, fetchHomeData, fetchGlobalNews]);
 
   useEffect(() => { 
-    fetchHomeData(); 
-  }, [fetchHomeData]);
+    if (mainTab === 'calendario' || mainTab === 'home') {
+      fetchHomeData(); 
+    }
+  }, [mainTab, fetchHomeData]);
 
   useEffect(() => {
     if (view === 'category') {
@@ -586,6 +589,13 @@ const App = () => {
   };
 
   // ==================== RENDER: CATEGORY VIEW ====================
+  const renderLoadingCircle = () => (
+    <div className="loading-circle-container">
+      <div className="loading-circle"></div>
+      <p className="loading-circle-text">Cargando datos...</p>
+    </div>
+  );
+
   const renderCategoryView = () => {
     const isF1 = selectedCategory === 'F1';
     const isWRC = selectedCategory === 'WRC';
@@ -658,6 +668,18 @@ const App = () => {
         </div>
 
         <AnimatePresence mode="wait">
+          {isCategoryLoading ? (
+            <motion.div 
+              key="cat-loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="cat-content"
+            >
+              {renderLoadingCircle()}
+            </motion.div>
+          ) : (
+            <div key="cat-data-container">
           {categorySubTab === 'calendar' && (
             <motion.div key="cat-cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
               {isF1 ? (
@@ -1107,9 +1129,11 @@ const App = () => {
                     <ExternalLink size={16} className="news-ext-icon" />
                   </a>
                 ))}
-                {news.length === 0 && !isLoading && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
+                {news.length === 0 && !isCategoryLoading && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
               </div>
             </motion.div>
+          )}
+          </div>
           )}
         </AnimatePresence>
       </motion.div>
