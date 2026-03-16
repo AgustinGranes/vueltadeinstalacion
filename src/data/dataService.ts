@@ -2034,40 +2034,28 @@ export const dataService = {
   },
 
   async fetchWithProxy(targetUrl: string): Promise<string> {
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache'
-    };
-
-    // 1. If it's a relative URL, it's a local proxy or internal API
+    // 1. Local/Internal
     if (targetUrl.startsWith('/')) {
       try {
-        const res = await fetch(targetUrl, { headers });
+        const res = await fetch(targetUrl);
         if (res.ok) return await res.text();
-        throw new Error(`Local file/proxy failed: ${res.status}`);
-      } catch (e) {
-        console.error(`[DataService] Local error for ${targetUrl}:`, e);
         return '';
-      }
+      } catch (e) { return ''; }
     }
 
-    // 2. Try our custom Serverless Proxy (bypass CORS server-side)
+    // 2. PRIMARY: Serverless Proxy (Fixes CORS & 403)
     try {
       const serverlessUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
       const res = await fetch(serverlessUrl);
       if (res.ok) {
         const text = await res.text();
-        if (text && text.length > 10) return text; 
+        if (text && text.length > 5) return text; 
       }
-      console.warn(`[DataService] Serverless proxy failed for ${targetUrl}: ${res.status}`);
     } catch (e) {
-      console.warn(`[DataService] Serverless proxy exception:`, e);
+      console.warn(`[DataService] Serverless proxy failed for ${targetUrl}`);
     }
 
-    // 3. Fallback to Vercel Rewrites
+    // 3. FALLBACK: Vercel Rewrites (legacy)
     try {
       let proxyPath = targetUrl
         .replace('https://tc2000.com.ar', '/api/tc2000')
@@ -2079,28 +2067,19 @@ export const dataService = {
         .replace('https://www.marca.com', '/api/marca')
         .replace('https://api.vueltarapida.com/api', '/api/vueltarapida')
         .replace('https://api.vueltarapida.com', '/api/vueltarapida')
-        .replace('https://tiempos.actc.org.ar', '/api/actc-tiempos')
         .replace('https://actc.org.ar', '/api/actc')
-        .replace('https://www.solotc.com.ar', '/api/solotc')
-        .replace('https://campeones.com.ar', '/api/campeones')
-        .replace('https://www.nascar.com', '/api/nascar')
-        .replace('https://latino.nascar.com', '/api/nascar-latino')
-        .replace('https://vueltarapida.com', '/api/vueltarapida-html')
-        .replace('https://as.com', '/api/as');
+        .replace('https://vueltarapida.com', '/api/vueltarapida-html');
 
       if (proxyPath !== targetUrl) {
-        const cacheBuster = `t=${Date.now()}`;
-        const finalPath = proxyPath.includes('?') ? `${proxyPath}&${cacheBuster}` : `${proxyPath}?${cacheBuster}`;
-        const res = await fetch(finalPath, { headers });
+        const res = await fetch(proxyPath);
         if (res.ok) return await res.text();
       }
     } catch (e) {}
 
-    // 4. Last resort: Public CORS Proxies
+    // 4. LAST RESORT: Public CORS Proxies
     const proxies = [
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`
     ];
 
     for (const proxyFn of proxies) {
@@ -2108,17 +2087,12 @@ export const dataService = {
         const proxyUrl = proxyFn(targetUrl);
         const res = await fetch(proxyUrl); 
         if (!res.ok) continue;
-
         if (proxyUrl.includes('allorigins')) {
-          const text = await res.text();
-          if (!text) continue;
-          const data = JSON.parse(text);
+          const data = await res.json();
           return data.contents;
         }
         return await res.text();
-      } catch (e) {
-        console.warn(`[DataService] External proxy failed:`, e);
-      }
+      } catch (e) {}
     }
     throw new Error('All proxy methods failed');
   },
