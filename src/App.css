@@ -41,7 +41,30 @@
 /* =============== CONTENT =============== */
 .content-area {
   flex: 1;
-  padding: 20px 16px 100px;
+  padding: 0 16px 100px;
+  position: relative;
+}
+
+.pull-to-refresh-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+  color: var(--accent);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* =============== HOME VIEW =============== */

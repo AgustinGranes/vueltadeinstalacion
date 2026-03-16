@@ -76,94 +76,194 @@ const App = () => {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
+
+  const fetchCategoryData = useCallback(async (cat: CategoryType) => {
+    if (loadedData.has(cat)) return;
+    setIsLoading(true);
+    try {
+      if (cat === 'F1') {
+        const [cal, news, stand] = await Promise.all([
+          dataService.getF1Calendar(),
+          dataService.getF1News(),
+          dataService.getF1StandingsFull()
+        ]);
+        setF1Calendar(cal);
+        setF1News(news);
+        setF1Drivers(stand.drivers);
+        setF1Constructor(stand.constructors);
+      } else if (cat === 'WRC') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getWRCNews(),
+          dataService.getWRCStandings(),
+          dataService.getWRCCalendar()
+        ]);
+        setWrcNews(news);
+        setWrcStandings(stand);
+        setWrcCalendar(cal);
+      } else if (cat === 'TC') {
+        const [news, stand] = await Promise.all([
+          dataService.getTCNews(),
+          dataService.getTCStandings()
+        ]);
+        setTcNews(news);
+        setTcDrivers(stand);
+      } else if (cat === 'TCP') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTCPNews(),
+          dataService.getTCPStandings(),
+          dataService.getTCPCalendar()
+        ]);
+        setTcpNews(news);
+        setTcpDrivers(stand);
+        setTcpCalendar(cal);
+      } else if (cat === 'TCM') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTCMNews(),
+          dataService.getTCMStandings(),
+          dataService.getTCMCalendar()
+        ]);
+        setTcmNews(news);
+        setTcmDrivers(stand);
+        setTcmCalendar(cal);
+      } else if (cat === 'TCPM') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTCPMNews(),
+          dataService.getTCPMStandings(),
+          dataService.getTCPMCalendar()
+        ]);
+        setTcpmNews(news);
+        setTcpmDrivers(stand);
+        setTcpmCalendar(cal);
+      } else if (cat === 'TCPK') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTCPKNews(),
+          dataService.getTCPKStandings(),
+          dataService.getTCPKCalendar()
+        ]);
+        setTcpkNews(news);
+        setTcpkDrivers(stand);
+        setTcpkCalendar(cal);
+      } else if (cat === 'TCPPK') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTCPPKNews(),
+          dataService.getTCPPKStandings(),
+          dataService.getTCPPKCalendar()
+        ]);
+        setTcppkNews(news);
+        setTcppkDrivers(stand);
+        setTcppkCalendar(cal);
+      } else if (cat === 'IndyCar') {
+        const [cal, stand, news] = await Promise.all([
+          dataService.getIndyCarCalendar(),
+          dataService.getIndyCarStandings(),
+          dataService.getIndyCarNews()
+        ]);
+        setIndyCalendar(cal);
+        setIndyDrivers(stand);
+        setIndyNews(news);
+      } else if (cat === 'NASCAR') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getNascarNews(),
+          dataService.getNascarStandings(),
+          dataService.getNascarCalendar()
+        ]);
+        setNascarNews(news);
+        setNascarStandings(stand);
+        setNascarCalendar(cal);
+      } else if (cat === 'TC2000') {
+        const [news, stand, cal] = await Promise.all([
+          dataService.getTC2000News(),
+          dataService.getTC2000Standings(),
+          dataService.getTC2000Calendar()
+        ]);
+        setTc2000News(news);
+        setTc2000Drivers(stand.drivers);
+        setTc2000Teams(stand.teams);
+        setTc2000Brands(stand.brands);
+        setTc2000Calendar(cal);
+      }
+      setLoadedData(prev => new Set(prev).add(cat));
+    } catch (e) {
+      console.error(`Fetch error for ${cat}:`, e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadedData]);
+
+  const fetchGlobalNews = useCallback(async () => {
+    if (loadedData.has('globalNews')) return;
     setIsLoading(true);
     try {
       const results = await Promise.allSettled([
-        dataService.getWeeklyCalendar(),
-        dataService.getF1Calendar(),
         dataService.getF1News(),
         dataService.getWRCNews(),
-        dataService.getF1StandingsFull(),
-        dataService.getWRCStandings(),
-        dataService.getWRCCalendar(),
         dataService.getTCNews(),
-        dataService.getTCStandings(),
-        dataService.getTCPKNews(),
-        dataService.getTCPKStandings(),
-        dataService.getTCPKCalendar(),
-        dataService.getIndyCarCalendar(),
-        dataService.getIndyCarStandings(),
         dataService.getIndyCarNews(),
         dataService.getNascarNews(),
-        dataService.getNascarStandings(),
-        dataService.getNascarCalendar(),
-        dataService.getTCPNews(),
-        dataService.getTCPStandings(),
-        dataService.getTCPCalendar(),
-        dataService.getTCMNews(),
-        dataService.getTCMStandings(),
-        dataService.getTCMCalendar(),
-        dataService.getTCPMNews(),
-        dataService.getTCPMStandings(),
-        dataService.getTCPMCalendar(),
-        dataService.getTCPPKNews(),
-        dataService.getTCPPKStandings(),
-        dataService.getTCPPKCalendar(),
         dataService.getTC2000News(),
-        dataService.getTC2000Standings(),
-        dataService.getTC2000Calendar(),
       ]);
-
-      if (results[0].status === 'fulfilled') setWeeklyRaces(results[0].value);
-      if (results[1].status === 'fulfilled') setF1Calendar(results[1].value);
-      if (results[2].status === 'fulfilled') setF1News(results[2].value);
-      if (results[3].status === 'fulfilled') setWrcNews(results[3].value);
-      if (results[4].status === 'fulfilled') {
-        setF1Drivers(results[4].value.drivers);
-        setF1Constructor(results[4].value.constructors);
-      }
-      if (results[5].status === 'fulfilled') setWrcStandings(results[5].value);
-      if (results[6].status === 'fulfilled') setWrcCalendar(results[6].value);
-      if (results[7].status === 'fulfilled') setTcNews(results[7].value);
-      if (results[8].status === 'fulfilled') setTcDrivers(results[8].value);
-      if (results[9].status === 'fulfilled') setTcpkNews(results[9].value);
-      if (results[10].status === 'fulfilled') setTcpkDrivers(results[10].value);
-      if (results[11].status === 'fulfilled') setTcpkCalendar(results[11].value);
-      if (results[12].status === 'fulfilled') setIndyCalendar(results[12].value);
-      if (results[13].status === 'fulfilled') setIndyDrivers(results[13].value);
-      if (results[14].status === 'fulfilled') setIndyNews(results[14].value);
-      if (results[15].status === 'fulfilled') setNascarNews(results[15].value);
-      if (results[16].status === 'fulfilled') setNascarStandings(results[16].value);
-      if (results[17].status === 'fulfilled') setNascarCalendar(results[17].value);
-      if (results[18].status === 'fulfilled') setTcpNews(results[18].value);
-      if (results[19].status === 'fulfilled') setTcpDrivers(results[19].value);
-      if (results[20].status === 'fulfilled') setTcpCalendar(results[20].value);
-      if (results[21].status === 'fulfilled') setTcmNews(results[21].value);
-      if (results[22].status === 'fulfilled') setTcmDrivers(results[22].value);
-      if (results[23].status === 'fulfilled') setTcmCalendar(results[23].value);
-      if (results[24].status === 'fulfilled') setTcpmNews(results[24].value);
-      if (results[25].status === 'fulfilled') setTcpmDrivers(results[25].value);
-      if (results[26].status === 'fulfilled') setTcpmCalendar(results[26].value);
-      if (results[27].status === 'fulfilled') setTcppkNews(results[27].value);
-      if (results[28].status === 'fulfilled') setTcppkDrivers(results[28].value);
-      if (results[29].status === 'fulfilled') setTcppkCalendar(results[29].value);
-      if (results[30].status === 'fulfilled') setTc2000News(results[30].value);
-      if (results[31].status === 'fulfilled') {
-        setTc2000Drivers(results[31].value.drivers);
-        setTc2000Teams(results[31].value.teams);
-        setTc2000Brands(results[31].value.brands);
-      }
-      if (results[32].status === 'fulfilled') setTc2000Calendar(results[32].value);
+      if (results[0].status === 'fulfilled') setF1News(results[0].value);
+      if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
+      if (results[2].status === 'fulfilled') setTcNews(results[2].value);
+      if (results[3].status === 'fulfilled') setIndyNews(results[3].value);
+      if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
+      if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
+      setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
-      console.error('Fetch error:', e);
+      console.error('Global news fetch error:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadedData]);
+
+  const fetchHomeData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const weekly = await dataService.getWeeklyCalendar();
+      setWeeklyRaces(weekly);
+      setLoadedData(prev => new Set(prev).add('home'));
+    } catch (e) {
+      console.error('Home fetch error:', e);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const refreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    setLoadedData(new Set()); // Reset to force refetch
+    
+    if (view === 'category') {
+      await fetchCategoryData(selectedCategory);
+    } else if (mainTab === 'home') {
+      await fetchHomeData();
+    } else if (mainTab === 'noticias') {
+      await fetchGlobalNews();
+    } else if (mainTab === 'calendario') {
+      // Home data is essentially the weekly calendar
+      await fetchHomeData();
+    }
+    
+    setIsRefreshing(false);
+  }, [view, mainTab, selectedCategory, fetchCategoryData, fetchHomeData, fetchGlobalNews]);
+
+  useEffect(() => { 
+    fetchHomeData(); 
+  }, [fetchHomeData]);
+
+  useEffect(() => {
+    if (view === 'category') {
+      fetchCategoryData(selectedCategory);
+    }
+  }, [view, selectedCategory, fetchCategoryData]);
+
+  useEffect(() => {
+    if (mainTab === 'noticias') {
+      fetchGlobalNews();
+    }
+  }, [mainTab, fetchGlobalNews]);
 
   const handleCategoryClick = (cat: CategoryType) => {
     setSelectedCategory(cat);
@@ -1095,14 +1195,23 @@ const App = () => {
                  </AnimatePresence>
               </div>
 
-              <motion.div
-                drag="y"
-                dragConstraints={{ top: 0, bottom: 0 }}
-                onDragEnd={(_, info) => {
-                  if (info.offset.y > 100 && !isRefreshing) {
-                    setIsRefreshing(true);
-                    fetchData();
+              <div
+                onTouchStart={(e) => {
+                  if (window.scrollY === 0) {
+                    (window as any).pullStart = e.touches[0].pageY;
                   }
+                }}
+                onTouchMove={(e) => {
+                  if ((window as any).pullStart !== undefined && window.scrollY === 0) {
+                    const pullDist = e.touches[0].pageY - (window as any).pullStart;
+                    if (pullDist > 100 && !isRefreshing) {
+                      refreshAll();
+                      (window as any).pullStart = undefined;
+                    }
+                  }
+                }}
+                onTouchEnd={() => {
+                  (window as any).pullStart = undefined;
                 }}
               >
                 <AnimatePresence mode="wait">
@@ -1114,7 +1223,7 @@ const App = () => {
                     </>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             </main>
 
             {view === 'main' && (
