@@ -72,7 +72,9 @@ const App = () => {
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isCategoryLoading, setIsCategoryLoading] = useState(false);
+  const [isCatCalLoading, setIsCatCalLoading] = useState(false);
+  const [isCatStandLoading, setIsCatStandLoading] = useState(false);
+  const [isCatNewsLoading, setIsCatNewsLoading] = useState(false);
   const [isHomeLoading, setIsHomeLoading] = useState(false);
   const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -190,8 +192,80 @@ const App = () => {
     } catch (e) {
       console.error(`Fetch error for ${cat}:`, e);
     } finally {
-      setIsCategoryLoading(false);
+      setIsRefreshing(false);
     }
+  }, []);
+
+  const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-calendar`;
+    if (loadedData.has(key)) return;
+    setIsCatCalLoading(true);
+    try {
+      if (cat === 'F1') setF1Calendar(await dataService.getF1Calendar());
+      else if (cat === 'WRC') setWrcCalendar(await dataService.getWRCCalendar());
+      else if (cat === 'TCP') setTcpCalendar(await dataService.getTCPCalendar());
+      else if (cat === 'TCM') setTcmCalendar(await dataService.getTCMCalendar());
+      else if (cat === 'TCPM') setTcpmCalendar(await dataService.getTCPMCalendar());
+      else if (cat === 'TCPK') setTcpkCalendar(await dataService.getTCPKCalendar());
+      else if (cat === 'TCPPK') setTcppkCalendar(await dataService.getTCPPKCalendar());
+      else if (cat === 'IndyCar') setIndyCalendar(await dataService.getIndyCarCalendar());
+      else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
+      else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
+      // TC uses weekly races only for now
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
+    finally { setIsCatCalLoading(false); }
+  }, [loadedData]);
+
+  const fetchCategoryStandings = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-standings`;
+    if (loadedData.has(key)) return;
+    setIsCatStandLoading(true);
+    try {
+      if (cat === 'F1') {
+        const res = await dataService.getF1StandingsFull();
+        setF1Drivers(res.drivers);
+        setF1Constructor(res.constructors);
+      } else if (cat === 'WRC') {
+        setWrcStandings(await dataService.getWRCStandings());
+      } else if (cat === 'TC') setTcDrivers(await dataService.getTCStandings());
+      else if (cat === 'TCP') setTcpDrivers(await dataService.getTCPStandings());
+      else if (cat === 'TCM') setTcmDrivers(await dataService.getTCMStandings());
+      else if (cat === 'TCPM') setTcpmDrivers(await dataService.getTCPMStandings());
+      else if (cat === 'TCPK') setTcpkDrivers(await dataService.getTCPKStandings());
+      else if (cat === 'TCPPK') setTcppkDrivers(await dataService.getTCPPKStandings());
+      else if (cat === 'IndyCar') setIndyDrivers(await dataService.getIndyCarStandings());
+      else if (cat === 'NASCAR') setNascarStandings(await dataService.getNascarStandings());
+      else if (cat === 'TC2000') {
+        const res = await dataService.getTC2000Standings();
+        setTc2000Drivers(res.drivers);
+        setTc2000Teams(res.teams);
+        setTc2000Brands(res.brands);
+      }
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
+    finally { setIsCatStandLoading(false); }
+  }, [loadedData]);
+
+  const fetchCategoryNews = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-news`;
+    if (loadedData.has(key)) return;
+    setIsCatNewsLoading(true);
+    try {
+      if (cat === 'F1') setF1News(await dataService.getF1News());
+      else if (cat === 'WRC') setWrcNews(await dataService.getWRCNews());
+      else if (cat === 'TC') setTcNews(await dataService.getTCNews());
+      else if (cat === 'TCP') setTcpNews(await dataService.getTCPNews());
+      else if (cat === 'TCM') setTcmNews(await dataService.getTCMNews());
+      else if (cat === 'TCPM') setTcpmNews(await dataService.getTCPMNews());
+      else if (cat === 'TCPK') setTcpkNews(await dataService.getTCPKNews());
+      else if (cat === 'TCPPK') setTcppkNews(await dataService.getTCPPKNews());
+      else if (cat === 'IndyCar') setIndyNews(await dataService.getIndyCarNews());
+      else if (cat === 'NASCAR') setNascarNews(await dataService.getNascarNews());
+      else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
+    finally { setIsCatNewsLoading(false); }
   }, [loadedData]);
 
   const fetchGlobalNews = useCallback(async () => {
@@ -239,7 +313,17 @@ const App = () => {
     setLoadedData(new Set()); // Reset to force refetch
     
     if (view === 'category') {
-      await fetchCategoryData(selectedCategory);
+      const cat = selectedCategory;
+      setLoadedData(prev => {
+        const n = new Set(prev);
+        n.delete(`${cat}-calendar`);
+        n.delete(`${cat}-standings`);
+        n.delete(`${cat}-news`);
+        return n;
+      });
+      if (categorySubTab === 'calendar') await fetchCategoryCalendar(cat);
+      else if (categorySubTab === 'standings') await fetchCategoryStandings(cat);
+      else if (categorySubTab === 'news') await fetchCategoryNews(cat);
     } else if (mainTab === 'home') {
       await fetchHomeData();
     } else if (mainTab === 'noticias') {
@@ -268,9 +352,11 @@ const App = () => {
 
   useEffect(() => {
     if (view === 'category') {
-      fetchCategoryData(selectedCategory);
+      if (categorySubTab === 'calendar') fetchCategoryCalendar(selectedCategory);
+      else if (categorySubTab === 'standings') fetchCategoryStandings(selectedCategory);
+      else if (categorySubTab === 'news') fetchCategoryNews(selectedCategory);
     }
-  }, [view, selectedCategory, fetchCategoryData]);
+  }, [view, selectedCategory, categorySubTab, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
 
   useEffect(() => {
     if (mainTab === 'noticias') {
@@ -688,21 +774,11 @@ const App = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          {isCategoryLoading ? (
-            <motion.div 
-              key="cat-loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="cat-content"
-            >
-              {renderLoadingCircle()}
-            </motion.div>
-          ) : (
-            <div key="cat-data-container">
           {categorySubTab === 'calendar' && (
             <motion.div key="cat-cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
-              {isF1 ? (
+              {isCatCalLoading ? renderLoadingCircle() : (
+                <>
+                {isF1 ? (
                 <div className="f1-calendar-list">
                   {f1Calendar.map((race, idx) => (
                     <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
@@ -892,15 +968,19 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario TC2000...' : 'No se encontró calendario TC2000.'}</p>
+                    <p className="empty-msg">No se encontró calendario TC2000.</p>
                   )}
                 </div>
               ) : null}
+              </>
+              )}
             </motion.div>
           )}
 
           {categorySubTab === 'standings' && (
             <motion.div key="cat-stand" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
+              {isCatStandLoading ? renderLoadingCircle() : (
+                <>
               {isF1 ? (
                 <>
                   <div className="f1-tabs nascar-tabs">
@@ -1134,26 +1214,28 @@ const App = () => {
                     </div>
                   </>
                 ) : null}
+                </>
+              )}
             </motion.div>
           )}
 
           {categorySubTab === 'news' && (
             <motion.div key="cat-news" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
-              <div className="news-feed">
-                {news.map((item, idx) => (
-                  <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
-                    <div className="news-card-body">
-                      <span className="news-badge">{selectedCategory} | {item.source}</span>
-                      <h3 className="news-headline">{item.title}</h3>
-                    </div>
-                    <ExternalLink size={16} className="news-ext-icon" />
-                  </a>
-                ))}
-                {news.length === 0 && !isCategoryLoading && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
-              </div>
+              {isCatNewsLoading ? renderLoadingCircle() : (
+                <div className="news-feed">
+                  {news.map((item, idx) => (
+                    <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
+                      <div className="news-card-body">
+                        <span className="news-badge">{selectedCategory} | {item.source}</span>
+                        <h3 className="news-headline">{item.title}</h3>
+                      </div>
+                      <ExternalLink size={16} className="news-ext-icon" />
+                    </a>
+                  ))}
+                  {news.length === 0 && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
+                </div>
+              )}
             </motion.div>
-          )}
-          </div>
           )}
         </AnimatePresence>
       </motion.div>
