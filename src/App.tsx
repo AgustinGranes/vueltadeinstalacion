@@ -17,19 +17,7 @@ const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
 const INDYCAR_LOGO = '/INDYCAR.png';
 
-const ALL_LOGOS = [
-  { name: 'F1', url: 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg', class: 'f1' },
-  { name: 'WRC', url: '/WRC.png', class: 'wrc' },
-  { name: 'NASCAR', url: '/NASCAR.png', class: 'nascar' },
-  { name: 'IndyCar', url: '/INDYCAR.png', class: 'indycar' },
-  { name: 'TC', url: '/TC.png', class: 'tc' },
-  { name: 'TCP', url: '/TCP.png', class: 'tcp' },
-  { name: 'TCM', url: '/TCM.png', class: 'tcm' },
-  { name: 'TCPM', url: '/TCPM.png', class: 'tcpm' },
-  { name: 'TCPK', url: '/TCPK.png', class: 'tcpk' },
-  { name: 'TCPPK', url: '/TCPPK.png', class: 'tcppk' },
-  { name: 'TC2000', url: '/TC2000.png', class: 'tc2000' },
-];
+
 
 const App = () => {
   // Navigation
