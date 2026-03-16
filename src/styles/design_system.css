@@ -1,12 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #141414;
-  --bg-card: #1a1a1a;
-  --bg-card-hover: #222222;
-  --bg-elevated: #1e1e1e;
-  --bg-main: #0a0a0a;
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #222222;
+  --bg-card: #282828;
+  --bg-card-hover: #323232;
+  --bg-elevated: #303030;
+  --bg-main: #1a1a1a;
   
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.6);
@@ -100,7 +100,7 @@ button {
   top: 0;
   z-index: 100;
   padding: 12px 20px 8px;
-  background: rgba(10, 10, 10, 0.75);
+  background: rgba(26, 26, 26, 0.75);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
@@ -576,6 +576,7 @@ button {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  line-clamp: 2;
   overflow: hidden;
 }
 
@@ -669,7 +670,7 @@ button {
 .race-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(15, 15, 15, 0.7);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   z-index: 2000;
