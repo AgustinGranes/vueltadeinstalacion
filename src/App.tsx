@@ -71,7 +71,7 @@ const App = () => {
   const [nascarNews, setNascarNews] = useState<NewsItem[]>([]);
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
 
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
   const [isHomeLoading, setIsHomeLoading] = useState(false);
   const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
@@ -251,6 +251,14 @@ const App = () => {
     
     setIsRefreshing(false);
   }, [view, mainTab, selectedCategory, fetchCategoryData, fetchHomeData, fetchGlobalNews]);
+
+  useEffect(() => {
+    // Mandatory initial splash screen delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => { 
     if (mainTab === 'calendario' || mainTab === 'home') {
