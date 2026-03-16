@@ -598,8 +598,130 @@ export const dataService = {
       fetchMarca('https://www.marca.com/motor/rallies/clasificacion-pilotos.html', 'drivers'),
       fetchMarca('https://www.marca.com/motor/rallies/clasificacion-equipos.html', 'manufacturers')
     ]);
-
     return standings;
+  },
+
+  // === WRC2 NEWS (Lapeando — LIVE SCRAPING) ===
+  async getWRC2News(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://lapeando.com/noticias?categoria=22');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // Select news articles
+      const articles = doc.querySelectorAll('.post-block, article, .news-item, .post');
+      articles.forEach(art => {
+        const linkElem = art.querySelector('a');
+        const titleElem = art.querySelector('h1, h2, h3, .title');
+        const imgElem = art.querySelector('img');
+        
+        const title = titleElem?.textContent?.trim() || linkElem?.textContent?.trim() || '';
+        const link = linkElem?.getAttribute('href') || '';
+        const img = imgElem?.getAttribute('src') || '';
+        
+        if (title && link) {
+          allNews.push({
+            title,
+            summary: '',
+            link: link.startsWith('http') ? link : `https://lapeando.com${link.startsWith('/') ? '' : '/'}${link}`,
+            source: 'Lapeando',
+            category: 'WRC2',
+            imageUrl: img ? (img.startsWith('http') ? img : `https://lapeando.com${img.startsWith('/') ? '' : '/'}${img}`) : undefined
+          });
+        }
+      });
+
+      // Fallback: search all links if specific blocks fail
+      if (allNews.length === 0) {
+        doc.querySelectorAll('a').forEach(l => {
+          const t = l.textContent?.trim();
+          const h = l.getAttribute('href');
+          if (t && t.length > 25 && h && h.includes('/noticias/')) {
+            allNews.push({
+              title: t,
+              summary: '',
+              link: h.startsWith('http') ? h : `https://lapeando.com${h.startsWith('/') ? '' : '/'}${h}`,
+              source: 'Lapeando',
+              category: 'WRC2'
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn(`[DataService] WRC2 news error:`, e); }
+    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i);
+  },
+
+  // === WRC2 STANDINGS (wrc.com — Official) ===
+  async getWRC2Standings(): Promise<WRCStandings> {
+    const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
+    try {
+      const html = await this.fetchWithProxy('https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=337&seasonId=47');
+      const data = JSON.parse(html);
+      if (data && data.results) {
+        data.results.forEach((r: any) => {
+          standings.drivers.push({
+            pos: r.position?.toString() || '',
+            driver: r.driverDisplayName || r.driverName || '',
+            codriverOrTeam: r.teamName || '',
+            points: r.totalPoints?.toString() || '0'
+          });
+        });
+      }
+    } catch (e) { console.error('[DataService] WRC2 standings error:', e); }
+    return standings;
+  },
+
+  async getWRC2Calendar(): Promise<WRCCalendarEvent[]> {
+    return this.getWRCCalendar();
+  },
+
+  // === WRC3 NEWS (Diario Rally) ===
+  async getWRC3News(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('http://www.diariorally.com.ar/info_cat.asp?idcat=1');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const links = doc.querySelectorAll('a[href*="info_nota.asp"]');
+      links.forEach(l => {
+        const title = l.textContent?.trim() || '';
+        const href = l.getAttribute('href') || '';
+        if (title && title.length > 20 && href) {
+          allNews.push({
+            title,
+            summary: '',
+            link: href.startsWith('http') ? href : `http://www.diariorally.com.ar/${href}`,
+            source: 'Diario Rally',
+            category: 'WRC3'
+          });
+        }
+      });
+    } catch (e) { console.warn(`[DataService] WRC3 news error:`, e); }
+    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 15);
+  },
+
+  // === WRC3 STANDINGS (Red Bull API) ===
+  async getWRC3Standings(): Promise<WRCStandings> {
+    const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
+    try {
+      const html = await this.fetchWithProxy('https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=344&seasonId=47');
+      const data = JSON.parse(html);
+      if (data && data.results) {
+        data.results.forEach((r: any) => {
+          standings.drivers.push({
+            pos: r.position?.toString() || '',
+            driver: r.driverDisplayName || r.driverName || '',
+            codriverOrTeam: r.teamName || '',
+            points: r.totalPoints?.toString() || '0'
+          });
+        });
+      }
+    } catch (e) { console.error('[DataService] WRC3 standings error:', e); }
+    return standings;
+  },
+
+  async getWRC3Calendar(): Promise<WRCCalendarEvent[]> {
+    return this.getWRCCalendar();
   },
 
   // === WRC CALENDAR (Marca.com scraping) ===

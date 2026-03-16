@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'WRC3' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'calendar' | 'standings' | 'news';
@@ -31,6 +31,8 @@ const App = () => {
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
   const [f1Calendar, setF1Calendar] = useState<CalendarRace[]>([]);
   const [wrcCalendar, setWrcCalendar] = useState<WRCCalendarEvent[]>([]);
+  const [wrc2Calendar, setWrc2Calendar] = useState<WRCCalendarEvent[]>([]);
+  const [wrc3Calendar, setWrc3Calendar] = useState<WRCCalendarEvent[]>([]);
   const [tcpCalendar, setTcpCalendar] = useState<CalendarRace[]>([]);
   const [tcmCalendar, setTcmCalendar] = useState<CalendarRace[]>([]);
   const [tcpmCalendar, setTcpmCalendar] = useState<CalendarRace[]>([]);
@@ -43,6 +45,8 @@ const App = () => {
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
   const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
   const [wrcStandings, setWrcStandings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
+  const [wrc2Standings, setWrc2Standings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
+  const [wrc3Standings, setWrc3Standings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
   const [tcDrivers, setTcDrivers] = useState<TCStandingRow[]>([]);
   const [tcpDrivers, setTcpDrivers] = useState<TCStandingRow[]>([]);
   const [tcmDrivers, setTcmDrivers] = useState<TCStandingRow[]>([]);
@@ -57,6 +61,8 @@ const App = () => {
   const [f1StandingsTab, setF1StandingsTab] = useState<'drivers' | 'constructors'>('drivers');
   const [f1News, setF1News] = useState<NewsItem[]>([]);
   const [wrcNews, setWrcNews] = useState<NewsItem[]>([]);
+  const [wrc2News, setWrc2News] = useState<NewsItem[]>([]);
+  const [wrc3News, setWrc3News] = useState<NewsItem[]>([]);
   const [tcNews, setTcNews] = useState<NewsItem[]>([]);
   const [tcpNews, setTcpNews] = useState<NewsItem[]>([]);
   const [tcmNews, setTcmNews] = useState<NewsItem[]>([]);
@@ -83,118 +89,6 @@ const App = () => {
 
   const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
 
-  const fetchCategoryData = useCallback(async (cat: CategoryType) => {
-    if (loadedData.has(cat)) return;
-    setIsCategoryLoading(true);
-    try {
-      if (cat === 'F1') {
-        const [cal, news, stand] = await Promise.all([
-          dataService.getF1Calendar(),
-          dataService.getF1News(),
-          dataService.getF1StandingsFull()
-        ]);
-        setF1Calendar(cal);
-        setF1News(news);
-        setF1Drivers(stand.drivers);
-        setF1Constructor(stand.constructors);
-      } else if (cat === 'WRC') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getWRCNews(),
-          dataService.getWRCStandings(),
-          dataService.getWRCCalendar()
-        ]);
-        setWrcNews(news);
-        setWrcStandings(stand);
-        setWrcCalendar(cal);
-      } else if (cat === 'TC') {
-        const [news, stand] = await Promise.all([
-          dataService.getTCNews(),
-          dataService.getTCStandings()
-        ]);
-        setTcNews(news);
-        setTcDrivers(stand);
-      } else if (cat === 'TCP') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTCPNews(),
-          dataService.getTCPStandings(),
-          dataService.getTCPCalendar()
-        ]);
-        setTcpNews(news);
-        setTcpDrivers(stand);
-        setTcpCalendar(cal);
-      } else if (cat === 'TCM') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTCMNews(),
-          dataService.getTCMStandings(),
-          dataService.getTCMCalendar()
-        ]);
-        setTcmNews(news);
-        setTcmDrivers(stand);
-        setTcmCalendar(cal);
-      } else if (cat === 'TCPM') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTCPMNews(),
-          dataService.getTCPMStandings(),
-          dataService.getTCPMCalendar()
-        ]);
-        setTcpmNews(news);
-        setTcpmDrivers(stand);
-        setTcpmCalendar(cal);
-      } else if (cat === 'TCPK') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTCPKNews(),
-          dataService.getTCPKStandings(),
-          dataService.getTCPKCalendar()
-        ]);
-        setTcpkNews(news);
-        setTcpkDrivers(stand);
-        setTcpkCalendar(cal);
-      } else if (cat === 'TCPPK') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTCPPKNews(),
-          dataService.getTCPPKStandings(),
-          dataService.getTCPPKCalendar()
-        ]);
-        setTcppkNews(news);
-        setTcppkDrivers(stand);
-        setTcppkCalendar(cal);
-      } else if (cat === 'IndyCar') {
-        const [cal, stand, news] = await Promise.all([
-          dataService.getIndyCarCalendar(),
-          dataService.getIndyCarStandings(),
-          dataService.getIndyCarNews()
-        ]);
-        setIndyCalendar(cal);
-        setIndyDrivers(stand);
-        setIndyNews(news);
-      } else if (cat === 'NASCAR') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getNascarNews(),
-          dataService.getNascarStandings(),
-          dataService.getNascarCalendar()
-        ]);
-        setNascarNews(news);
-        setNascarStandings(stand);
-        setNascarCalendar(cal);
-      } else if (cat === 'TC2000') {
-        const [news, stand, cal] = await Promise.all([
-          dataService.getTC2000News(),
-          dataService.getTC2000Standings(),
-          dataService.getTC2000Calendar()
-        ]);
-        setTc2000News(news);
-        setTc2000Drivers(stand.drivers);
-        setTc2000Teams(stand.teams);
-        setTc2000Brands(stand.brands);
-        setTc2000Calendar(cal);
-      }
-      setLoadedData(prev => new Set(prev).add(cat));
-    } catch (e) {
-      console.error(`Fetch error for ${cat}:`, e);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, []);
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-calendar`;
@@ -203,6 +97,8 @@ const App = () => {
     try {
       if (cat === 'F1') setF1Calendar(await dataService.getF1Calendar());
       else if (cat === 'WRC') setWrcCalendar(await dataService.getWRCCalendar());
+      else if (cat === 'WRC2') setWrc2Calendar(await dataService.getWRC2Calendar());
+      else if (cat === 'WRC3') setWrc3Calendar(await dataService.getWRC3Calendar());
       else if (cat === 'TCP') setTcpCalendar(await dataService.getTCPCalendar());
       else if (cat === 'TCM') setTcmCalendar(await dataService.getTCMCalendar());
       else if (cat === 'TCPM') setTcpmCalendar(await dataService.getTCPMCalendar());
@@ -228,6 +124,10 @@ const App = () => {
         setF1Constructor(res.constructors);
       } else if (cat === 'WRC') {
         setWrcStandings(await dataService.getWRCStandings());
+      } else if (cat === 'WRC2') {
+        setWrc2Standings(await dataService.getWRC2Standings());
+      } else if (cat === 'WRC3') {
+        setWrc3Standings(await dataService.getWRC3Standings());
       } else if (cat === 'TC') setTcDrivers(await dataService.getTCStandings());
       else if (cat === 'TCP') setTcpDrivers(await dataService.getTCPStandings());
       else if (cat === 'TCM') setTcmDrivers(await dataService.getTCMStandings());
@@ -254,6 +154,8 @@ const App = () => {
     try {
       if (cat === 'F1') setF1News(await dataService.getF1News());
       else if (cat === 'WRC') setWrcNews(await dataService.getWRCNews());
+      else if (cat === 'WRC2') setWrc2News(await dataService.getWRC2News());
+      else if (cat === 'WRC3') setWrc3News(await dataService.getWRC3News());
       else if (cat === 'TC') setTcNews(await dataService.getTCNews());
       else if (cat === 'TCP') setTcpNews(await dataService.getTCPNews());
       else if (cat === 'TCM') setTcmNews(await dataService.getTCMNews());
@@ -334,7 +236,7 @@ const App = () => {
     }
     
     setIsRefreshing(false);
-  }, [view, mainTab, selectedCategory, fetchCategoryData, fetchHomeData, fetchGlobalNews]);
+  }, [view, mainTab, selectedCategory, fetchHomeData, fetchGlobalNews]);
 
   useEffect(() => {
     // Mandatory initial splash screen delay
@@ -384,6 +286,18 @@ const App = () => {
           <div className="cat-card-glow" />
           <img src={WRC_LOGO} alt="WRC" className="cat-logo wrc-logo" />
           <span className="cat-label">WRC</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card wrc2-card" onClick={() => handleCategoryClick('WRC2')}>
+          <div className="cat-card-glow" />
+          <img src="/WRC2.png" alt="WRC2" className="cat-logo wrc2-logo" />
+          <span className="cat-label">WRC2</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card wrc3-card" onClick={() => handleCategoryClick('WRC3')}>
+          <div className="cat-card-glow" />
+          <img src="/WRC3.png" alt="WRC3" className="cat-logo wrc3-logo" />
+          <span className="cat-label">WRC3</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
@@ -705,6 +619,8 @@ const App = () => {
   const renderCategoryView = () => {
     const isF1 = selectedCategory === 'F1';
     const isWRC = selectedCategory === 'WRC';
+    const isWRC2 = selectedCategory === 'WRC2';
+    const isWRC3 = selectedCategory === 'WRC3';
     const isTC = selectedCategory === 'TC';
     const isTCP = selectedCategory === 'TCP';
     const isTCM = selectedCategory === 'TCM';
@@ -717,6 +633,8 @@ const App = () => {
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
+    if (isWRC2) logo = '/WRC2.png';
+    if (isWRC3) logo = '/WRC3.png';
     if (isTC) logo = TC_LOGO;
     if (isTCP) logo = TCP_LOGO;
     if (isTCM) logo = '/TCM.png';
@@ -729,6 +647,8 @@ const App = () => {
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'WRC';
+    if (isWRC2) catTitle = 'WRC2';
+    if (isWRC3) catTitle = 'WRC3';
     if (isTC) catTitle = 'Turismo Carretera';
     if (isTCP) catTitle = 'TC Pista';
     if (isTCM) catTitle = 'TC Mouras';
@@ -741,6 +661,8 @@ const App = () => {
 
     let news = f1News;
     if (isWRC) news = wrcNews;
+    if (isWRC2) news = wrc2News;
+    if (isWRC3) news = wrc3News;
     if (isTC) news = tcNews;
     if (isTCP) news = tcpNews;
     if (isTCM) news = tcmNews;
@@ -757,7 +679,7 @@ const App = () => {
           <button className="back-btn" onClick={() => setView('main')}>
             <ArrowLeft size={22} />
           </button>
-          <img src={logo} alt={selectedCategory} className={`cat-header-logo ${isWRC ? 'wrc-logo' : ''} ${isTC ? 'tc-logo' : ''} ${isTCP ? 'tcp-logo' : ''} ${isTCM ? 'tcm-logo' : ''} ${isTCPM ? 'tcpm-logo' : ''} ${isTCPK ? 'tcpk-logo' : ''} ${isTCPPK ? 'tcppk-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} />
+          <img src={logo} alt={selectedCategory} className={`cat-header-logo ${isWRC || isWRC2 || isWRC3 ? 'wrc-logo' : ''} ${isTC ? 'tc-logo' : ''} ${isTCP ? 'tcp-logo' : ''} ${isTCM ? 'tcm-logo' : ''} ${isTCPM ? 'tcpm-logo' : ''} ${isTCPK ? 'tcpk-logo' : ''} ${isTCPPK ? 'tcppk-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} />
           <h2 className="cat-header-title">{catTitle}</h2>
         </header>
 
@@ -813,6 +735,44 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">{isLoading ? 'Cargando calendario WRC...' : 'No se encontró calendario WRC.'}</p>
+                  )}
+                </div>
+      ) : isWRC2 ? (
+                <div className="wrc-calendar-list">
+                  {wrc2Calendar.length > 0 ? wrc2Calendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.rallyName}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Live' ? '🔴 En curso' :
+                          ev.status === 'Finished' ? '✅ Finalizado' :
+                            (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario WRC2.</p>
+                  )}
+                </div>
+      ) : isWRC3 ? (
+                <div className="wrc-calendar-list">
+                  {wrc3Calendar.length > 0 ? wrc3Calendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.rallyName}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Live' ? '🔴 En curso' :
+                          ev.status === 'Finished' ? '✅ Finalizado' :
+                            (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario WRC3.</p>
                   )}
                 </div>
       ) : isTC ? (
@@ -1041,6 +1001,36 @@ const App = () => {
                       </div>
                     ))}
                     {wrcStandings[wrcStandingsTab].length === 0 && <p className="empty-msg">Cargando posiciones WRC...</p>}
+                  </div>
+                </>
+              ) : isWRC2 ? (
+                <>
+                  <div className="standings-list wrc2-standings">
+                    {wrc2Standings.drivers.map((d: any, idx: number) => (
+                      <div key={idx} className={`stand-row wrc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {wrc2Standings.drivers.length === 0 && <p className="empty-msg">Cargando posiciones WRC2...</p>}
+                  </div>
+                </>
+              ) : isWRC3 ? (
+                <>
+                  <div className="standings-list wrc3-standings">
+                    {wrc3Standings.drivers.map((d: any, idx: number) => (
+                      <div key={idx} className={`stand-row wrc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {wrc3Standings.drivers.length === 0 && <p className="empty-msg">Cargando posiciones WRC3...</p>}
                   </div>
                 </>
               ) : isTC ? (
