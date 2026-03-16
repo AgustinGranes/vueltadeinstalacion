@@ -816,6 +816,10 @@
   to { transform: rotate(360deg); }
 }
 
+.white-logo {
+  filter: brightness(0) invert(1) !important;
+}
+
 .loading-logo.f1 { height: 34px; }
 .loading-logo.wrc { height: 46px; }
 

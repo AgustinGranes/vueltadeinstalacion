@@ -41,7 +41,7 @@ const App = () => {
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
-  const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'codrivers' | 'manufacturers' | 'teams'>('drivers');
+  const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
   const [wrcStandings, setWrcStandings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
   const [tcDrivers, setTcDrivers] = useState<TCStandingRow[]>([]);
   const [tcpDrivers, setTcpDrivers] = useState<TCStandingRow[]>([]);
@@ -794,10 +794,18 @@ const App = () => {
               ) : isWRC ? (
                 <>
                   <div className="nascar-tabs wrc-tabs">
-                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('drivers')}>Pilotos</button>
-                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'codrivers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('codrivers')}>Copilotos</button>
-                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('manufacturers')}>Fabricantes</button>
-                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('teams')}>Equipos</button>
+                    <button 
+        className={`category-subtab ${wrcStandingsTab === 'drivers' ? 'active' : ''}`}
+        onClick={() => setWrcStandingsTab('drivers')}
+      >
+        Pilotos
+      </button>
+      <button 
+        className={`category-subtab ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`}
+        onClick={() => setWrcStandingsTab('manufacturers')}
+      >
+        Fabricantes
+      </button>
                   </div>
                   <div className="standings-list wrc-standings">
                     {(wrcStandings[wrcStandingsTab] || []).map((d: any, idx: number) => (
@@ -1022,7 +1030,7 @@ const App = () => {
           <motion.img 
             src="/CARGA.png" 
             alt="Cargando..." 
-            className="loading-logo-exclusive"
+            className="loading-logo-exclusive white-logo"
             animate={{ 
               scale: [0.95, 1.05, 0.95], 
               opacity: [0.8, 1, 0.8],
@@ -1067,7 +1075,7 @@ const App = () => {
           >
             <header className="main-header">
               <div className="header-centered-logo">
-                <img src="/logo.png" alt="Vuelta de Instalación" className="app-header-logo-centered" />
+                <img src="/logo.png" alt="Vuelta de Instalación" className="app-header-logo-centered white-logo" />
               </div>
             </header>
 
