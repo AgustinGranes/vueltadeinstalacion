@@ -1444,6 +1444,12 @@
   color: #fff;
 }
 
+.wrc-tabs .nascar-tab-btn.active {
+  background: #0066CC;
+  border-color: #0066CC;
+  color: #fff;
+}
+
 .nascar-stand-row {
   border-left: 3px solid #FFD659 !important;
 }

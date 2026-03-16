@@ -606,8 +606,23 @@ export const dataService = {
     const events: WRCCalendarEvent[] = [];
     
     try {
-      const upcomingHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar');
-      const pastHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=past');
+      let upcomingHtml = '';
+      let pastHtml = '';
+      
+      try {
+        upcomingHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar');
+      } catch (e) { console.warn('[DataService] WRC upcoming fetch failed'); }
+      
+      try {
+        pastHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=past');
+      } catch (e) { console.warn('[DataService] WRC past fetch failed'); }
+
+      if (!upcomingHtml && !pastHtml) {
+        // Try one more fallback if both failed - sometimes a simple query works better
+        try {
+          upcomingHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=upcoming');
+        } catch (e) {}
+      }
 
       const parseHtml = (html: string | null, isPast: boolean) => {
         if (!html) return;

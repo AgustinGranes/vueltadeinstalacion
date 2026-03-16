@@ -795,17 +795,17 @@ const App = () => {
                 <>
                   <div className="nascar-tabs wrc-tabs">
                     <button 
-        className={`category-subtab ${wrcStandingsTab === 'drivers' ? 'active' : ''}`}
-        onClick={() => setWrcStandingsTab('drivers')}
-      >
-        Pilotos
-      </button>
-      <button 
-        className={`category-subtab ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`}
-        onClick={() => setWrcStandingsTab('manufacturers')}
-      >
-        Fabricantes
-      </button>
+                      className={`nascar-tab-btn ${wrcStandingsTab === 'drivers' ? 'active' : ''}`}
+                      onClick={() => setWrcStandingsTab('drivers')}
+                    >
+                      Pilotos
+                    </button>
+                    <button 
+                      className={`nascar-tab-btn ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`}
+                      onClick={() => setWrcStandingsTab('manufacturers')}
+                    >
+                      Fabricantes
+                    </button>
                   </div>
                   <div className="standings-list wrc-standings">
                     {(wrcStandings[wrcStandingsTab] || []).map((d: any, idx: number) => (
