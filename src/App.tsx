@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
-import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandingRow, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
+import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
 type CategoryType = 'F1' | 'WRC' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'IndyCar' | 'NASCAR';
@@ -53,7 +53,8 @@ const App = () => {
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
-  const [wrcDrivers, setWrcDrivers] = useState<WRCStandingRow[]>([]);
+  const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'codrivers' | 'manufacturers' | 'teams'>('drivers');
+  const [wrcStandings, setWrcStandings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
   const [tcDrivers, setTcDrivers] = useState<TCStandingRow[]>([]);
   const [tcpDrivers, setTcpDrivers] = useState<TCStandingRow[]>([]);
   const [tcmDrivers, setTcmDrivers] = useState<TCStandingRow[]>([]);
@@ -84,7 +85,7 @@ const App = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished'>('upcoming');
+  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
   const [loadingLogo] = useState(() => ALL_LOGOS[Math.floor(Math.random() * ALL_LOGOS.length)]);
 
   const fetchData = useCallback(async () => {
@@ -134,7 +135,7 @@ const App = () => {
         setF1Drivers(results[4].value.drivers);
         setF1Constructor(results[4].value.constructors);
       }
-      if (results[5].status === 'fulfilled') setWrcDrivers(results[5].value.drivers);
+      if (results[5].status === 'fulfilled') setWrcStandings(results[5].value);
       if (results[6].status === 'fulfilled') setWrcCalendar(results[6].value);
       if (results[7].status === 'fulfilled') setTcNews(results[7].value);
       if (results[8].status === 'fulfilled') setTcDrivers(results[8].value);
@@ -292,7 +293,7 @@ const App = () => {
               <div className="weekly-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'upcoming' ? 'active' : ''}`}
-                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'upcoming' ? 'finished' : 'upcoming')}
+                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'upcoming' ? null : 'upcoming')}
                 >
                   <div className="section-title-group">
                     <Calendar size={18} />
@@ -357,7 +358,7 @@ const App = () => {
               <div className="weekly-section finished-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'finished' ? 'active' : ''}`}
-                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'finished' ? 'upcoming' : 'finished')}
+                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'finished' ? null : 'finished')}
                 >
                   <div className="section-title-group">
                     <Trophy size={18} />
@@ -623,7 +624,7 @@ const App = () => {
         <div className="tcp-calendar-list">
           {tcpCalendar.length > 0 ? tcpCalendar.map((ev, idx) => (
             <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-              <div className="race-round-num">{ev.round}</div>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
               <div className="race-info-block">
                 <span className="race-name-label">{ev.race}</span>
                 <span className="race-date-label">{ev.dates}</span>
@@ -641,7 +642,7 @@ const App = () => {
         <div className="tcm-calendar-list">
           {tcmCalendar.length > 0 ? tcmCalendar.map((ev, idx) => (
             <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-              <div className="race-round-num">{ev.round}</div>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
               <div className="race-info-block">
                 <span className="race-name-label">{ev.race}</span>
                 <span className="race-date-label">{ev.dates}</span>
@@ -659,7 +660,7 @@ const App = () => {
         <div className="tcpm-calendar-list">
           {tcpmCalendar.length > 0 ? tcpmCalendar.map((ev, idx) => (
             <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-              <div className="race-round-num">{ev.round}</div>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
               <div className="race-info-block">
                 <span className="race-name-label">{ev.race}</span>
                 <span className="race-date-label">{ev.dates}</span>
@@ -677,7 +678,7 @@ const App = () => {
                 <div className="tcpk-calendar-list">
                   {tcpkCalendar.length > 0 ? tcpkCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-                      <div className="race-round-num">{ev.round}</div>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.race}</span>
                         <span className="race-date-label">{ev.dates}</span>
@@ -695,7 +696,7 @@ const App = () => {
                 <div className="tcppk-calendar-list">
                   {tcppkCalendar.length > 0 ? tcppkCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-                      <div className="race-round-num">{ev.round}</div>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.race}</span>
                         <span className="race-date-label">{ev.dates}</span>
@@ -749,7 +750,7 @@ const App = () => {
                 <div className="tc2000-calendar-list">
                   {tc2000Calendar.length > 0 ? tc2000Calendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-                      <div className="race-round-num">{ev.round}</div>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.race}</span>
                         <span className="race-date-label">{ev.dates}</span>
@@ -803,9 +804,14 @@ const App = () => {
                 </>
               ) : isWRC ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
+                  <div className="nascar-tabs wrc-tabs">
+                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'codrivers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('codrivers')}>Copilotos</button>
+                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('manufacturers')}>Fabricantes</button>
+                    <button className={`nascar-tab-btn ${wrcStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setWrcStandingsTab('teams')}>Equipos</button>
+                  </div>
                   <div className="standings-list wrc-standings">
-                    {wrcDrivers.map((d, idx) => (
+                    {(wrcStandings[wrcStandingsTab] || []).map((d: any, idx: number) => (
                       <div key={idx} className={`stand-row wrc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                         <span className="stand-pos">{d.pos}</span>
                         <div className="stand-info">
@@ -815,12 +821,11 @@ const App = () => {
                         <span className="stand-pts">{d.points} pts</span>
                       </div>
                     ))}
-                    {wrcDrivers.length === 0 && <p className="empty-msg">Cargando posiciones WRC...</p>}
+                    {wrcStandings[wrcStandingsTab].length === 0 && <p className="empty-msg">Cargando posiciones WRC...</p>}
                   </div>
                 </>
               ) : isTC ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                   <div className="standings-list tc-standings">
                     {tcDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row tc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -836,7 +841,6 @@ const App = () => {
                 </>
               ) : isTCP ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                   <div className="standings-list tcp-standings">
                     {tcpDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row tcp-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -852,7 +856,6 @@ const App = () => {
                 </>
               ) : isTCM ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                   <div className="standings-list tcm-standings">
                     {tcmDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row tcm-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -868,7 +871,6 @@ const App = () => {
                 </>
               ) : isTCPM ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                   <div className="standings-list tcpm-standings">
                     {tcpmDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row tcpm-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -884,7 +886,6 @@ const App = () => {
                 </>
               ) : isTCPK ? (
                  <>
-                   <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                    <div className="standings-list tcpk-standings">
                      {tcpkDrivers.map((d, idx) => (
                        <div key={idx} className={`stand-row tcpk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -900,7 +901,6 @@ const App = () => {
                  </>
                 ) : isTCPPK ? (
                   <>
-                    <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                     <div className="standings-list tcppk-standings">
                       {tcppkDrivers.map((d, idx) => (
                         <div key={idx} className={`stand-row tcppk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -960,22 +960,21 @@ const App = () => {
                         <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
-                ) : isIndy ? (
-                  <>
-                    <h3 className="standings-section-title">Campeonato de Pilotos</h3>
-                    <div className="standings-list indy-standings">
-                      {indyDrivers.map((d, idx) => (
-                        <div key={idx} className={`stand-row indy-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                          <span className="stand-pos">{d.pos}</span>
-                          <div className="stand-info">
-                            <span className="stand-name">{d.driver}</span>
-                          </div>
-                          <span className="stand-pts">{d.points} pts</span>
+              ) : isIndy ? (
+                <>
+                  <div className="standings-list indy-standings">
+                    {indyDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row indy-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
                         </div>
-                      ))}
-                      {indyDrivers.length === 0 && <p className="empty-msg">{isLoading ? 'Cargando posiciones...' : 'No se encontraron posiciones IndyCar.'}</p>}
-                    </div>
-                  </>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {indyDrivers.length === 0 && <p className="empty-msg">{isLoading ? 'Cargando posiciones...' : 'No se encontraron posiciones IndyCar.'}</p>}
+                  </div>
+                </>
                 ) : isNascar ? (
                   <>
                     <div className="nascar-tabs">

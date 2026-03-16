@@ -110,6 +110,13 @@ export type WRCStandingRow = {
   points: string;
 };
 
+export type WRCStandings = {
+  drivers: WRCStandingRow[];
+  codrivers: WRCStandingRow[];
+  manufacturers: WRCStandingRow[];
+  teams: WRCStandingRow[];
+};
+
 export type WRCCalendarEvent = {
   round: number;
   rallyName: string;
@@ -341,15 +348,18 @@ export const dataService = {
         let status: CalendarRace['status'] = 'Upcoming';
         let winner = '';
 
-        const mondayAfter = new Date(endDate);
-        mondayAfter.setDate(mondayAfter.getDate() + 1);
-        mondayAfter.setHours(6, 0, 0, 0);
+        const startOfRace = new Date(startDate);
+        startOfRace.setHours(0, 0, 0, 0);
+        
+        const endOfRace = new Date(endDate);
+        endOfRace.setHours(23, 59, 59, 999);
 
-        if (now >= mondayAfter) {
+        if (now > endOfRace) {
           status = 'Finished';
-        } else if (now >= startDate && now < mondayAfter) {
+        } else if (now >= startOfRace && now <= endOfRace) {
           status = 'Live';
         }
+
 
         const matchedEvent = currentEvents.find((ev: any) =>
           raceName.includes(ev.shortName?.replace(' GP', '')) || ev.name?.includes(raceName.split(' ').slice(0, 2).join(' '))
@@ -542,38 +552,39 @@ export const dataService = {
   },
 
   // === WRC CHAMPIONSHIP STANDINGS (lat.motorsport.com — dynamic, year-aware, drivers only) ===
-  async getWRCStandings(): Promise<{ drivers: WRCStandingRow[] }> {
-    const drivers: WRCStandingRow[] = [];
+  async getWRCStandings(): Promise<WRCStandings> {
+    const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
     const year = new Date().getFullYear();
 
     try {
       const html = await this.fetchWithProxy(`https://lat.motorsport.com/wrc/standings/${year}/`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
-
-      // First table = drivers
       const tables = doc.querySelectorAll('.ms-table, table');
-      if (tables.length > 0) {
-        tables[0].querySelectorAll('tbody tr').forEach(row => {
+      const keys: (keyof WRCStandings)[] = ['drivers', 'codrivers', 'manufacturers', 'teams'];
+
+      tables.forEach((table, idx) => {
+        if (idx >= keys.length) return;
+        const key = keys[idx];
+        table.querySelectorAll('tbody tr').forEach(row => {
           const cells = row.querySelectorAll('td');
           if (cells.length >= 3) {
             const pos = cells[0]?.textContent?.trim() || '';
-            const nameWrapper = cells[1]?.querySelector('a.info-wrapper, a');
-            const driverName = nameWrapper?.querySelector('span:first-child')?.textContent?.trim()
-              || nameWrapper?.textContent?.trim()
+            const nameWrap = cells[1]?.querySelector('a.info-wrapper, a');
+            const name = nameWrap?.querySelector('span:first-child')?.textContent?.trim()
+              || nameWrap?.textContent?.trim()
               || cells[1]?.textContent?.trim() || '';
-            const teamName = nameWrapper?.querySelector('span:last-child')?.textContent?.trim() || '';
+            const sub = nameWrap?.querySelector('span:last-child')?.textContent?.trim() || '';
             const pts = cells[2]?.textContent?.trim() || '0';
-            if (driverName && pos) {
-              drivers.push({ pos, driver: driverName, codriverOrTeam: teamName, points: pts });
+            if (name && pos) {
+              standings[key].push({ pos, driver: name, codriverOrTeam: sub, points: pts });
             }
           }
         });
-      }
+      });
     } catch (e) {
       console.error('[DataService] WRC standings error:', e);
     }
-
-    return { drivers };
+    return standings;
   },
 
   // === WRC CALENDAR (Official wrc.com — dynamic scraping) ===
@@ -670,7 +681,10 @@ export const dataService = {
 
           let status: WRCCalendarEvent['status'] = isPast ? 'Finished' : 'Upcoming';
           const cardText = text.toLowerCase();
-          if (cardText.includes('happening now') || cardText.includes('live') || cardText.includes('en curso')) {
+          
+          if (cardText.includes('upcoming event')) {
+            status = 'Upcoming';
+          } else if (cardText.includes('happening now') || cardText.includes('live') || cardText.includes('en curso')) {
             status = 'Live';
           } else {
             const range = parseWRCDate(dates);
