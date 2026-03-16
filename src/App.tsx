@@ -1067,7 +1067,7 @@ const App = () => {
           >
             <header className="main-header">
               <div className="header-centered-logo">
-                <img src="/LOGO.png" alt="Vuelta de Instalación" className="app-header-logo-centered" />
+                <img src="/logo.png" alt="Vuelta de Instalación" className="app-header-logo-centered" />
               </div>
             </header>
 
