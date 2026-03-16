@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/proxy",
+      "destination": "/api/proxy.js"
+    },
+    {
       "source": "/api/vueltarapida/(.*)",
       "destination": "https://api.vueltarapida.com/api/$1"
     },

@@ -2042,19 +2042,32 @@ export const dataService = {
       'Pragma': 'no-cache'
     };
 
-    // If it's a relative URL, it's already a local proxy path
+    // 1. If it's a relative URL, it's a local proxy or internal API
     if (targetUrl.startsWith('/')) {
       try {
         const res = await fetch(targetUrl, { headers });
         if (res.ok) return await res.text();
-        // If local proxy fails, we can't really fallback to CORS proxies for a relative path
-        throw new Error(`Local proxy failed with status ${res.status}`);
+        throw new Error(`Local file/proxy failed: ${res.status}`);
       } catch (e) {
-        console.error(`[DataService] Local proxy error for ${targetUrl}:`, e);
+        console.error(`[DataService] Local error for ${targetUrl}:`, e);
         return '';
       }
     }
 
+    // 2. Try our custom Serverless Proxy (bypass CORS server-side)
+    try {
+      const serverlessUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+      const res = await fetch(serverlessUrl);
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.length > 10) return text; 
+      }
+      console.warn(`[DataService] Serverless proxy failed for ${targetUrl}: ${res.status}`);
+    } catch (e) {
+      console.warn(`[DataService] Serverless proxy exception:`, e);
+    }
+
+    // 3. Fallback to Vercel Rewrites
     try {
       let proxyPath = targetUrl
         .replace('https://tc2000.com.ar', '/api/tc2000')
@@ -2080,13 +2093,10 @@ export const dataService = {
         const finalPath = proxyPath.includes('?') ? `${proxyPath}&${cacheBuster}` : `${proxyPath}?${cacheBuster}`;
         const res = await fetch(finalPath, { headers });
         if (res.ok) return await res.text();
-        console.warn(`[DataService] Direct proxy ${finalPath} failed: ${res.status}`);
       }
-    } catch (e) {
-      console.warn('[DataService] Direct proxy exception:', e);
-    }
+    } catch (e) {}
 
-    // Fallback to public CORS proxies
+    // 4. Last resort: Public CORS Proxies
     const proxies = [
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
       (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -2105,12 +2115,11 @@ export const dataService = {
           const data = JSON.parse(text);
           return data.contents;
         }
-
         return await res.text();
       } catch (e) {
         console.warn(`[DataService] External proxy failed:`, e);
       }
     }
-    throw new Error('All CORS proxies failed');
+    throw new Error('All proxy methods failed');
   },
 };
