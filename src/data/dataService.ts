@@ -161,17 +161,17 @@ export const dataService = {
 
       const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
 
-      const [racesRes, catRes] = await Promise.all([
-        fetch(url),
-        fetch('/api/vueltarapida/categories')
+      const [racesResText, catResText] = await Promise.all([
+        this.fetchWithProxy(url),
+        this.fetchWithProxy('/api/vueltarapida/categories')
       ]);
 
-      if (!racesRes.ok) throw new Error(`HTTP ${racesRes.status}`);
-      const data = await racesRes.json();
+      if (!racesResText) return [];
+      const data = JSON.parse(racesResText);
 
       let categoriesMap: Record<string, any> = {};
-      if (catRes.ok) {
-        const catData = await catRes.json();
+      if (catResText) {
+        const catData = JSON.parse(catResText);
         if (Array.isArray(catData)) {
           catData.forEach((c: any) => {
             if (c.categoryId) categoriesMap[c.categoryId] = c;
@@ -2008,7 +2008,14 @@ export const dataService = {
       if (proxyPath !== targetUrl) {
         const cacheBuster = `t=${Date.now()}`;
         const finalPath = proxyPath.includes('?') ? `${proxyPath}&${cacheBuster}` : `${proxyPath}?${cacheBuster}`;
-        const res = await fetch(finalPath);
+        const res = await fetch(finalPath, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Referer': 'https://vueltarapida.com/',
+            'Origin': 'https://vueltadeinstalacion.vercel.app'
+          }
+        });
         if (res.ok) return await res.text();
       }
     } catch (e) {
