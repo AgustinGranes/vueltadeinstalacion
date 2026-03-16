@@ -71,7 +71,7 @@ const App = () => {
   const [nascarNews, setNascarNews] = useState<NewsItem[]>([]);
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [isCategoryLoading, setIsCategoryLoading] = useState(false);
   const [isHomeLoading, setIsHomeLoading] = useState(false);
   const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
@@ -384,7 +384,7 @@ const App = () => {
           </div>
         ) : calendarViewMode === 'semanal' ? (
           <div className="weekly-list">
-            {flatSchedules.length === 0 && !isLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {flatSchedules.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
             
             {/* PRÓXIMOS SECTION */}
             {flatSchedules.some(s => s.startAt >= Date.now()) && (
@@ -513,7 +513,7 @@ const App = () => {
           </div>
         ) : (
           <div className="category-calendar-list">
-            {weeklyRaces.length === 0 && !isLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {weeklyRaces.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
             {Object.entries(
               weeklyRaces.reduce<Record<string, Race[]>>((acc, race) => {
                 const key = race.category || 'Otros';
