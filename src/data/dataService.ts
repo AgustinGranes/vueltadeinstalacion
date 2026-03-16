@@ -2043,57 +2043,68 @@ export const dataService = {
       } catch (e) { return ''; }
     }
 
-    // 2. PRIMARY: Serverless Proxy (Fixes CORS & 403)
+    const cacheBuster = `cb=${Date.now()}`;
+    const cleanUrl = targetUrl.includes('?') ? `${targetUrl}&${cacheBuster}` : `${targetUrl}?${cacheBuster}`;
+
+    // 2. PRIMARY: Our Serverless Proxy (bypass CORS & 403)
     try {
-      const serverlessUrl = `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
+      const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
       const res = await fetch(serverlessUrl);
       if (res.ok) {
         const text = await res.text();
-        if (text && text.length > 5) return text; 
+        // Check if we got an error page instead of data (common with 403 redirects)
+        if (text && text.length > 20 && !text.includes('<title>403') && !text.includes('Forbidden')) {
+          return text;
+        }
       }
+      console.warn(`[DataService] Serverless proxy failed or returned 403 for ${targetUrl}`);
     } catch (e) {
-      console.warn(`[DataService] Serverless proxy failed for ${targetUrl}`);
+      console.warn(`[DataService] Serverless proxy exception:`, e);
     }
 
-    // 3. FALLBACK: Vercel Rewrites (legacy)
+    // 3. FALLBACK: Public CORS Proxies with different IPs
+    const publicProxies = [
+      (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
+      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    ];
+
+    for (const proxyFn of publicProxies) {
+      try {
+        const proxyUrl = proxyFn(targetUrl);
+        const res = await fetch(proxyUrl); 
+        if (!res.ok) continue;
+
+        if (proxyUrl.includes('allorigins')) {
+          const data = await res.json();
+          if (data && data.contents) return data.contents;
+          continue;
+        }
+        
+        const text = await res.text();
+        if (text && text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
+          return text;
+        }
+      } catch (e) {}
+    }
+
+    // 4. LAST STAND: Legacy Rewrites
     try {
       let proxyPath = targetUrl
         .replace('https://tc2000.com.ar', '/api/tc2000')
         .replace('https://carburando.com', '/api/carburando')
-        .replace('https://www.carburando.com', '/api/carburando')
         .replace('https://www.wrc.com', '/api/wrc')
-        .replace('https://lat.motorsport.com', '/api/motorsport')
-        .replace('https://es.motorsport.com', '/api/motorsport-es')
-        .replace('https://www.marca.com', '/api/marca')
         .replace('https://api.vueltarapida.com/api', '/api/vueltarapida')
         .replace('https://api.vueltarapida.com', '/api/vueltarapida')
         .replace('https://actc.org.ar', '/api/actc')
         .replace('https://vueltarapida.com', '/api/vueltarapida-html');
 
       if (proxyPath !== targetUrl) {
-        const res = await fetch(proxyPath);
+        const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`);
         if (res.ok) return await res.text();
       }
     } catch (e) {}
 
-    // 4. LAST RESORT: Public CORS Proxies
-    const proxies = [
-      (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`
-    ];
-
-    for (const proxyFn of proxies) {
-      try {
-        const proxyUrl = proxyFn(targetUrl);
-        const res = await fetch(proxyUrl); 
-        if (!res.ok) continue;
-        if (proxyUrl.includes('allorigins')) {
-          const data = await res.json();
-          return data.contents;
-        }
-        return await res.text();
-      } catch (e) {}
-    }
-    throw new Error('All proxy methods failed');
+    throw new Error('All proxy methods failed to bypass 403/CORS');
   },
 };
