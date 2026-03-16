@@ -159,11 +159,11 @@ export const dataService = {
       sunday.setDate(monday.getDate() + 6);
       sunday.setHours(23, 59, 59, 999);
 
-      const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
+      const url = `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
 
       const [racesResText, catResText] = await Promise.all([
         this.fetchWithProxy(url),
-        this.fetchWithProxy('/api/vueltarapida/categories')
+        this.fetchWithProxy('https://api.vueltarapida.com/api/categories')
       ]);
 
       if (!racesResText) return [];
@@ -1876,13 +1876,47 @@ export const dataService = {
       const html = await this.fetchWithProxy('https://tc2000.com.ar/carreras.php?evento=calendario');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const items = doc.querySelectorAll('.box-fechas');
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const monthsMap: Record<string, number> = {
+        'ENE': 0, 'FEB': 1, 'MAR': 2, 'ABR': 3, 'MAY': 4, 'JUN': 5, 
+        'JUL': 6, 'AGO': 7, 'SET': 8, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DIC': 11
+      };
+
       items.forEach((el, idx) => {
         const roundStr = el.querySelector('.item-fechas')?.textContent?.trim() || '';
         const round = parseInt(roundStr) || idx + 1;
-        const dateStr = el.querySelector('.gris')?.textContent?.trim() || '';
-        const event = el.querySelector('h3')?.textContent?.trim() || 'A confirmar';
+        const dateStr = el.querySelector('.gris')?.textContent?.trim() || ''; // DOM 15 / MAR
+        const eventName = el.querySelector('h3')?.textContent?.trim() || 'A confirmar';
         
-        calendar.push({ round, race: event, dates: dateStr, status: 'Upcoming', winner: '' });
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (dateStr) {
+          const parts = dateStr.toUpperCase().split(' ');
+          // Looking for "15 / MAR" or "15 / 03"
+          const dayPart = parts.find(p => /^\d+$/.test(p));
+          const monthPart = parts.find(p => monthsMap[p] !== undefined || (/^\d+$/.test(p) && parseInt(p) > 0 && parseInt(p) <= 12));
+          
+          if (dayPart && monthPart) {
+            const day = parseInt(dayPart);
+            let month = monthsMap[monthPart];
+            if (month === undefined) month = parseInt(monthPart) - 1;
+
+            const raceYear = now.getFullYear();
+            const raceDate = new Date(raceYear, month, day);
+            raceDate.setHours(0, 0, 0, 0);
+
+            if (raceDate.getTime() === now.getTime()) {
+              status = 'Live';
+            } else if (raceDate.getTime() < now.getTime()) {
+              status = 'Finished';
+            } else {
+              status = 'Upcoming';
+            }
+          }
+        }
+
+        calendar.push({ round, race: eventName, dates: dateStr, status, winner: '' });
       });
     } catch (e) { console.error('[DataService] TC2000 calendar error:', e); }
     return calendar;
@@ -1943,7 +1977,7 @@ export const dataService = {
 
       // 2. Carburando
       try {
-        const carbHtml = await this.fetchWithProxy('https://www.carburando.com/categorias/tc2000');
+        const carbHtml = await this.fetchWithProxy('https://carburando.com/categorias/tc2000');
         const carbDoc = new DOMParser().parseFromString(carbHtml, 'text/html');
         carbDoc.querySelectorAll('article').forEach(el => {
            const title = el.querySelector('h1.title, h2.title')?.textContent?.trim();
@@ -1989,6 +2023,15 @@ export const dataService = {
   },
 
   async fetchWithProxy(targetUrl: string): Promise<string> {
+    // If it's a relative URL, it means it's already a proxy path or local API
+    if (targetUrl.startsWith('/')) {
+      const res = await fetch(targetUrl);
+      if (res.ok) return await res.text();
+      // If it fails, try to "un-proxy" it and use CORS proxies
+      // For now, let's just use it as is
+      return '';
+    }
+
     try {
       let proxyPath = targetUrl
         .replace('https://www.wrc.com', '/api/wrc')
@@ -2008,14 +2051,7 @@ export const dataService = {
       if (proxyPath !== targetUrl) {
         const cacheBuster = `t=${Date.now()}`;
         const finalPath = proxyPath.includes('?') ? `${proxyPath}&${cacheBuster}` : `${proxyPath}?${cacheBuster}`;
-        const res = await fetch(finalPath, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Referer': 'https://vueltarapida.com/',
-            'Origin': 'https://vueltadeinstalacion.vercel.app'
-          }
-        });
+        const res = await fetch(finalPath);
         if (res.ok) return await res.text();
       }
     } catch (e) {
