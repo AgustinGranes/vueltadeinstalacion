@@ -565,26 +565,48 @@ export const dataService = {
   // === WRC CHAMPIONSHIP STANDINGS (lat.motorsport.com — dynamic, year-aware, drivers only) ===
   async getWRCStandings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
-    const seasonId = 47; // 2026 season ID found via research
+    const seasonId = 47; // 2026 season ID
 
     const fetchTable = async (championshipId: number, key: keyof WRCStandings) => {
       try {
-        const url = `https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=${championshipId}&seasonId=${seasonId}`;
-        const resText = await this.fetchWithProxy(url);
-        if (!resText || resText.trim() === '' || (!resText.trim().startsWith('{') && !resText.trim().startsWith('['))) {
-          console.warn(`[DataService] Invalid JSON response for WRC ${key}`);
-          return;
-        }
+        const resultsUrl = `https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=${championshipId}&seasonId=${seasonId}`;
+        const detailUrl = `https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-detail.json?championshipId=${championshipId}&seasonId=${seasonId}`;
         
+        const [resText, detailText] = await Promise.all([
+          this.fetchWithProxy(resultsUrl),
+          this.fetchWithProxy(detailUrl)
+        ]);
+
+        if (!resText || !detailText) return;
+
         const data = JSON.parse(resText);
+        const detail = JSON.parse(detailText);
+
+        // Map entry IDs to names
+        const entryMap: Record<number, { name: string; sub?: string }> = {};
+        if (detail && Array.isArray(detail.championshipEntries)) {
+          detail.championshipEntries.forEach((entry: any) => {
+            const firstName = entry.fieldOne || '';
+            const lastName = entry.fieldTwo || '';
+            const name = lastName ? `${firstName} ${lastName}`.trim() : firstName;
+            // Manufacturers/Teams might not have fieldTwo
+            entryMap[entry.id] = { name };
+          });
+        }
+
         if (data && Array.isArray(data.entryResults)) {
           data.entryResults.forEach((entry: any) => {
-            const pos = String(entry.rank || '');
-            const driver = entry.driverName || entry.manufacturerName || entry.teamName || '';
-            const sub = entry.teamName || entry.coDriverName || '';
-            const points = String(entry.totalPoints || '0');
-            if (driver && pos) {
-              standings[key].push({ pos, driver, codriverOrTeam: sub, points });
+            const pos = String(entry.overallPosition || entry.rank || '');
+            const points = String(entry.overallPoints || '0');
+            const info = entryMap[entry.championshipEntryId];
+            
+            if (info && pos) {
+              standings[key].push({ 
+                pos, 
+                driver: info.name, 
+                codriverOrTeam: '', // Detail API might have more info, but name is main priority
+                points 
+              });
             }
           });
         }
@@ -608,7 +630,6 @@ export const dataService = {
     const events: WRCCalendarEvent[] = [];
     
     try {
-      // 1. Try to fetch from official WRC site
       const fetchSources = async () => {
         try {
           return await Promise.all([
@@ -616,75 +637,54 @@ export const dataService = {
             this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=past')
           ]);
         } catch (e) {
-          console.warn('[DataService] Remote WRC fetch failed, will try local fallback');
+          console.warn('[DataService] Remote WRC fetch failed');
           return [null, null];
         }
       };
 
       let [upcomingHtml, pastHtml] = await fetchSources();
 
-      // 2. Fallback to local file if remote fails or returns nothing useful
-      if (!upcomingHtml || upcomingHtml.length < 5000) {
-        try {
-          console.log('[DataService] Loading local WRC calendar fallback...');
-          const localRes = await fetch('/wrc_calendar.html');
-          if (localRes.ok) {
-            upcomingHtml = await localRes.text();
-            pastHtml = ''; // Local file usually contains everything or at least upcoming
-          }
-        } catch (e) {
-          console.error('[DataService] Local fallback failed too');
-        }
-      }
-
       const parseHtml = (html: string | null, isPast: boolean) => {
         if (!html) return;
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Find main event cards - confirmed via research: a.event-feed-card
-        const cards = doc.querySelectorAll('.event-feed-card, .event-list__row, .rally-card, .event-card');
+        // Identified selector: a.event-feed-card
+        const cards = doc.querySelectorAll('a.event-feed-card');
         
         cards.forEach((el) => {
-          const text = el.textContent || '';
-          const cardText = text.toLowerCase();
-          if (!cardText.includes('rally')) return;
-
-          // Extract title
-          const titleEl = el.querySelector('.event-feed-card__title, .event-list__rally-name, h3, h2, .title');
+          const titleEl = el.querySelector('.event-feed-card__title');
           let rallyName = titleEl?.textContent?.trim() || '';
-          if (!rallyName) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-            rallyName = lines.find(l => l.toLowerCase().includes('rally') && !l.toLowerCase().includes('shakedown') && !l.toLowerCase().includes('día')) || '';
-          }
           if (!rallyName) return;
 
           // Clean rally name
           rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').replace(/ROUND\s+\d+\s+/i, '').trim();
-          if (rallyName.toLowerCase().includes('shakedown') || rallyName.toLowerCase().includes('día') || /^\d+[:]\d+/.test(rallyName)) return;
 
-          const dateEl = el.querySelector('.event-feed-card__date-text, .event-list__date, .date, .event-card__date, time');
+          const dateEl = el.querySelector('time');
           const dates = dateEl?.textContent?.trim() || '';
+          
+          const labelEl = el.querySelector('.event-feed-card__content > div:last-child');
+          const labelText = labelEl?.textContent?.trim().toLowerCase() || '';
           
           let status: WRCCalendarEvent['status'] = isPast ? 'Finished' : 'Upcoming';
           
           if (!isPast) {
-            // According to user: if in upcoming list but NO "Upcoming event" label, it's live/happening
-            if (!cardText.includes('upcoming event')) {
-              status = 'Live';
+            // "RECARGUE... LA LOGICA ES QUE SI DEBAJO DE LOS RALLYES QUE TODAVIA NO SUCEDIERON NO DICE "UPCOMING EVENT), EN MI PAGINA DIGA EN CURSO"
+            if (!labelText.includes('upcoming event')) {
+              status = 'Live'; // "En curso" in UI
             }
-          }
-
-          // Special case for past tab explicitly
-          if (isPast || cardText.includes('past event')) {
+          } else {
             status = 'Finished';
           }
-          
+
+          // Special case for next
+          // We'll handle "Next" later by finding the first "Upcoming" after sorting
+
           const existingIdx = events.findIndex(e => e.rallyName.toLowerCase() === rallyName.toLowerCase());
           if (existingIdx >= 0) {
-            const existing = events[existingIdx];
-            const p = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
-            if ((p[status] || 0) > (p[existing.status] || 0)) {
-              events[existingIdx] = { round: existing.round, rallyName, dates: dates || existing.dates, status };
-            }
+             // Keep the most relevant status if duplicate
+             const p = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
+             if ((p[status] || 0) > (p[events[existingIdx].status] || 0)) {
+               events[existingIdx].status = status;
+             }
           } else {
             events.push({ round: 0, rallyName, dates, status });
           }
@@ -694,26 +694,23 @@ export const dataService = {
       parseHtml(pastHtml, true);
       parseHtml(upcomingHtml, false);
 
-      // Final sorting: Finished -> Live -> Upcoming
-      events.sort((a, b) => {
-        const order = { 'Finished': 0, 'Live': 1, 'Upcoming': 2, 'Next': 2 };
-        if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
-        if (a.round && b.round) return a.round - b.round;
-        return a.rallyName.localeCompare(b.rallyName);
-      });
-
-      // Recalculate rounds
-      events.forEach((ev, idx) => ev.round = idx + 1);
-
-      // Ensure at least one "Next" or handle it based on status
-      let foundActive = false;
-      return events.map(ev => {
-        if (ev.status === 'Upcoming' && !foundActive) {
-          foundActive = true;
-          return { ...ev, status: 'Next' as const };
+      // Sort: Finished events first, then Live, then Upcoming
+      // Actually, we want them in chronological order. 
+      // WRC site usually lists them in season order.
+      // For now, let's keep the order they appeared or sort by round if we can guess.
+      // But we'll just assign rounds based on final list order.
+      
+      // Assign rounds and find Next
+      let foundNext = false;
+      events.forEach((ev, idx) => {
+        ev.round = idx + 1;
+        if (ev.status === 'Upcoming' && !foundNext) {
+          ev.status = 'Next';
+          foundNext = true;
         }
-        return ev;
       });
+
+      return events;
 
     } catch (e) {
       console.error('[DataService] WRC overall failure:', e);

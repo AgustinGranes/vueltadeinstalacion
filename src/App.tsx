@@ -84,9 +84,9 @@ const App = () => {
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
-  const [loadingLogo] = useState(() => ALL_LOGOS[Math.floor(Math.random() * ALL_LOGOS.length)]);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -171,6 +171,7 @@ const App = () => {
       console.error('Fetch error:', e);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
@@ -1031,15 +1032,14 @@ const App = () => {
       <div className="loading-content">
         <div className="loading-logo-wrap single-logo">
           <motion.img 
-            src={loadingLogo.url} 
-            alt={loadingLogo.name} 
-            className={`loading-logo ${loadingLogo.class}`}
+            src="/CARGA.png" 
+            alt="Cargando..." 
+            className="loading-logo-exclusive"
             animate={{ 
-              scale: [0.9, 1.1, 0.9], 
-              opacity: [0.6, 1, 0.6],
-              rotate: loadingLogo.class === 'indy' || loadingLogo.class === 'f1' ? [0, 2, -2, 0] : 0
+              scale: [0.95, 1.05, 0.95], 
+              opacity: [0.8, 1, 0.8],
             }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
         
@@ -1078,27 +1078,47 @@ const App = () => {
             className="app-main-layout"
           >
             <header className="main-header">
-              <div className="header-top">
-                <div className="header-title-group">
-                  <img src="/logo.png" alt="Logo" className="app-header-logo" />
-                  <h1 className="app-title">Vuelta de Instalación</h1>
-                </div>
-                <button className="refresh-btn" onClick={fetchData} disabled={isLoading}>
-                  <RefreshCw size={18} className={isLoading ? 'spinning' : ''} />
-                </button>
+              <div className="header-centered-logo">
+                <img src="/LOGO.png" alt="Vuelta de Instalación" className="app-header-logo-centered" />
               </div>
             </header>
 
             <main className="content-area">
-              <AnimatePresence mode="wait">
-                {view === 'category' ? renderCategoryView() : (
-                  <>
-                    {mainTab === 'home' && renderHome()}
-                    {mainTab === 'calendario' && renderCalendario()}
-                    {mainTab === 'noticias' && renderNoticias()}
-                  </>
-                )}
-              </AnimatePresence>
+              <div className="pull-to-refresh-container">
+                 <AnimatePresence>
+                   {isRefreshing && (
+                     <motion.div 
+                       initial={{ height: 0, opacity: 0 }}
+                       animate={{ height: 50, opacity: 1 }}
+                       exit={{ height: 0, opacity: 0 }}
+                       className="pull-to-refresh-indicator"
+                     >
+                       <RefreshCw size={20} className="spinning" />
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+
+              <motion.div
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.y > 100 && !isRefreshing) {
+                    setIsRefreshing(true);
+                    fetchData();
+                  }
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {view === 'category' ? renderCategoryView() : (
+                    <>
+                      {mainTab === 'home' && renderHome()}
+                      {mainTab === 'calendario' && renderCalendario()}
+                      {mainTab === 'noticias' && renderNoticias()}
+                    </>
+                  )}
+                </AnimatePresence>
+              </motion.div>
             </main>
 
             {view === 'main' && (
