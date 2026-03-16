@@ -1857,26 +1857,29 @@ export const dataService = {
         
         let status: CalendarRace['status'] = 'Upcoming';
         if (dateStr) {
-          const parts = dateStr.toUpperCase().split(' ');
-          // Looking for "15 / MAR" or "15 / 03"
-          const dayPart = parts.find(p => /^\d+$/.test(p));
-          const monthPart = parts.find(p => monthsMap[p] !== undefined || (/^\d+$/.test(p) && parseInt(p) > 0 && parseInt(p) <= 12));
+          // Robust regex to find day and month: "15 / MAR", "15-03", "15/03", "DOM 15 / MAR"
+          const match = dateStr.toUpperCase().match(/(\d{1,2})\s*[\/\.-]?\s*([A-Z]{3}|\d{1,2})/);
           
-          if (dayPart && monthPart) {
-            const day = parseInt(dayPart);
+          if (match) {
+            const day = parseInt(match[1]);
+            const monthPart = match[2];
             let month = monthsMap[monthPart];
-            if (month === undefined) month = parseInt(monthPart) - 1;
+            if (month === undefined && /^\d+$/.test(monthPart)) {
+              month = parseInt(monthPart) - 1;
+            }
+            
+            if (month !== undefined) {
+              const raceYear = now.getFullYear();
+              const raceDate = new Date(raceYear, month, day);
+              raceDate.setHours(0, 0, 0, 0);
 
-            const raceYear = now.getFullYear();
-            const raceDate = new Date(raceYear, month, day);
-            raceDate.setHours(0, 0, 0, 0);
-
-            if (raceDate.getTime() === now.getTime()) {
-              status = 'Live';
-            } else if (raceDate.getTime() < now.getTime()) {
-              status = 'Finished';
-            } else {
-              status = 'Upcoming';
+              if (raceDate.getTime() === now.getTime()) {
+                status = 'Live';
+              } else if (raceDate.getTime() < now.getTime()) {
+                status = 'Finished';
+              } else {
+                status = 'Upcoming';
+              }
             }
           }
         }
