@@ -122,6 +122,7 @@ export type WRCCalendarEvent = {
   rallyName: string;
   dates: string;
   status: 'Finished' | 'Upcoming' | 'Next' | 'Live';
+  winner?: string;
 };
 
 export type TCStandingRow = {
@@ -601,77 +602,69 @@ export const dataService = {
     return standings;
   },
 
-  // === WRC CALENDAR (Official wrc.com — dynamic scraping) ===
+  // === WRC CALENDAR (Marca.com scraping) ===
   async getWRCCalendar(): Promise<WRCCalendarEvent[]> {
     const events: WRCCalendarEvent[] = [];
     
     try {
-      let upcomingHtml = '';
-      let pastHtml = '';
+      const html = await this.fetchWithProxy('https://www.marca.com/motor/rallies/calendario.html');
+      if (!html) return [];
       
-      try {
-        upcomingHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar');
-      } catch (e) { console.warn('[DataService] WRC upcoming fetch failed'); }
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table.calendario.motor tbody tr');
       
-      try {
-        pastHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=past');
-      } catch (e) { console.warn('[DataService] WRC past fetch failed'); }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
 
-      if (!upcomingHtml && !pastHtml) {
-        // Try one more fallback if both failed - sometimes a simple query works better
-        try {
-          upcomingHtml = await this.fetchWithProxy('https://www.wrc.com/en/calendar?rb3TabId=upcoming');
-        } catch (e) {}
-      }
+      rows.forEach((row, idx) => {
+        const titleEl = row.querySelector('td.evento');
+        let rallyName = titleEl?.textContent?.trim() || '';
+        if (!rallyName) return;
 
-      const parseHtml = (html: string | null, isPast: boolean) => {
-        if (!html) return;
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cards = doc.querySelectorAll('a.event-feed-card');
+        // Clean name
+        rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').trim();
+
+        const dateEl = row.querySelector('td.fecha-inicio');
+        const dates = dateEl?.textContent?.trim() || '';
         
-        cards.forEach((el) => {
-          const titleEl = el.querySelector('.event-feed-card__title');
-          let rallyName = titleEl?.textContent?.trim() || '';
-          if (!rallyName) return;
-
-          rallyName = rallyName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').replace(/ROUND\s+\d+\s+/i, '').trim();
-
-          const dateEl = el.querySelector('time');
-          const dates = dateEl?.textContent?.trim() || '';
-          
-          const labelEl = el.querySelector('.event-feed-card__content > div:last-child');
-          const labelText = labelEl?.textContent?.trim().toLowerCase() || '';
-          
-          let status: WRCCalendarEvent['status'] = isPast ? 'Finished' : 'Upcoming';
-          
-          if (!isPast) {
-            if (!labelText.includes('upcoming event')) {
+        const winnerEl = row.querySelector('td.primero');
+        const winner = winnerEl?.textContent?.trim() || '';
+        
+        // Parse date for "Live" detection (Formato DD-MM-YYYY)
+        let status: WRCCalendarEvent['status'] = 'Upcoming';
+        
+        if (winner) {
+          status = 'Finished';
+        } else if (dates) {
+          const parts = dates.split('-');
+          if (parts.length === 3) {
+            const eventDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            eventDate.setHours(0,0,0,0);
+            
+            // Assume rally lasts 4 days
+            const endDate = new Date(eventDate);
+            endDate.setDate(eventDate.getDate() + 3);
+            
+            if (today >= eventDate && today <= endDate) {
               status = 'Live';
+            } else if (today > endDate) {
+              status = 'Finished';
             }
           }
+        }
 
-          const existingIdx = events.findIndex(e => e.rallyName.toLowerCase() === rallyName.toLowerCase());
-          if (existingIdx >= 0) {
-             const p = { 'Live': 3, 'Finished': 2, 'Upcoming': 1, 'Next': 1 };
-             if ((p[status] || 0) > (p[events[existingIdx].status] || 0)) {
-               events[existingIdx].status = status;
-               if (dates) events[existingIdx].dates = dates;
-             }
-          } else {
-            events.push({ round: 0, rallyName, dates, status });
-          }
+        events.push({ 
+          round: idx + 1, 
+          rallyName, 
+          dates, 
+          status,
+          winner: winner || undefined
         });
-      };
+      });
 
-      parseHtml(pastHtml, true);
-      parseHtml(upcomingHtml, false);
-
-      // Sort by dates is tricky, but we can trust the order in which they appear in the season
-      // We'll just rely on the order from the site as a baseline
-      
+      // Find "Next" event (first Upcoming)
       let foundNext = false;
-      events.forEach((ev, idx) => {
-        ev.round = idx + 1;
+      events.forEach(ev => {
         if (ev.status === 'Upcoming' && !foundNext) {
           ev.status = 'Next';
           foundNext = true;
@@ -681,7 +674,7 @@ export const dataService = {
       return events;
 
     } catch (e) {
-      console.error('[DataService] WRC overall failure:', e);
+      console.error('[DataService] Marca WRC calendar error:', e);
       return [];
     }
   },
