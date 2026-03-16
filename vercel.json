@@ -57,6 +57,18 @@
       "destination": "https://campeones.com.ar/$1"
     },
     {
+      "source": "/api/tc2000/(.*)",
+      "destination": "https://tc2000.com.ar/$1"
+    },
+    {
+      "source": "/api/carburando/(.*)",
+      "destination": "https://carburando.com/$1"
+    },
+    {
+      "source": "/api/wrc/(.*)",
+      "destination": "https://www.wrc.com/$1"
+    },
+    {
       "source": "/api/nascar/(.*)",
       "destination": "https://www.nascar.com/$1"
     },

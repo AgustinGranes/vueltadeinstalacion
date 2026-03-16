@@ -166,16 +166,27 @@ export const dataService = {
         this.fetchWithProxy('https://api.vueltarapida.com/api/categories')
       ]);
 
-      if (!racesResText) return [];
-      const data = JSON.parse(racesResText);
+      if (!racesResText || racesResText.trim() === '') return [];
+      
+      let data;
+      try {
+        data = JSON.parse(racesResText);
+      } catch (e) {
+        console.error('[DataService] Failed to parse races JSON:', e);
+        return [];
+      }
 
       let categoriesMap: Record<string, any> = {};
-      if (catResText) {
-        const catData = JSON.parse(catResText);
-        if (Array.isArray(catData)) {
-          catData.forEach((c: any) => {
-            if (c.categoryId) categoriesMap[c.categoryId] = c;
-          });
+      if (catResText && catResText.trim() !== '') {
+        try {
+          const catData = JSON.parse(catResText);
+          if (Array.isArray(catData)) {
+            catData.forEach((c: any) => {
+              if (c.categoryId) categoriesMap[c.categoryId] = c;
+            });
+          }
+        } catch (e) {
+          console.error('[DataService] Failed to parse categories JSON:', e);
         }
       }
 
@@ -2023,17 +2034,32 @@ export const dataService = {
   },
 
   async fetchWithProxy(targetUrl: string): Promise<string> {
-    // If it's a relative URL, it means it's already a proxy path or local API
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    };
+
+    // If it's a relative URL, it's already a local proxy path
     if (targetUrl.startsWith('/')) {
-      const res = await fetch(targetUrl);
-      if (res.ok) return await res.text();
-      // If it fails, try to "un-proxy" it and use CORS proxies
-      // For now, let's just use it as is
-      return '';
+      try {
+        const res = await fetch(targetUrl, { headers });
+        if (res.ok) return await res.text();
+        // If local proxy fails, we can't really fallback to CORS proxies for a relative path
+        throw new Error(`Local proxy failed with status ${res.status}`);
+      } catch (e) {
+        console.error(`[DataService] Local proxy error for ${targetUrl}:`, e);
+        return '';
+      }
     }
 
     try {
       let proxyPath = targetUrl
+        .replace('https://tc2000.com.ar', '/api/tc2000')
+        .replace('https://carburando.com', '/api/carburando')
+        .replace('https://www.carburando.com', '/api/carburando')
         .replace('https://www.wrc.com', '/api/wrc')
         .replace('https://lat.motorsport.com', '/api/motorsport')
         .replace('https://es.motorsport.com', '/api/motorsport-es')
@@ -2046,16 +2072,18 @@ export const dataService = {
         .replace('https://campeones.com.ar', '/api/campeones')
         .replace('https://www.nascar.com', '/api/nascar')
         .replace('https://latino.nascar.com', '/api/nascar-latino')
-        .replace('https://vueltarapida.com', '/api/vueltarapida-html');
+        .replace('https://vueltarapida.com', '/api/vueltarapida-html')
+        .replace('https://as.com', '/api/as');
 
       if (proxyPath !== targetUrl) {
         const cacheBuster = `t=${Date.now()}`;
         const finalPath = proxyPath.includes('?') ? `${proxyPath}&${cacheBuster}` : `${proxyPath}?${cacheBuster}`;
-        const res = await fetch(finalPath);
+        const res = await fetch(finalPath, { headers });
         if (res.ok) return await res.text();
+        console.warn(`[DataService] Direct proxy ${finalPath} failed: ${res.status}`);
       }
     } catch (e) {
-      console.warn('Direct proxy failed, trying CORS proxies');
+      console.warn('[DataService] Direct proxy exception:', e);
     }
 
     // Fallback to public CORS proxies
@@ -2068,17 +2096,19 @@ export const dataService = {
     for (const proxyFn of proxies) {
       try {
         const proxyUrl = proxyFn(targetUrl);
-        const res = await fetch(proxyUrl);
+        const res = await fetch(proxyUrl); 
         if (!res.ok) continue;
 
         if (proxyUrl.includes('allorigins')) {
-          const data = await res.json();
+          const text = await res.text();
+          if (!text) continue;
+          const data = JSON.parse(text);
           return data.contents;
         }
 
         return await res.text();
       } catch (e) {
-        console.warn(`Proxy failed:`, e);
+        console.warn(`[DataService] External proxy failed:`, e);
       }
     }
     throw new Error('All CORS proxies failed');
