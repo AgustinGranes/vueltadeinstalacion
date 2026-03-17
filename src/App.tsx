@@ -106,6 +106,7 @@ const App = () => {
       else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
       else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
       else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
+      else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
