@@ -178,9 +178,9 @@
 }
 
 .wec-logo {
-  height: 32px !important;
+  height: 40px !important; /* Increased size */
   width: auto !important;
-  filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
 
 .wec-tabs-scroll {
