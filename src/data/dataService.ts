@@ -470,7 +470,7 @@ export const dataService = {
     });
   },
 
-  // === WEC STANDINGS (FIA WEC) ===
+  // === WEC STANDINGS (Motorsport.com) ===
   async getWECStandings(): Promise<WECStandings> {
     const standings: WECStandings = {
       hypercarMfr: [],
@@ -480,54 +480,56 @@ export const dataService = {
       lmgt3Drivers: []
     };
 
-    try {
-      const html = await this.fetchWithProxy('https://www.fiawec.com/en/page/manufacturers-classification');
+    const parseMotorsportTable = (html: string) => {
+      const rows: TCStandingRow[] = [];
+      if (!html) return rows;
       const doc = new DOMParser().parseFromString(html, 'text/html');
+      const trs = doc.querySelectorAll('table.ms-table tbody tr.ms-table-row');
       
-      const parseTable = (rows: NodeListOf<Element>, nameColIndex: number) => {
-        const data: TCStandingRow[] = [];
-        rows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          if (cells.length >= nameColIndex) {
-            const pos = cells[0]?.textContent?.trim() || '';
-            const name = cells[nameColIndex - 1]?.textContent?.trim() || '';
-            const pts = cells[cells.length - 1]?.textContent?.trim() || '0';
-            if (pos && name && name !== 'Logo') {
-              data.push({ pos, driver: name, points: pts });
-            }
+      trs.forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 3) {
+          const pos = cells[0].textContent?.trim() || '';
+          
+          // Driver/Team/Mfg Name logic
+          const nameContainer = cells[1];
+          let name = '';
+          const infoWrapperName = nameContainer.querySelector('.info-wrapper .name');
+          if (infoWrapperName) {
+            name = infoWrapperName.textContent?.trim() || '';
+          } else {
+            name = nameContainer.textContent?.trim() || '';
           }
-        });
-        return data;
-      };
 
-      // FIA WEC uses accordion sections.
-      const sections = Array.from(doc.querySelectorAll('.accordion-item, .classification-section, .collapsible-section'));
-      
-      sections.forEach(sec => {
-        const title = sec.querySelector('h2, .accordion-header, button')?.textContent?.toLowerCase() || '';
-        const rows = sec.querySelectorAll('tbody tr, table tr:not(:first-child)');
-        
-        if (title.includes('manufacturers') && title.includes('hypercar')) {
-          standings.hypercarMfr = parseTable(rows, 2);
-        } else if (title.includes('hypercar teams')) {
-          standings.hypercarTeams = parseTable(rows, 5);
-        } else if (title.includes('drivers championship') && title.includes('hypercar')) {
-          standings.hypercarDrivers = parseTable(rows, 4);
-        } else if (title.includes('lmgt3 teams')) {
-          standings.lmgt3Teams = parseTable(rows, 5);
-        } else if (title.includes('lmgt3 drivers')) {
-          standings.lmgt3Drivers = parseTable(rows, 4);
+          const pts = cells[2].textContent?.trim() || '0';
+          
+          if (pos && name && !isNaN(parseInt(pos))) {
+            rows.push({ pos, driver: name, points: pts });
+          }
         }
       });
+      return rows;
+    };
 
-      // Fallback if no sections found (simple table traversal)
-      if (standings.hypercarMfr.length === 0) {
-        const tables = doc.querySelectorAll('table');
-        if (tables.length > 0) standings.hypercarMfr = parseTable(tables[0].querySelectorAll('tbody tr'), 2);
-        if (tables.length > 1) standings.hypercarTeams = parseTable(tables[1].querySelectorAll('tbody tr'), 5);
-      }
+    try {
+      const [driversHtml, lmgt3Html, mfrHtml, teamsHtml] = await Promise.all([
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Driver&class='),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Driver&class=LMGT3'),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Manufacturers&class=HYPERCAR'),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Team&class=HYPERCAR')
+      ]);
 
-    } catch (e) { console.error('[DataService] WEC standings error:', e); }
+      standings.hypercarDrivers = parseMotorsportTable(driversHtml);
+      standings.lmgt3Drivers = parseMotorsportTable(lmgt3Html);
+      standings.hypercarMfr = parseMotorsportTable(mfrHtml);
+      standings.hypercarTeams = parseMotorsportTable(teamsHtml);
+      standings.lmgt3Teams = [...standings.hypercarTeams]; // Fallback as no specific URL was provided for GT3 teams
+
+      // Re-use teams for lmgt3Teams if needed, or just leave as is if not provided specifically
+      // (User only provided 4 URLs, so we'll populate those 4 fields)
+    } catch (e) {
+      console.error('[DataService] WEC standings error:', e);
+    }
     return standings;
   },
 
