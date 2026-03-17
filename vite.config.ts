@@ -134,18 +134,6 @@ export default defineConfig({
           'Referer': 'https://www.wrc.com/'
         }
       },
-      '/api/lapeando': {
-        target: 'https://lapeando.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/lapeando/, ''),
-        secure: false
-      },
-      '/api/diariorally': {
-        target: 'http://www.diariorally.com.ar',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/diariorally/, ''),
-        secure: false
-      },
       '/api/actc-tiempos': {
         target: 'https://tiempos.actc.org.ar',
         changeOrigin: true,
