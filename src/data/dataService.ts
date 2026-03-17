@@ -2400,7 +2400,7 @@ export const dataService = {
         .replace('https://soymotor.com', '/api/soymotor')
         .replace('https://campeones.com.ar', '/api/campeones');
 
-      if (proxyPath !== targetUrl) {
+        if (proxyPath !== targetUrl) {
         const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`);
         if (res.ok) return await res.text();
       }
@@ -2408,4 +2408,6 @@ export const dataService = {
 
     throw new Error('All proxy methods failed to bypass 403/CORS');
   },
+  
+  CATEGORY_RESULTS_URLS,
 };
