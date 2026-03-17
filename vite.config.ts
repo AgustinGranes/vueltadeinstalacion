@@ -190,6 +190,52 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/nascar-latino/, ''),
         secure: false,
+      },
+      '/api/wec-api': {
+        target: 'https://www.fiawec.com/en',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/wec-api/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/soymotor': {
+        target: 'https://soymotor.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/soymotor/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/campeones': {
+        target: 'https://campeones.com.ar',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/campeones/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/actc-tiempos': {
+        target: 'https://tiempos.actc.org.ar',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/actc-tiempos/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/motorsport-results': {
+        target: 'https://lat.motorsport.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/motorsport-results/, ''),
+        secure: false,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',

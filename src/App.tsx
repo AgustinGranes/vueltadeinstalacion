@@ -5,10 +5,10 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
-type CategorySubTab = 'calendar' | 'standings' | 'news';
+type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
 const WRC_LOGO = '/WRC.png';
 const F1_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg';
@@ -16,6 +16,7 @@ const TC_LOGO = '/TC.png';
 const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
 const INDYCAR_LOGO = '/INDYCAR.png';
+const WEC_LOGO = '/WEC.png';
 
 
 
@@ -70,6 +71,10 @@ const App = () => {
   const [nascarStandingsTab, setNascarStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
   const [nascarNews, setNascarNews] = useState<NewsItem[]>([]);
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
+  const [wecNews, setWecNews] = useState<NewsItem[]>([]);
+  const [wecCalendar, setWecCalendar] = useState<WRCCalendarEvent[]>([]);
+  const [wecStandings, setWecStandings] = useState<any>({ hypercarMfr: [], hypercarTeams: [], hypercarDrivers: [], lmgt3Teams: [], lmgt3Drivers: [] });
+  const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-teams' | 'gt3-drivers'>('h-mfr');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -99,6 +104,7 @@ const App = () => {
       else if (cat === 'IndyCar') setIndyCalendar(await dataService.getIndyCarCalendar());
       else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
       else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
+      else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
       // TC uses weekly races only for now
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
@@ -129,6 +135,8 @@ const App = () => {
         setTc2000Drivers(res.drivers);
         setTc2000Teams(res.teams);
         setTc2000Brands(res.brands);
+      } else if (cat === 'WEC') {
+        setWecStandings(await dataService.getWECStandings());
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -151,6 +159,7 @@ const App = () => {
       else if (cat === 'IndyCar') setIndyNews(await dataService.getIndyCarNews());
       else if (cat === 'NASCAR') setNascarNews(await dataService.getNascarNews());
       else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
+      else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -167,6 +176,7 @@ const App = () => {
         dataService.getIndyCarNews(),
         dataService.getNascarNews(),
         dataService.getTC2000News(),
+        dataService.getWECNews(),
       ]);
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
@@ -174,6 +184,7 @@ const App = () => {
       if (results[3].status === 'fulfilled') setIndyNews(results[3].value);
       if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
       if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
+      if (results[6]?.status === 'fulfilled') setWecNews(results[6].value);
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
       console.error('Global news fetch error:', e);
@@ -326,6 +337,12 @@ const App = () => {
           <div className="cat-card-glow" />
           <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
           <span className="cat-label">TC2000</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card wec-card" onClick={() => handleCategoryClick('WEC')}>
+          <div className="cat-card-glow" />
+          <img src={WEC_LOGO} alt="WEC" className="cat-logo wec-logo" />
+          <span className="cat-label">WEC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -556,7 +573,7 @@ const App = () => {
   const renderNoticias = () => {
     const allNewsList = [
       ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
-      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews
+      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews
     ].sort(() => Math.random() - 0.5);
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
@@ -602,6 +619,7 @@ const App = () => {
     const isIndy = selectedCategory === 'IndyCar';
     const isNascar = selectedCategory === 'NASCAR';
     const isTC2000 = selectedCategory === 'TC2000';
+    const isWEC = selectedCategory === 'WEC';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -614,6 +632,7 @@ const App = () => {
     if (isTC2000) logo = '/TC2000.png';
     if (isIndy) logo = INDYCAR_LOGO;
     if (isNascar) logo = '/NASCAR.png';
+    if (isWEC) logo = WEC_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'WRC';
@@ -626,6 +645,7 @@ const App = () => {
     if (isIndy) catTitle = 'IndyCar';
     if (isNascar) catTitle = 'NASCAR Cup Series';
     if (isTC2000) catTitle = 'TC2000';
+    if (isWEC) catTitle = 'WEC';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -638,6 +658,7 @@ const App = () => {
     if (isIndy) news = indyNews;
     if (isNascar) news = nascarNews;
     if (isTC2000) news = tc2000News;
+    if (isWEC) news = wecNews;
 
     return (
       <motion.div key="category" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="category-view">
@@ -650,14 +671,21 @@ const App = () => {
         </header>
 
         <div className="cat-tabs">
-          <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
-            <Calendar size={16} /> Calendario
-          </button>
           <button className={`cat-tab ${categorySubTab === 'standings' ? 'active' : ''}`} onClick={() => setCategorySubTab('standings')}>
-            <Trophy size={16} /> Posiciones
+            <Trophy size={16} />
+            <span>Posiciones</span>
+          </button>
+          <button className={`cat-tab ${categorySubTab === 'results' ? 'active' : ''}`} onClick={() => setCategorySubTab('results')}>
+            <FileText size={16} />
+            <span>RESULTADOS</span>
+          </button>
+          <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
+            <Calendar size={16} />
+            <span>Calendario</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'news' ? 'active' : ''}`} onClick={() => setCategorySubTab('news')}>
-            <Newspaper size={16} /> Noticias
+            <Newspaper size={16} />
+            <span>Noticias</span>
           </button>
         </div>
 
@@ -857,6 +885,24 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">No se encontró calendario TC2000.</p>
+                  )}
+                </div>
+              ) : isWEC ? (
+                <div className="wec-calendar-list">
+                  {wecCalendar.length > 0 ? wecCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.rallyName}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? '✅ Finalizado' : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario WEC.</p>
                   )}
                 </div>
               ) : null}
@@ -1101,9 +1147,58 @@ const App = () => {
                       {nascarStandings[nascarStandingsTab].length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
                     </div>
                   </>
+                ) : isWEC ? (
+                  <>
+                    <div className="f1-tabs nascar-tabs wec-tabs-scroll">
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-mfr' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-mfr')}>Hypercar Mfr</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-teams' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-teams')}>Hypercar Teams</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-drivers')}>Hypercar Drivers</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'gt3-teams' ? 'active' : ''}`} onClick={() => setWecStandingsTab('gt3-teams')}>LMGT3 Teams</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'gt3-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('gt3-drivers')}>LMGT3 Drivers</button>
+                    </div>
+                    <div className="standings-list wec-standings">
+                      {(wecStandingsTab === 'h-mfr' ? wecStandings.hypercarMfr :
+                        wecStandingsTab === 'h-teams' ? wecStandings.hypercarTeams :
+                        wecStandingsTab === 'h-drivers' ? wecStandings.hypercarDrivers :
+                        wecStandingsTab === 'gt3-teams' ? wecStandings.lmgt3Teams :
+                        wecStandings.lmgt3Drivers).map((d: any, idx: number) => (
+                        <div key={idx} className={`stand-row wec-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver || d.team}</span>
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))}
+                      {((wecStandingsTab === 'h-mfr' && wecStandings.hypercarMfr.length === 0) ||
+                        (wecStandingsTab === 'h-teams' && wecStandings.hypercarTeams.length === 0) ||
+                        (wecStandingsTab === 'h-drivers' && wecStandings.hypercarDrivers.length === 0) ||
+                        (wecStandingsTab === 'gt3-teams' && wecStandings.lmgt3Teams.length === 0) ||
+                        (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && 
+                        <p className="empty-msg">No hay posiciones disponibles.</p>}
+                    </div>
+                  </>
                 ) : null}
                 </>
               )}
+            </motion.div>
+          )}
+
+          {categorySubTab === 'results' && (
+            <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
+              <div className="results-container">
+                <div className="tc-calendar-message results-box">
+                  <p className="tc-msg-text">Consulta los tiempos y resultados oficiales de la última sesión.</p>
+                  <a 
+                    href={dataService.CATEGORY_RESULTS_URLS[selectedCategory] || '#'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="tc-msg-btn"
+                  >
+                    Ver resultados
+                  </a>
+                </div>
+              </div>
             </motion.div>
           )}
 

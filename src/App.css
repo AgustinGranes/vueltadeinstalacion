@@ -168,8 +168,36 @@
 }
 
 .tc2000-card {
-  background: linear-gradient(145deg, #2a0505 0%, #801010 50%, #2a0505 100%);
-  border-color: rgba(224, 32, 32, 0.2);
+  background: linear-gradient(135deg, rgba(224, 32, 32, 0.1) 0%, rgba(224, 32, 32, 0.05) 100%);
+  border: 1px solid rgba(224, 32, 32, 0.15);
+}
+
+.wec-card {
+  background: linear-gradient(135deg, rgba(0, 76, 151, 0.1) 0%, rgba(0, 76, 151, 0.05) 100%);
+  border: 1px solid rgba(0, 76, 151, 0.15);
+}
+
+.wec-logo {
+  height: 24px !important;
+  width: auto !important;
+}
+
+.wec-tabs-scroll {
+  overflow-x: auto;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.wec-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.wec-tabs-scroll .nascar-tab-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .cat-card-glow {
@@ -619,6 +647,7 @@
 .wrc-stand-row { border-left-color: #ffd200; }
 .tc-stand-row { border-left-color: #005599; }
 .tc2000-stand-row { border-left-color: #e02020; }
+.wec-stand-row { border-left-color: #004C97; }
 
 /* Podium Highlights */
 .stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
@@ -1481,6 +1510,45 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* =============== TC MESSAGES / RESULTS =============== */
+.results-box {
+  margin-top: 10px;
+}
+
+.tc-calendar-message {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 0, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tc-msg-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tc-msg-btn {
+  background: var(--accent-yellow);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 14px;
+  transition: transform 0.2s;
+  align-self: center;
+}
+
+.tc-msg-btn:active {
+  transform: scale(0.96);
 }
 
 /* =============== LOADING CIRCLE =============== */

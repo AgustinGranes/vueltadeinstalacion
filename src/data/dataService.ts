@@ -133,10 +133,33 @@ export type TCStandingRow = {
   totalPts?: string;
 };
 
+export const CATEGORY_RESULTS_URLS: Record<string, string> = {
+  'F1': 'https://lat.motorsport.com/f1/results/2026',
+  'WRC': 'https://es.motorsport.com/wrc/results/2026',
+  'NASCAR': 'https://es.motorsport.com/nascar-cup/results/2026',
+  'WEC': 'https://es.motorsport.com/wec/results/2026/',
+  'IndyCar': 'https://es.motorsport.com/indycar/results/2026/',
+  'TC': 'https://tiempos.actc.org.ar/resultados',
+  'TCP': 'https://tiempos.actc.org.ar/resultados',
+  'TCM': 'https://tiempos.actc.org.ar/resultados',
+  'TCPM': 'https://tiempos.actc.org.ar/resultados',
+  'TCPK': 'https://tiempos.actc.org.ar/resultados',
+  'TCPPK': 'https://tiempos.actc.org.ar/resultados',
+  'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#'
+};
+
 export type TC2000Standings = {
   drivers: TCStandingRow[];
   teams: TCStandingRow[];
   brands: TCStandingRow[];
+};
+
+export type WECStandings = {
+  hypercarMfr: TCStandingRow[];
+  hypercarTeams: TCStandingRow[];
+  hypercarDrivers: TCStandingRow[];
+  lmgt3Teams: TCStandingRow[];
+  lmgt3Drivers: TCStandingRow[];
 };
 
 export type WRCRallyResult = {
@@ -256,7 +279,7 @@ export const dataService = {
           }
         }
 
-        // Fallback to scraping the detail page if API fails
+        // Fallback if API fails
         if (!circuitImage) {
            try {
               const detailHtml = await this.fetchWithProxy(`https://vueltarapida.com/calendario?race=${r.id}`);
@@ -395,6 +418,152 @@ export const dataService = {
       console.error('[DataService] F1 calendar error:', e);
       return [];
     }
+  },
+
+  // === WEC NEWS (AS.com + SoyMotor) ===
+  async getWECNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    
+    // Source 1: AS.com
+    try {
+      const html = await this.fetchWithProxy('https://as.com/noticias/wec-campeonato-mundial-resistencia/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('article.s, article.page-article').forEach(art => {
+        const linkElem = art.querySelector('h2.s__tl a, h2 a');
+        const t = linkElem?.textContent?.trim();
+        const l = linkElem?.getAttribute('href');
+        if (t && l) {
+          allNews.push({
+            title: t, summary: '',
+            link: l.startsWith('/') ? `https://as.com${l}` : l,
+            source: 'AS.com',
+            category: 'WEC'
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] AS WEC news error:', e); }
+
+    // Source 2: SoyMotor
+    try {
+      const html = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/wec');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a.node-container').forEach(art => {
+        const t = art.querySelector('h2 span')?.textContent?.trim() || art.getAttribute('title')?.trim();
+        const l = art.getAttribute('href');
+        if (t && l) {
+          allNews.push({
+            title: t, summary: '',
+            link: l.startsWith('/') ? `https://soymotor.com${l}` : l,
+            source: 'SoyMotor',
+            category: 'WEC'
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] SoyMotor WEC news error:', e); }
+
+    const seen = new Set<string>();
+    return allNews.filter(n => {
+      const key = n.title.toLowerCase().slice(0, 30);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  },
+
+  // === WEC STANDINGS (FIA WEC) ===
+  async getWECStandings(): Promise<WECStandings> {
+    const standings: WECStandings = {
+      hypercarMfr: [],
+      hypercarTeams: [],
+      hypercarDrivers: [],
+      lmgt3Teams: [],
+      lmgt3Drivers: []
+    };
+
+    try {
+      const html = await this.fetchWithProxy('https://www.fiawec.com/en/page/manufacturers-classification');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const parseTable = (rows: NodeListOf<Element>, nameColIndex: number) => {
+        const data: TCStandingRow[] = [];
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length >= nameColIndex) {
+            const pos = cells[0]?.textContent?.trim() || '';
+            const name = cells[nameColIndex - 1]?.textContent?.trim() || '';
+            const pts = cells[cells.length - 1]?.textContent?.trim() || '0';
+            if (pos && name && name !== 'Logo') {
+              data.push({ pos, driver: name, points: pts });
+            }
+          }
+        });
+        return data;
+      };
+
+      // FIA WEC uses accordion sections.
+      const sections = Array.from(doc.querySelectorAll('.accordion-item, .classification-section, .collapsible-section'));
+      
+      sections.forEach(sec => {
+        const title = sec.querySelector('h2, .accordion-header, button')?.textContent?.toLowerCase() || '';
+        const rows = sec.querySelectorAll('tbody tr, table tr:not(:first-child)');
+        
+        if (title.includes('manufacturers') && title.includes('hypercar')) {
+          standings.hypercarMfr = parseTable(rows, 2);
+        } else if (title.includes('hypercar teams')) {
+          standings.hypercarTeams = parseTable(rows, 5);
+        } else if (title.includes('drivers championship') && title.includes('hypercar')) {
+          standings.hypercarDrivers = parseTable(rows, 4);
+        } else if (title.includes('lmgt3 teams')) {
+          standings.lmgt3Teams = parseTable(rows, 5);
+        } else if (title.includes('lmgt3 drivers')) {
+          standings.lmgt3Drivers = parseTable(rows, 4);
+        }
+      });
+
+      // Fallback if no sections found (simple table traversal)
+      if (standings.hypercarMfr.length === 0) {
+        const tables = doc.querySelectorAll('table');
+        if (tables.length > 0) standings.hypercarMfr = parseTable(tables[0].querySelectorAll('tbody tr'), 2);
+        if (tables.length > 1) standings.hypercarTeams = parseTable(tables[1].querySelectorAll('tbody tr'), 5);
+      }
+
+    } catch (e) { console.error('[DataService] WEC standings error:', e); }
+    return standings;
+  },
+
+  // === WEC CALENDAR (Campeones) ===
+  async getWECCalendar(): Promise<WRCCalendarEvent[]> {
+    const calendar: WRCCalendarEvent[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://campeones.com.ar/calendario-mundial-de-resistencia-2022/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table tr');
+      // const today = new Date(); // Not used in the provided snippet
+
+      rows.forEach((row, idx) => {
+        if (idx === 0) return; // Skip header
+        const tds = row.querySelectorAll('td');
+        if (tds.length >= 3) {
+          const dateStr = tds[1]?.textContent?.trim() || '';
+          const raceName = tds[2]?.textContent?.trim() || '';
+          const circuit = tds[3]?.textContent?.trim() || '';
+          
+          if (raceName || circuit) {
+            calendar.push({
+              round: calendar.length + 1,
+              rallyName: raceName || circuit,
+              dates: dateStr,
+              status: 'Upcoming'
+            });
+          }
+        }
+      });
+
+      // Set first Upcoming as Next
+      if (calendar.length > 0) calendar[0].status = 'Next';
+
+    } catch (e) { console.error('[DataService] WEC calendar error:', e); }
+    return calendar;
   },
 
   // === F1 NEWS (AS.com + Motorsport.com) ===
@@ -1323,7 +1492,8 @@ export const dataService = {
           if (first.date.getTime() === last.date.getTime()) {
             dateRange = first.original;
           } else {
-            dateRange = `${first.date.getDate()} ${first.date.toLocaleString('es-ES', {month:'short'})} - ${last.original}`;
+            const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            dateRange = `${first.date.getDate()} ${shortMonths[first.date.getMonth()]} - ${last.date.getDate()} ${shortMonths[last.date.getMonth()]}`;
           }
         }
 
@@ -1631,6 +1801,51 @@ export const dataService = {
       });
     } catch (e) { console.error('[DataService] TCP standings error:', e); }
     return standings;
+  },
+
+  // === TC CALENDAR (Same as TCP) ===
+  async getTCCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://actc.org.ar/tcp/calendario.html');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const elements = doc.querySelectorAll('.info-race');
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const monthsMap: Record<string, number> = {
+        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
+        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+      };
+
+      elements.forEach((el, idx) => {
+        const dateEl = el.querySelector('.date');
+        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
+        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
+        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
+        
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (dayStr && monthYearStr) {
+          const monthMatch = monthYearStr.match(/[a-z]{3}/);
+          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
+            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
+            raceDate.setHours(0, 0, 0, 0);
+            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 5) status = 'Finished';
+            else if (diffDays >= 0) status = 'Live';
+            else status = 'Upcoming';
+          }
+        }
+
+        const hd = el.querySelector('.hd');
+        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
+        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
+        if (winner || status === 'Finished') status = 'Finished';
+
+        calendar.push({ round: idx + 1, race, dates, status, winner });
+      });
+    } catch (e) { console.error('[DataService] TCP calendar error:', e); }
+    return calendar;
   },
 
   // === TCP CALENDAR ===
@@ -2180,7 +2395,10 @@ export const dataService = {
         .replace('https://api.vueltarapida.com/api', '/api/vueltarapida')
         .replace('https://api.vueltarapida.com', '/api/vueltarapida')
         .replace('https://actc.org.ar', '/api/actc')
-        .replace('https://vueltarapida.com', '/api/vueltarapida-html');
+        .replace('https://vueltarapida.com', '/api/vueltarapida-html')
+        .replace('https://www.fiawec.com/en', '/api/wec-api')
+        .replace('https://soymotor.com', '/api/soymotor')
+        .replace('https://campeones.com.ar', '/api/campeones');
 
       if (proxyPath !== targetUrl) {
         const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`);
