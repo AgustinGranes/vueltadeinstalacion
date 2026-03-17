@@ -538,7 +538,14 @@ export const dataService = {
       const html = await this.fetchWithProxy('https://campeones.com.ar/calendario-mundial-de-resistencia-2022/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const rows = doc.querySelectorAll('table tr');
-      // const today = new Date(); // Not used in the provided snippet
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const monthsMap: Record<string, number> = {
+        'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5, 
+        'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11,
+        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+      };
 
       rows.forEach((row, idx) => {
         if (idx === 0) return; // Skip header
@@ -549,18 +556,59 @@ export const dataService = {
           const circuit = tds[3]?.textContent?.trim() || '';
           
           if (raceName || circuit) {
+            let status: WRCCalendarEvent['status'] = 'Upcoming';
+            
+            if (dateStr) {
+              const lowerDate = dateStr.toLowerCase();
+              let monthName = '';
+              let monthIdx = -1;
+              
+              for (const [m, idx] of Object.entries(monthsMap)) {
+                if (lowerDate.includes(m)) {
+                  if (m.length > monthName.length) { // Prefer longer matches like "febrero" over "feb"
+                    monthName = m;
+                    monthIdx = idx;
+                  }
+                }
+              }
+
+              if (monthIdx !== -1) {
+                const dayMatches = lowerDate.match(/\d+/g);
+                if (dayMatches && dayMatches.length > 0) {
+                  const firstDay = parseInt(dayMatches[0]);
+                  const lastDay = parseInt(dayMatches[dayMatches.length - 1]);
+                  
+                  const startDate = new Date(now.getFullYear(), monthIdx, firstDay);
+                  const endDate = new Date(now.getFullYear(), monthIdx, lastDay);
+                  endDate.setHours(23, 59, 59, 999);
+
+                  if (now > endDate) {
+                    status = 'Finished';
+                  } else if (now >= startDate && now <= endDate) {
+                    status = 'Live';
+                  }
+                }
+              }
+            }
+
             calendar.push({
               round: calendar.length + 1,
               rallyName: raceName || circuit,
               dates: dateStr,
-              status: 'Upcoming'
+              status
             });
           }
         }
       });
 
       // Set first Upcoming as Next
-      if (calendar.length > 0) calendar[0].status = 'Next';
+      let foundNext = false;
+      for (const event of calendar) {
+        if (!foundNext && event.status === 'Upcoming') {
+          event.status = 'Next';
+          foundNext = true;
+        }
+      }
 
     } catch (e) { console.error('[DataService] WEC calendar error:', e); }
     return calendar;
