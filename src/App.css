@@ -180,7 +180,7 @@
 .wec-logo {
   height: 32px !important;
   width: auto !important;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
 }
 
 .wec-tabs-scroll {
@@ -566,7 +566,7 @@
 }
 
 .cat-tab {
-  flex: 0 0 auto;
+  flex: 1; /* Make tabs fill the available space */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -578,6 +578,7 @@
   color: var(--text-tertiary);
   transition: all 0.25s;
   white-space: nowrap;
+  min-width: 100px; /* Ensure they have a minimum width before scrolling kicks in */
 }
 
 .cat-tab.active {
