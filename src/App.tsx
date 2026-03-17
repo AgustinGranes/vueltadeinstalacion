@@ -400,7 +400,7 @@ const App = () => {
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} — {item.circuit}</p>
+                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
                             
                             {item.circuitImage && (
                               <div className="weekly-circuit-img-wrap">
@@ -465,7 +465,7 @@ const App = () => {
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} — {item.circuit}</p>
+                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
                             
                             {item.circuitImage && (
                               <div className="weekly-circuit-img-wrap">
