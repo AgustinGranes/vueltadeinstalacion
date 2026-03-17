@@ -1805,47 +1805,7 @@ export const dataService = {
 
   // === TC CALENDAR (Same as TCP) ===
   async getTCCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcp/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 5) status = 'Finished';
-            else if (diffDays >= 0) status = 'Live';
-            else status = 'Upcoming';
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        if (winner || status === 'Finished') status = 'Finished';
-
-        calendar.push({ round: idx + 1, race, dates, status, winner });
-      });
-    } catch (e) { console.error('[DataService] TCP calendar error:', e); }
-    return calendar;
+    return this.getTCPCalendar();
   },
 
   // === TCP CALENDAR ===

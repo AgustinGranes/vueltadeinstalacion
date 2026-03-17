@@ -39,6 +39,7 @@ const App = () => {
   const [tcppkCalendar, setTcppkCalendar] = useState<CalendarRace[]>([]);
   const [tc2000Calendar, setTc2000Calendar] = useState<CalendarRace[]>([]);
   const [indyCalendar, setIndyCalendar] = useState<CalendarRace[]>([]);
+  const [tcCalendar, setTcCalendar] = useState<CalendarRace[]>([]);
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
@@ -104,8 +105,7 @@ const App = () => {
       else if (cat === 'IndyCar') setIndyCalendar(await dataService.getIndyCarCalendar());
       else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
       else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
-      else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
-      // TC uses weekly races only for now
+      else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -285,6 +285,12 @@ const App = () => {
           <span className="cat-label">WRC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card wec-card" onClick={() => handleCategoryClick('WEC')}>
+          <div className="cat-card-glow" />
+          <img src={WEC_LOGO} alt="WEC" className="cat-logo wec-logo" />
+          <span className="cat-label">WEC</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
           <div className="cat-card-glow" />
           <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
@@ -337,12 +343,6 @@ const App = () => {
           <div className="cat-card-glow" />
           <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
           <span className="cat-label">TC2000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card wec-card" onClick={() => handleCategoryClick('WEC')}>
-          <div className="cat-card-glow" />
-          <img src={WEC_LOGO} alt="WEC" className="cat-logo wec-logo" />
-          <span className="cat-label">WEC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -677,7 +677,7 @@ const App = () => {
           </button>
           <button className={`cat-tab ${categorySubTab === 'results' ? 'active' : ''}`} onClick={() => setCategorySubTab('results')}>
             <FileText size={16} />
-            <span>RESULTADOS</span>
+            <span>Resultados</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
             <Calendar size={16} />
@@ -731,21 +731,9 @@ const App = () => {
                     <p className="empty-msg">{isLoading ? 'Cargando calendario WRC...' : 'No se encontró calendario WRC.'}</p>
                   )}
                 </div>
-      ) : isTC ? (
-        <div className="tc-calendar-link-view">
-          <p className="tc-calendar-msg">El calendario oficial se encuentra en constante actualización.</p>
-          <a 
-            href="https://actc.org.ar/tc/index.html" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="tc-calendar-btn"
-          >
-            Consultar calendario oficial <ExternalLink size={16} />
-          </a>
-        </div>
-      ) : isTCP ? (
+      ) : (isTC || isTCP) ? (
         <div className="tcp-calendar-list">
-          {tcpCalendar.length > 0 ? tcpCalendar.map((ev, idx) => (
+          {(isTC ? tcCalendar : tcpCalendar).length > 0 ? (isTC ? tcCalendar : tcpCalendar).map((ev, idx) => (
             <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
               <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
               <div className="race-info-block">
@@ -758,7 +746,7 @@ const App = () => {
               </div>
             </div>
           )) : (
-            <p className="empty-msg">{isLoading ? 'Cargando calendario TCP...' : 'No se encontró calendario TCP.'}</p>
+            <p className="empty-msg">{isLoading ? `Cargando calendario ${isTC ? 'TC' : 'TCP'}...` : `No se encontró calendario ${isTC ? 'TC' : 'TCP'}.`}</p>
           )}
         </div>
       ) : isTCM ? (

@@ -178,8 +178,9 @@
 }
 
 .wec-logo {
-  height: 24px !important;
+  height: 32px !important;
   width: auto !important;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
 }
 
 .wec-tabs-scroll {
@@ -548,26 +549,35 @@
 /* Category sub-tabs */
 .cat-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   background: var(--bg-card);
   border-radius: 14px;
-  padding: 4px;
+  padding: 6px;
   border: 1px solid var(--separator);
   margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cat-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .cat-tab {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 6px;
+  padding: 10px 16px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-tertiary);
   transition: all 0.25s;
+  white-space: nowrap;
 }
 
 .cat-tab.active {
