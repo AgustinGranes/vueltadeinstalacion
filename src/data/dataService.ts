@@ -158,7 +158,6 @@ export type WECStandings = {
   hypercarMfr: TCStandingRow[];
   hypercarTeams: TCStandingRow[];
   hypercarDrivers: TCStandingRow[];
-  lmgt3Teams: TCStandingRow[];
   lmgt3Drivers: TCStandingRow[];
 };
 
@@ -420,42 +419,50 @@ export const dataService = {
     }
   },
 
-  // === WEC NEWS (AS.com + SoyMotor) ===
+  // === WEC NEWS (Motorsport + SoyMotor) ===
   async getWECNews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     
-    // Source 1: AS.com
+    // Source 1: Motorsport.com (Latam)
     try {
-      const html = await this.fetchWithProxy('https://as.com/noticias/wec-campeonato-mundial-resistencia/');
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/wec/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('article.s, article.page-article').forEach(art => {
-        const linkElem = art.querySelector('h2.s__tl a, h2 a');
-        const t = linkElem?.textContent?.trim();
-        const l = linkElem?.getAttribute('href');
-        if (t && l) {
+      doc.querySelectorAll('a.ms-item').forEach(art => {
+        const title = art.querySelector('.ms-item__title')?.textContent?.trim();
+        const link = art.getAttribute('href');
+        const img = art.querySelector('img')?.getAttribute('data-src') || art.querySelector('img')?.getAttribute('src');
+        if (title && link) {
           allNews.push({
-            title: t, summary: '',
-            link: l.startsWith('/') ? `https://as.com${l}` : l,
-            source: 'AS.com',
-            category: 'WEC'
+            title, summary: '',
+            link: link.startsWith('/') ? `https://lat.motorsport.com${link}` : link,
+            source: 'Motorsport.com',
+            category: 'WEC',
+            imageUrl: img || undefined
           });
         }
       });
-    } catch (e) { console.warn('[DataService] AS WEC news error:', e); }
+    } catch (e) { console.warn('[DataService] Motorsport WEC news error:', e); }
 
     // Source 2: SoyMotor
     try {
       const html = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/wec');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a.node-container').forEach(art => {
-        const t = art.querySelector('h2 span')?.textContent?.trim() || art.getAttribute('title')?.trim();
-        const l = art.getAttribute('href');
-        if (t && l) {
+      doc.querySelectorAll('.views-row').forEach(row => {
+        const titleElem = row.querySelector('h2');
+        const linkElem = row.querySelector('a.node-container');
+        const imgElem = row.querySelector('img');
+        
+        const title = titleElem?.textContent?.trim();
+        const link = linkElem?.getAttribute('href');
+        const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
+        
+        if (title && link) {
           allNews.push({
-            title: t, summary: '',
-            link: l.startsWith('/') ? `https://soymotor.com${l}` : l,
+            title, summary: '',
+            link: link.startsWith('/') ? `https://soymotor.com${link}` : link,
             source: 'SoyMotor',
-            category: 'WEC'
+            category: 'WEC',
+            imageUrl: img ? (img.startsWith('http') ? img : `https://soymotor.com${img}`) : undefined
           });
         }
       });
@@ -463,7 +470,7 @@ export const dataService = {
 
     const seen = new Set<string>();
     return allNews.filter(n => {
-      const key = n.title.toLowerCase().slice(0, 30);
+      const key = n.title.toLowerCase().slice(0, 40);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -476,7 +483,6 @@ export const dataService = {
       hypercarMfr: [],
       hypercarTeams: [],
       hypercarDrivers: [],
-      lmgt3Teams: [],
       lmgt3Drivers: []
     };
 
@@ -523,7 +529,6 @@ export const dataService = {
       standings.lmgt3Drivers = parseMotorsportTable(lmgt3Html);
       standings.hypercarMfr = parseMotorsportTable(mfrHtml);
       standings.hypercarTeams = parseMotorsportTable(teamsHtml);
-      standings.lmgt3Teams = [...standings.hypercarTeams]; // Fallback as no specific URL was provided for GT3 teams
 
       // Re-use teams for lmgt3Teams if needed, or just leave as is if not provided specifically
       // (User only provided 4 URLs, so we'll populate those 4 fields)

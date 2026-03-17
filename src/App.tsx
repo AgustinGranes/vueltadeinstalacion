@@ -74,8 +74,8 @@ const App = () => {
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
   const [wecNews, setWecNews] = useState<NewsItem[]>([]);
   const [wecCalendar, setWecCalendar] = useState<WRCCalendarEvent[]>([]);
-  const [wecStandings, setWecStandings] = useState<any>({ hypercarMfr: [], hypercarTeams: [], hypercarDrivers: [], lmgt3Teams: [], lmgt3Drivers: [] });
-  const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-teams' | 'gt3-drivers'>('h-mfr');
+  const [wecStandings, setWecStandings] = useState<any>({ hypercarMfr: [], hypercarTeams: [], hypercarDrivers: [], lmgt3Drivers: [] });
+  const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-drivers'>('h-mfr');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -1142,14 +1142,12 @@ const App = () => {
                       <button className={`nascar-tab-btn ${wecStandingsTab === 'h-mfr' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-mfr')}>Hypercar Mfr</button>
                       <button className={`nascar-tab-btn ${wecStandingsTab === 'h-teams' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-teams')}>Hypercar Teams</button>
                       <button className={`nascar-tab-btn ${wecStandingsTab === 'h-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-drivers')}>Hypercar Drivers</button>
-                      <button className={`nascar-tab-btn ${wecStandingsTab === 'gt3-teams' ? 'active' : ''}`} onClick={() => setWecStandingsTab('gt3-teams')}>LMGT3 Teams</button>
                       <button className={`nascar-tab-btn ${wecStandingsTab === 'gt3-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('gt3-drivers')}>LMGT3 Drivers</button>
                     </div>
                     <div className="standings-list wec-standings">
                       {(wecStandingsTab === 'h-mfr' ? wecStandings.hypercarMfr :
                         wecStandingsTab === 'h-teams' ? wecStandings.hypercarTeams :
                         wecStandingsTab === 'h-drivers' ? wecStandings.hypercarDrivers :
-                        wecStandingsTab === 'gt3-teams' ? wecStandings.lmgt3Teams :
                         wecStandings.lmgt3Drivers).map((d: any, idx: number) => (
                         <div key={idx} className={`stand-row wec-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{d.pos}</span>
@@ -1162,7 +1160,6 @@ const App = () => {
                       {((wecStandingsTab === 'h-mfr' && wecStandings.hypercarMfr.length === 0) ||
                         (wecStandingsTab === 'h-teams' && wecStandings.hypercarTeams.length === 0) ||
                         (wecStandingsTab === 'h-drivers' && wecStandings.hypercarDrivers.length === 0) ||
-                        (wecStandingsTab === 'gt3-teams' && wecStandings.lmgt3Teams.length === 0) ||
                         (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && 
                         <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
