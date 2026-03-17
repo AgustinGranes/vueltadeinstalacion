@@ -605,7 +605,7 @@ export const dataService = {
   async getWRC2News(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://lapeando.com/noticias?categoria=22');
+      const html = await this.fetchWithProxy('/api/lapeando/noticias?categoria=22');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
       // Select news articles
@@ -655,7 +655,7 @@ export const dataService = {
   async getWRC2Standings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
     try {
-      const html = await this.fetchWithProxy('https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=337&seasonId=47');
+      const html = await this.fetchWithProxy('/api/wrc-api/championship-overall-results.json?championshipId=337&seasonId=47');
       const data = JSON.parse(html);
       if (data && data.results) {
         data.results.forEach((r: any) => {
@@ -672,14 +672,16 @@ export const dataService = {
   },
 
   async getWRC2Calendar(): Promise<WRCCalendarEvent[]> {
-    return this.getWRCCalendar();
+    try {
+      return await this.getWRCCalendar();
+    } catch { return []; }
   },
 
   // === WRC3 NEWS (Diario Rally) ===
   async getWRC3News(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('http://www.diariorally.com.ar/info_cat.asp?idcat=1');
+      const html = await this.fetchWithProxy('/api/diariorally/info_cat.asp?idcat=1');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
       const links = doc.querySelectorAll('a[href*="info_nota.asp"]');
@@ -704,7 +706,7 @@ export const dataService = {
   async getWRC3Standings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
     try {
-      const html = await this.fetchWithProxy('https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/championship-overall-results.json?championshipId=344&seasonId=47');
+      const html = await this.fetchWithProxy('/api/wrc-api/championship-overall-results.json?championshipId=344&seasonId=47');
       const data = JSON.parse(html);
       if (data && data.results) {
         data.results.forEach((r: any) => {
@@ -721,7 +723,9 @@ export const dataService = {
   },
 
   async getWRC3Calendar(): Promise<WRCCalendarEvent[]> {
-    return this.getWRCCalendar();
+    try {
+      return await this.getWRCCalendar();
+    } catch { return []; }
   },
 
   // === WRC CALENDAR (Marca.com scraping) ===

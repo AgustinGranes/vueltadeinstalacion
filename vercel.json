@@ -69,6 +69,18 @@
       "destination": "https://carburando.com/$1"
     },
     {
+      "source": "/api/wrc-api/(.*)",
+      "destination": "https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/$1"
+    },
+    {
+      "source": "/api/lapeando/(.*)",
+      "destination": "https://lapeando.com/$1"
+    },
+    {
+      "source": "/api/diariorally/(.*)",
+      "destination": "http://www.diariorally.com.ar/$1"
+    },
+    {
       "source": "/api/wrc/(.*)",
       "destination": "https://www.wrc.com/$1"
     },
