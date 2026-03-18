@@ -173,8 +173,8 @@
 }
 
 .wec-card {
-  background: linear-gradient(135deg, rgba(0, 76, 151, 0.1) 0%, rgba(0, 76, 151, 0.05) 100%);
-  border: 1px solid rgba(0, 76, 151, 0.15);
+  background: linear-gradient(145deg, #002d50 0%, #004c97 50%, #002d50 100%) !important;
+  border-color: rgba(0, 76, 151, 0.4) !important;
 }
 
 .wec-logo {
@@ -224,6 +224,7 @@
 .tc2000-logo {
   height: 65px;
   max-width: 95%;
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .cat-event-category-row {

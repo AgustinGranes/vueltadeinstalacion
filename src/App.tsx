@@ -667,25 +667,25 @@ const App = () => {
           <button className="back-btn" onClick={() => setView('main')}>
             <ArrowLeft size={22} />
           </button>
-          <img src={logo} alt={selectedCategory} className={`cat-header-logo ${isWRC ? 'wrc-logo' : ''} ${isTC ? 'tc-logo' : ''} ${isTCP ? 'tcp-logo' : ''} ${isTCM ? 'tcm-logo' : ''} ${isTCPM ? 'tcpm-logo' : ''} ${isTCPK ? 'tcpk-logo' : ''} ${isTCPPK ? 'tcppk-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} />
+          <img 
+            src={logo} 
+            alt={selectedCategory} 
+            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''}`} 
+          />
           <h2 className="cat-header-title">{catTitle}</h2>
         </header>
 
         <div className="cat-tabs">
           <button className={`cat-tab ${categorySubTab === 'standings' ? 'active' : ''}`} onClick={() => setCategorySubTab('standings')}>
-            <Trophy size={16} />
             <span>Posiciones</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'results' ? 'active' : ''}`} onClick={() => setCategorySubTab('results')}>
-            <FileText size={16} />
             <span>Resultados</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
-            <Calendar size={16} />
             <span>Calendario</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'news' ? 'active' : ''}`} onClick={() => setCategorySubTab('news')}>
-            <Newspaper size={16} />
             <span>Noticias</span>
           </button>
         </div>

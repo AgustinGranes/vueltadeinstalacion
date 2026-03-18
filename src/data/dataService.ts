@@ -490,39 +490,45 @@ export const dataService = {
       const rows: TCStandingRow[] = [];
       if (!html) return rows;
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const trs = doc.querySelectorAll('table.ms-table tbody tr.ms-table-row');
+      // Using the precise row class observed
+      const trs = doc.querySelectorAll('tr.ms-table_row');
       
       trs.forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        if (cells.length >= 3) {
-          const pos = cells[0].textContent?.trim() || '';
-          
-          // Driver/Team/Mfg Name logic
-          const nameContainer = cells[1];
-          let name = '';
-          const infoWrapperName = nameContainer.querySelector('.info-wrapper .name');
-          if (infoWrapperName) {
-            name = infoWrapperName.textContent?.trim() || '';
-          } else {
-            name = nameContainer.textContent?.trim() || '';
-          }
+        const posEl = tr.querySelector('.ms-table_field--pos');
+        const pointsEl = tr.querySelector('.ms-table_field--total_points');
+        
+        let name = '';
+        // Try different name selectors based on category
+        const driverNameEl = tr.querySelector('.ms-table_field--driver .name-short');
+        const teamNameEl = tr.querySelector('.ms-table_field--team .name');
+        const constructorNameEl = tr.querySelector('.ms-table_field--result_constructor');
+        
+        if (driverNameEl) name = driverNameEl.textContent?.trim() || '';
+        else if (teamNameEl) name = teamNameEl.textContent?.trim() || '';
+        else if (constructorNameEl) name = constructorNameEl.textContent?.trim() || '';
+        else {
+          // Fallback to name-short class anywhere or second cell
+          name = tr.querySelector('.name-short, .name')?.textContent?.trim() || 
+                 tr.querySelectorAll('td')[1]?.textContent?.trim() || '';
+        }
 
-          const pts = cells[2].textContent?.trim() || '0';
-          
-          if (pos && name && !isNaN(parseInt(pos))) {
-            rows.push({ pos, driver: name, points: pts });
-          }
+        const pos = posEl?.textContent?.trim() || '';
+        const pts = pointsEl?.textContent?.trim() || '0';
+        
+        if (pos && name && !isNaN(parseInt(pos))) {
+          rows.push({ pos, driver: name, points: pts });
         }
       });
       return rows;
     };
 
     try {
+      // Using stable 2025 URLs to ensure distinct data categories (2026 redirects to default page).
       const [driversHtml, lmgt3Html, mfrHtml, teamsHtml] = await Promise.all([
-        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Driver&class='),
-        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Driver&class=LMGT3'),
-        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Manufacturers&class=HYPERCAR'),
-        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2026/?type=Team&class=HYPERCAR')
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2025/?type=Driver&class='),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2025/?type=Driver&class=LMGT3'),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2025/?type=Manufacturers&class=HYPERCAR'),
+        this.fetchWithProxy('https://es.motorsport.com/wec/standings/2025/?type=Team&class=HYPERCAR')
       ]);
 
       standings.hypercarDrivers = parseMotorsportTable(driversHtml);
@@ -1131,7 +1137,7 @@ export const dataService = {
     const standings: TCStandingRow[] = [];
     console.log('[DataService] Fetching TC standings (Live)...');
     try {
-      const html = await this.fetchWithProxy('https://tiempos.actc.org.ar/campeonato-de-tc/campeonato');
+      const html = await this.fetchWithProxy('https://tiempos.actc.org.ar/campeonato-tc/campeonato');
       console.log(`[DataService] Loaded ${html.length} chars from ACTC Tiempos`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
@@ -1169,6 +1175,69 @@ export const dataService = {
     }
     console.log(`[DataService] Final TC standings list: ${standings.length} drivers.`);
     return standings;
+  },
+
+  // === TC CALENDAR ===
+  async getTCCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://actc.org.ar/tc/calendario.html');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // Use the same logic as TCPK but for TC
+      const elements = doc.querySelectorAll('.info-race');
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+
+      const monthsMap: Record<string, number> = {
+        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
+        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+      };
+
+      elements.forEach((el, idx) => {
+        const dateEl = el.querySelector('.date');
+        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
+        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
+        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
+        
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (dayStr && monthYearStr) {
+          const monthMatch = monthYearStr.match(/[a-z]{3}/);
+          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
+            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
+            raceDate.setHours(0, 0, 0, 0);
+            
+            const diffTime = now.getTime() - raceDate.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays >= 5) {
+              status = 'Finished';
+            } else if (diffDays >= 0) {
+              status = 'Live';
+            } else {
+              status = 'Upcoming';
+            }
+          }
+        }
+
+        const hd = el.querySelector('.hd');
+        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
+        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
+        
+        if (winner || status === 'Finished') {
+          status = 'Finished';
+        }
+
+        calendar.push({
+          round: idx + 1,
+          race: race,
+          dates: dates,
+          status: status,
+          winner: winner
+        });
+      });
+    } catch (e) { console.error('[DataService] TC calendar error:', e); }
+    return calendar;
   },
 
   // === TCPK NEWS ===
@@ -1858,11 +1927,6 @@ export const dataService = {
     return standings;
   },
 
-  // === TC CALENDAR (Same as TCP) ===
-  async getTCCalendar(): Promise<CalendarRace[]> {
-    return this.getTCPCalendar();
-  },
-
   // === TCP CALENDAR ===
   async getTCPCalendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
@@ -2365,8 +2429,8 @@ export const dataService = {
       const res = await fetch(serverlessUrl);
       if (res.ok) {
         const text = await res.text();
-        // Check if we got an error page instead of data (common with 403 redirects)
-        if (text && text.length > 20 && !text.includes('<title>403') && !text.includes('Forbidden')) {
+        // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
+        if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {
           return text;
         }
       }
