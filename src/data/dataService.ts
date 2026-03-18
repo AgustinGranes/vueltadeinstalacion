@@ -1177,14 +1177,12 @@ export const dataService = {
     return standings;
   },
 
-  // === TC CALENDAR ===
-  async getTCCalendar(): Promise<CalendarRace[]> {
+  // === UNIFIED ACTC CALENDAR HELPER ===
+  async _getACTCCalendar(categorySlug: string): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tc/calendario.html');
+      const html = await this.fetchWithProxy(`https://actc.org.ar/${categorySlug}/calendario.html`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      // Use the same logic as TCPK but for TC
       const elements = doc.querySelectorAll('.info-race');
       const now = new Date();
       now.setHours(0, 0, 0, 0);
@@ -1206,39 +1204,27 @@ export const dataService = {
           if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
             const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
             raceDate.setHours(0, 0, 0, 0);
-            
-            const diffTime = now.getTime() - raceDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays >= 5) {
-              status = 'Finished';
-            } else if (diffDays >= 0) {
-              status = 'Live';
-            } else {
-              status = 'Upcoming';
-            }
+            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 5) status = 'Finished';
+            else if (diffDays >= 0) status = 'Live';
+            else status = 'Upcoming';
           }
         }
 
         const hd = el.querySelector('.hd');
-        // Prioritize h2 for race name as it's the location
         const race = hd?.querySelector('h2')?.textContent?.trim() || hd?.querySelector('p')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        
-        if (winner || status === 'Finished') {
-          status = 'Finished';
-        }
+        const winner = el.querySelector('.winner, .winner .name, .ganador')?.textContent?.trim() || '';
+        if (winner || status === 'Finished') status = 'Finished';
 
-        calendar.push({
-          round: idx + 1,
-          race: race,
-          dates: dates,
-          status: status,
-          winner: winner
-        });
+        calendar.push({ round: idx + 1, race, dates, status, winner });
       });
-    } catch (e) { console.error('[DataService] TC calendar error:', e); }
+    } catch (e) { console.error(`[DataService] ACTC ${categorySlug} calendar error:`, e); }
     return calendar;
+  },
+
+  // === TC CALENDAR ===
+  async getTCCalendar(): Promise<CalendarRace[]> {
+    return this._getACTCCalendar('tc');
   },
 
   // === TCPK NEWS ===
@@ -1311,65 +1297,7 @@ export const dataService = {
 
   // === TCPK CALENDAR ===
   async getTCPKCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcpk/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            
-            const diffTime = now.getTime() - raceDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays >= 5) {
-              status = 'Finished';
-            } else if (diffDays >= 0) {
-              status = 'Live';
-            } else {
-              status = 'Upcoming';
-            }
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        
-        // If there's a winner, it's definitely finished
-        if (winner || status === 'Finished') {
-          status = 'Finished';
-        }
-
-        calendar.push({
-          round: idx + 1,
-          race: race,
-          dates: dates,
-          status: status,
-          winner: winner
-        });
-      });
-    } catch (e) { console.error('[DataService] TCPK calendar error:', e); }
-    return calendar;
+    return this._getACTCCalendar('tcpk');
   },
 
   // === INDYCAR NEWS ===
@@ -1930,47 +1858,7 @@ export const dataService = {
 
   // === TCP CALENDAR ===
   async getTCPCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcp/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 5) status = 'Finished';
-            else if (diffDays >= 0) status = 'Live';
-            else status = 'Upcoming';
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        if (winner || status === 'Finished') status = 'Finished';
-
-        calendar.push({ round: idx + 1, race, dates, status, winner });
-      });
-    } catch (e) { console.error('[DataService] TCP calendar error:', e); }
-    return calendar;
+    return this._getACTCCalendar('tcp');
   },
 
   // === TCM NEWS ===
@@ -2024,47 +1912,7 @@ export const dataService = {
 
   // === TCM CALENDAR ===
   async getTCMCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcm/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 5) status = 'Finished';
-            else if (diffDays >= 0) status = 'Live';
-            else status = 'Upcoming';
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        if (winner || status === 'Finished') status = 'Finished';
-
-        calendar.push({ round: idx + 1, race, dates, status, winner });
-      });
-    } catch (e) { console.error('[DataService] TCM calendar error:', e); }
-    return calendar;
+    return this._getACTCCalendar('tcm');
   },
 
   // === TCPM NEWS ===
@@ -2118,47 +1966,7 @@ export const dataService = {
 
   // === TCPM CALENDAR ===
   async getTCPMCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcpm/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 5) status = 'Finished';
-            else if (diffDays >= 0) status = 'Live';
-            else status = 'Upcoming';
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        if (winner || status === 'Finished') status = 'Finished';
-
-        calendar.push({ round: idx + 1, race, dates, status, winner });
-      });
-    } catch (e) { console.error('[DataService] TCPM calendar error:', e); }
-    return calendar;
+    return this._getACTCCalendar('tcpm');
   },
 
   // === TCPPK NEWS ===
@@ -2212,47 +2020,7 @@ export const dataService = {
 
   // === TCPPK CALENDAR ===
   async getTCPPKCalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    try {
-      const html = await this.fetchWithProxy('https://actc.org.ar/tcppk/calendario.html');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const elements = doc.querySelectorAll('.info-race');
-      const now = new Date();
-      now.setHours(0, 0, 0, 0);
-
-      const monthsMap: Record<string, number> = {
-        'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
-        'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-      };
-
-      elements.forEach((el, idx) => {
-        const dateEl = el.querySelector('.date');
-        const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
-        const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
-        const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
-        
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (dayStr && monthYearStr) {
-          const monthMatch = monthYearStr.match(/[a-z]{3}/);
-          if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
-            const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
-            raceDate.setHours(0, 0, 0, 0);
-            const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 5) status = 'Finished';
-            else if (diffDays >= 0) status = 'Live';
-            else status = 'Upcoming';
-          }
-        }
-
-        const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
-        const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
-        if (winner || status === 'Finished') status = 'Finished';
-
-        calendar.push({ round: idx + 1, race, dates, status, winner });
-      });
-    } catch (e) { console.error('[DataService] TCPPK calendar error:', e); }
-    return calendar;
+    return this._getACTCCalendar('tcppk');
   },
 
   // === TC2000 ===
