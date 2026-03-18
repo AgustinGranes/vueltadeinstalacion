@@ -1221,7 +1221,8 @@ export const dataService = {
         }
 
         const hd = el.querySelector('.hd');
-        const race = hd?.querySelector('p')?.textContent?.trim() || hd?.querySelector('h2')?.textContent?.trim() || 'A confirmar';
+        // Prioritize h2 for race name as it's the location
+        const race = hd?.querySelector('h2')?.textContent?.trim() || hd?.querySelector('p')?.textContent?.trim() || 'A confirmar';
         const winner = el.querySelector('.winner, .ganador')?.textContent?.trim() || '';
         
         if (winner || status === 'Finished') {

@@ -178,7 +178,7 @@
 }
 
 .wec-logo {
-  height: 40px !important; /* Increased size */
+  height: 60px !important; /* Much larger */
   width: auto !important;
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
@@ -1435,9 +1435,14 @@
 }
 
 .indycar-logo {
-  height: 40px !important;
+  height: 60px !important;
   max-width: 85%;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+}
+
+.wrc-logo {
+  height: 60px !important;
+  max-width: 85%;
 }
 
 .indy-stand-row {
@@ -1471,7 +1476,7 @@
 }
 
 .nascar-logo {
-  height: 35px !important;
+  height: 60px !important;
   max-width: 90%;
   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.2));
 }
