@@ -246,6 +246,7 @@ export const dataService = {
           let circuitImage = r.circuitImage || '';
           const possibleIds = [r.circuit?._id, r.circuitId, r._id].filter(Boolean);
           
+          if (!circuitImage && possibleIds.length > 0) {
             for (const cid of possibleIds) {                // Use absolute URL to force proxy and avoid CORS
                 const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
                 if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
@@ -257,6 +258,7 @@ export const dataService = {
                   }
                 }
             }
+          }
 
           let circuitName = r.circuit || '';
           if (!circuitName && r.circuitId) {
@@ -2146,72 +2148,90 @@ export const dataService = {
   },
 
   async fetchWithProxy(targetUrl: string): Promise<string> {
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const cleanUrl = targetUrl.trim();
     const cacheBuster = `t=${Date.now()}`;
-
-    // 1. LOCAL DEVELOPMENT: Use Vite proxy paths
-    if (isLocal) {
-      let localUrl = cleanUrl;
-      // Convert absolute URLs back to local proxy paths for known APIs
-      if (localUrl.startsWith('https://api.vueltarapida.com/api')) {
-        localUrl = localUrl.replace('https://api.vueltarapida.com/api', '/api/vueltarapida');
-      } else if (localUrl.startsWith('https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard')) {
-        localUrl = '/api/espn-json/apis/site/v2/sports/racing/f1/scoreboard';
-      } else if (localUrl.startsWith('https://site.api.espn.com/apis/v2/sports/racing/f1/standings')) {
-        localUrl = '/api/espn-json/apis/v2/sports/racing/f1/standings';
-      } else if (localUrl.startsWith('https://as.com/motor/formula_1/')) {
-        localUrl = '/api/as/motor/formula_1/';
-      } else if (localUrl.startsWith('https://lat.motorsport.com/f1/news/')) {
-        localUrl = '/api/motorsport/f1/news/';
-      }
-
-      if (localUrl.startsWith('/')) {
-        try {
-          const res = await fetch(localUrl);
-          if (res.ok) return await res.text();
-        } catch (e) { /* fallback to proxy */ }
-      }
-    }
-
-    // 2. PRODUCTION (VERCEL) / FALLBACK: Use Serverless Proxy for absolute URLs
-    if (!cleanUrl.startsWith('/')) {
+    // 1. Target URL processing
+    // 1. Local/Internal
+    if (targetUrl.startsWith('/')) {
       try {
-        const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
-        const res = await fetch(serverlessUrl);
+        const res = await fetch(targetUrl);
         if (res.ok) return await res.text();
-      } catch (e) {
-        console.warn('Primary proxy failed');
-      }
+        return '';
+      } catch (e) { return ''; }
     }
 
-    // 3. LEGACY FALLBACK: Direct fetch with public proxy fallback
-    try {
-      const res = await fetch(cleanUrl);
-      if (res.ok) return await res.text();
-    } catch (e) {}
+    const cleanUrl = targetUrl.includes('?') ? `${targetUrl}&${cacheBuster}` : `${targetUrl}?${cacheBuster}`;
 
-    // Public CORS Proxies
+    // 2. PRIMARY: Our Serverless Proxy (bypass CORS & 403)
+    try {
+      const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
+      const res = await fetch(serverlessUrl);
+      if (res.ok) {
+        const text = await res.text();
+        // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
+        if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {
+          return text;
+        }
+      }
+      console.warn(`[DataService] Serverless proxy failed or returned 403 for ${targetUrl}`);
+    } catch (e) {
+      console.warn(`[DataService] Serverless proxy exception:`, e);
+    }
+
+    // 3. FALLBACK: Public CORS Proxies with different IPs
     const publicProxies = [
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
-      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
     ];
 
     for (const proxyFn of publicProxies) {
       try {
-        const proxyUrl = proxyFn(cleanUrl);
-        const res = await fetch(proxyUrl);
+        const proxyUrl = proxyFn(targetUrl);
+        const res = await fetch(proxyUrl); 
         if (!res.ok) continue;
-        const text = await res.text();
+
         if (proxyUrl.includes('allorigins')) {
-          const data = JSON.parse(text);
-          return data.contents;
+          const data = await res.json();
+          if (data && data.contents) return data.contents;
+          continue;
         }
-        return text;
+        
+        const text = await res.text();
+        if (text && text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
+          return text;
+        }
       } catch (e) {}
     }
 
-    throw new Error('All proxy methods failed');
+    // 4. LAST STAND: Legacy Rewrites
+    try {
+      let proxyPath = targetUrl
+        .replace('https://tc2000.com.ar', '/api/tc2000')
+        .replace('https://carburando.com', '/api/carburando')
+        .replace('https://www.wrc.com', '/api/wrc')
+        .replace('https://api.vueltarapida.com/api', '/api/vueltarapida')
+        .replace('https://api.vueltarapida.com', '/api/vueltarapida')
+        .replace('https://actc.org.ar', '/api/actc')
+        .replace('https://vueltarapida.com', '/api/vueltarapida-html')
+        .replace('https://www.fiawec.com/en', '/api/wec-api')
+        .replace('https://soymotor.com', '/api/soymotor')
+        .replace('https://campeones.com.ar', '/api/campeones');
+
+        if (proxyPath !== targetUrl) {
+        // MUST include Referer and User-Agent to bypass upstream validation (F-1738884619)
+        const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Referer': 'https://vueltarapida.com/',
+            'Origin': 'https://vueltadeinstalacion.vercel.app'
+          }
+        });
+        if (res.ok) return await res.text();
+      }
+    } catch (e) {}
+
+    throw new Error('All proxy methods failed to bypass 403/CORS');
   },
   
   CATEGORY_RESULTS_URLS,
