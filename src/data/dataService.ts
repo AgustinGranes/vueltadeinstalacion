@@ -257,7 +257,6 @@ export const dataService = {
                   }
                 }
             }
-          }
 
           let circuitName = r.circuit || '';
           if (!circuitName && r.circuitId) {
