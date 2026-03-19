@@ -15,58 +15,56 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(10, 10, 10, 0.8);
+  background: rgba(26, 26, 26, 0.8);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--separator);
 }
 
-.header-top {
+.header-centered-logo {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
-.app-title {
-  font-size: 26px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.app-header-logo-centered {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
 }
 
 .refresh-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--separator);
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  transition: all 0.2s;
-}
-
-.refresh-btn:active {
-  background: var(--bg-card-hover);
-}
-
-.spinning {
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  display: none;
 }
 
 /* =============== CONTENT =============== */
 .content-area {
   flex: 1;
-  padding: 20px 16px 100px;
+  padding: 10px 16px 100px;
+  position: relative;
+}
+
+.pull-to-refresh-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+  color: var(--accent);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* =============== HOME VIEW =============== */
@@ -89,7 +87,7 @@
 
 .home-subtitle {
   font-size: 15px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   font-weight: 500;
   margin-top: -16px;
 }
@@ -129,6 +127,80 @@
   border-color: rgba(0, 102, 204, 0.2);
 }
 
+.tc-card {
+  background: linear-gradient(145deg, #1a1a1a 0%, #333333 50%, #1a1a1a 100%);
+  border-color: rgba(255, 255, 0, 0.2);
+}
+
+.tcp-card {
+  background: linear-gradient(145deg, #0f0f0f 0%, #2a2a2a 50%, #0f0f0f 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tcm-card {
+  background: linear-gradient(145deg, #200a0a 0%, #401010 50%, #200a0a 100%);
+  border-color: rgba(204, 0, 0, 0.2);
+}
+
+.tcpm-card {
+  background: linear-gradient(145deg, #2a0a0a 0%, #501515 50%, #2a0a0a 100%);
+  border-color: rgba(153, 0, 0, 0.2);
+}
+
+.tcpk-card {
+  background: linear-gradient(145deg, #0a1a0f 0%, #103015 50%, #0a1a0f 100%);
+  border-color: rgba(0, 204, 102, 0.2);
+}
+
+.tcppk-card {
+  background: linear-gradient(145deg, #051a0a 0%, #0d3a15 50%, #051a0a 100%);
+  border-color: rgba(0, 102, 51, 0.2);
+}
+
+.indycar-card {
+  background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+  border-color: rgba(0, 161, 222, 0.2);
+}
+
+.nascar-card {
+  background: linear-gradient(145deg, #1a1a0a 0%, #333110 50%, #1a1a0a 100%);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+.tc2000-card {
+  background: linear-gradient(135deg, rgba(224, 32, 32, 0.1) 0%, rgba(224, 32, 32, 0.05) 100%);
+  border: 1px solid rgba(224, 32, 32, 0.15);
+}
+
+.wec-card {
+  background: linear-gradient(145deg, #002d50 0%, #004c97 50%, #002d50 100%) !important;
+  border-color: rgba(0, 76, 151, 0.4) !important;
+}
+
+.wec-logo {
+  height: 60px !important; /* Much larger */
+  width: auto !important;
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
+}
+
+.wec-tabs-scroll {
+  overflow-x: auto;
+  display: flex;
+  gap: 12px;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.wec-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.wec-tabs-scroll .nascar-tab-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .cat-card-glow {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -147,6 +219,12 @@
 .wrc-logo {
   height: 80px; /* Much bigger specifically for WRC */
   max-width: 100%;
+}
+
+.tc2000-logo {
+  height: 65px;
+  max-width: 95%;
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .cat-event-category-row {
@@ -472,26 +550,36 @@
 /* Category sub-tabs */
 .cat-tabs {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   background: var(--bg-card);
   border-radius: 14px;
-  padding: 4px;
+  padding: 6px;
   border: 1px solid var(--separator);
   margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cat-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .cat-tab {
-  flex: 1;
+  flex: 1; /* Make tabs fill the available space */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 6px;
+  padding: 10px 16px;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-tertiary);
   transition: all 0.25s;
+  white-space: nowrap;
+  min-width: 100px; /* Ensure they have a minimum width before scrolling kicks in */
 }
 
 .cat-tab.active {
@@ -570,6 +658,8 @@
 .f1-stand-row { border-left-color: #e10600; }
 .wrc-stand-row { border-left-color: #ffd200; }
 .tc-stand-row { border-left-color: #005599; }
+.tc2000-stand-row { border-left-color: #e02020; }
+.wec-stand-row { border-left-color: #004C97; }
 
 /* Podium Highlights */
 .stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
@@ -586,8 +676,6 @@
   gap: 10px;
 }
 
-.wrc-calendar-list { display: flex; flex-direction: column; gap: 6px; }
-
 .race-row {
   display: flex;
   align-items: center;
@@ -597,10 +685,17 @@
   border-radius: 14px;
   border: 1px solid var(--separator);
   transition: all 0.15s;
+  margin-bottom: 8px; /* Added separation */
 }
 
-.race-row.live { border-color: rgba(255, 69, 58, 0.4); background: rgba(255, 69, 58, 0.06); }
-.race-row.next { border-color: rgba(10, 132, 255, 0.4); background: rgba(10, 132, 255, 0.06); }
+.tcp-calendar-list, .tcpk-calendar-list, .indy-calendar-list, .nascar-calendar-list, .wrc-calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Increased consistent gap */
+  padding: 4px 0;
+}
+
+
 
 .race-round-num {
   width: 32px;
@@ -617,7 +712,7 @@
 }
 
 .race-round-num.finished { background: rgba(48, 209, 88, 0.12); color: var(--accent-green); }
-.race-round-num.next { background: var(--accent-blue); color: white; }
+.race-round-num.next { background: var(--bg-elevated); color: var(--text-tertiary); }
 .race-round-num.live { background: var(--accent-red); color: white; }
 
 .race-info-block { flex: 1; display: flex; flex-direction: column; gap: 2px; }
@@ -640,7 +735,7 @@
   animation: pulse-glow 2s infinite;
 }
 
-.race-status-badge.next { background: rgba(10, 132, 255, 0.15); color: var(--accent-blue); }
+.race-status-badge.next { background: var(--bg-elevated); color: var(--text-secondary); }
 
 /* =============== WEEKLY CALENDAR SECTIONS =============== */
 .weekly-list { 
@@ -754,11 +849,39 @@
   margin-bottom: 8px;
 }
 
-.loading-logo {
-  height: 44px;
-  width: auto;
+.loading-logo-exclusive {
+  width: 200px;
+  height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.2));
+}
+
+/* Pull to Refresh */
+.pull-to-refresh-container {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pull-to-refresh-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+  width: 100%;
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.white-logo {
+  filter: brightness(0) invert(1) !important;
 }
 
 .loading-logo.f1 { height: 34px; }
@@ -1312,9 +1435,14 @@
 }
 
 .indycar-logo {
-  height: 40px !important;
+  height: 60px !important;
   max-width: 85%;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+}
+
+.wrc-logo {
+  height: 60px !important;
+  max-width: 85%;
 }
 
 .indy-stand-row {
@@ -1348,7 +1476,7 @@
 }
 
 .nascar-logo {
-  height: 35px !important;
+  height: 60px !important;
   max-width: 90%;
   filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.2));
 }
@@ -1385,6 +1513,12 @@
   color: #fff;
 }
 
+.wrc-tabs .nascar-tab-btn.active {
+  background: #0066CC;
+  border-color: #0066CC;
+  color: #fff;
+}
+
 .nascar-stand-row {
   border-left: 3px solid #FFD659 !important;
 }
@@ -1393,4 +1527,73 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* =============== TC MESSAGES / RESULTS =============== */
+.results-box {
+  margin-top: 10px;
+}
+
+.tc-calendar-message {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 0, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tc-msg-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tc-msg-btn {
+  background: var(--accent-yellow);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 14px;
+  transition: transform 0.2s;
+  align-self: center;
+}
+
+.tc-msg-btn:active {
+  transform: scale(0.96);
+}
+
+/* =============== LOADING CIRCLE =============== */
+.loading-circle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  width: 100%;
+}
+
+.loading-circle {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+.loading-circle-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

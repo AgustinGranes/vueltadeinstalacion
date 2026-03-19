@@ -2,28 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
-import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandingRow, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
+import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'TC' | 'TCPK' | 'IndyCar' | 'NASCAR';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
-type CategorySubTab = 'calendar' | 'standings' | 'news';
+type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
 const WRC_LOGO = '/WRC.png';
 const F1_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg';
 const TC_LOGO = '/TC.png';
+const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
 const INDYCAR_LOGO = '/INDYCAR.png';
+const WEC_LOGO = '/WEC.png';
 
-const ALL_LOGOS = [
-  { name: 'F1', url: 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg', class: 'f1' },
-  { name: 'WRC', url: '/WRC.png', class: 'wrc' },
-  { name: 'TC', url: '/TC.png', class: 'tc' },
-  { name: 'TCPK', url: '/TCPK.png', class: 'tcpk' },
-  { name: 'IndyCar', url: '/INDYCAR.png', class: 'indycar' },
-  { name: 'NASCAR', url: '/NASCAR.png', class: 'nascar' },
-];
+
 
 const App = () => {
   // Navigation
@@ -37,85 +32,237 @@ const App = () => {
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
   const [f1Calendar, setF1Calendar] = useState<CalendarRace[]>([]);
   const [wrcCalendar, setWrcCalendar] = useState<WRCCalendarEvent[]>([]);
+  const [tcpCalendar, setTcpCalendar] = useState<CalendarRace[]>([]);
+  const [tcmCalendar, setTcmCalendar] = useState<CalendarRace[]>([]);
+  const [tcpmCalendar, setTcpmCalendar] = useState<CalendarRace[]>([]);
   const [tcpkCalendar, setTcpkCalendar] = useState<CalendarRace[]>([]);
+  const [tcppkCalendar, setTcppkCalendar] = useState<CalendarRace[]>([]);
+  const [tc2000Calendar, setTc2000Calendar] = useState<CalendarRace[]>([]);
   const [indyCalendar, setIndyCalendar] = useState<CalendarRace[]>([]);
+  const [tcCalendar, setTcCalendar] = useState<CalendarRace[]>([]);
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
-  const [wrcDrivers, setWrcDrivers] = useState<WRCStandingRow[]>([]);
+  const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
+  const [wrcStandings, setWrcStandings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
   const [tcDrivers, setTcDrivers] = useState<TCStandingRow[]>([]);
+  const [tcpDrivers, setTcpDrivers] = useState<TCStandingRow[]>([]);
+  const [tcmDrivers, setTcmDrivers] = useState<TCStandingRow[]>([]);
+  const [tcpmDrivers, setTcpmDrivers] = useState<TCStandingRow[]>([]);
   const [tcpkDrivers, setTcpkDrivers] = useState<TCStandingRow[]>([]);
+  const [tcppkDrivers, setTcppkDrivers] = useState<TCStandingRow[]>([]);
+  const [tc2000Drivers, setTc2000Drivers] = useState<TCStandingRow[]>([]);
+  const [tc2000Teams, setTc2000Teams] = useState<TCStandingRow[]>([]);
+  const [tc2000Brands, setTc2000Brands] = useState<TCStandingRow[]>([]);
   const [indyDrivers, setIndyDrivers] = useState<TCStandingRow[]>([]);
 
   const [f1StandingsTab, setF1StandingsTab] = useState<'drivers' | 'constructors'>('drivers');
   const [f1News, setF1News] = useState<NewsItem[]>([]);
   const [wrcNews, setWrcNews] = useState<NewsItem[]>([]);
   const [tcNews, setTcNews] = useState<NewsItem[]>([]);
+  const [tcpNews, setTcpNews] = useState<NewsItem[]>([]);
+  const [tcmNews, setTcmNews] = useState<NewsItem[]>([]);
+  const [tcpmNews, setTcpmNews] = useState<NewsItem[]>([]);
   const [tcpkNews, setTcpkNews] = useState<NewsItem[]>([]);
+  const [tcppkNews, setTcppkNews] = useState<NewsItem[]>([]);
+  const [tc2000News, setTc2000News] = useState<NewsItem[]>([]);
+  const [tc2000StandingsTab, setTc2000StandingsTab] = useState<'drivers' | 'teams' | 'brands'>('drivers');
   const [nascarCalendar, setNascarCalendar] = useState<CalendarRace[]>([]);
   const [nascarStandings, setNascarStandings] = useState<NascarStandings>({ drivers: [], owners: [], manufacturers: [] });
   const [nascarStandingsTab, setNascarStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
   const [nascarNews, setNascarNews] = useState<NewsItem[]>([]);
   const [indyNews, setIndyNews] = useState<NewsItem[]>([]);
+  const [wecNews, setWecNews] = useState<NewsItem[]>([]);
+  const [wecCalendar, setWecCalendar] = useState<WRCCalendarEvent[]>([]);
+  const [wecStandings, setWecStandings] = useState<any>({ hypercarMfr: [], hypercarTeams: [], hypercarDrivers: [], lmgt3Drivers: [] });
+  const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-drivers'>('h-mfr');
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isCatCalLoading, setIsCatCalLoading] = useState(false);
+  const [isCatStandLoading, setIsCatStandLoading] = useState(false);
+  const [isCatNewsLoading, setIsCatNewsLoading] = useState(false);
+  const [isHomeLoading, setIsHomeLoading] = useState(false);
+  const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished'>('upcoming');
-  const [loadingLogo] = useState(() => ALL_LOGOS[Math.floor(Math.random() * ALL_LOGOS.length)]);
+  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
+
+
+  const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-calendar`;
+    if (loadedData.has(key)) return;
+    setIsCatCalLoading(true);
+    try {
+      if (cat === 'F1') setF1Calendar(await dataService.getF1Calendar());
+      else if (cat === 'WRC') setWrcCalendar(await dataService.getWRCCalendar());
+      else if (cat === 'TCP') setTcpCalendar(await dataService.getTCPCalendar());
+      else if (cat === 'TCM') setTcmCalendar(await dataService.getTCMCalendar());
+      else if (cat === 'TCPM') setTcpmCalendar(await dataService.getTCPMCalendar());
+      else if (cat === 'TCPK') setTcpkCalendar(await dataService.getTCPKCalendar());
+      else if (cat === 'TCPPK') setTcppkCalendar(await dataService.getTCPPKCalendar());
+      else if (cat === 'IndyCar') setIndyCalendar(await dataService.getIndyCarCalendar());
+      else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
+      else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
+      else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
+      else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
+    finally { setIsCatCalLoading(false); }
+  }, [loadedData]);
+
+  const fetchCategoryStandings = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-standings`;
+    if (loadedData.has(key)) return;
+    setIsCatStandLoading(true);
+    try {
+      if (cat === 'F1') {
+        const res = await dataService.getF1StandingsFull();
+        setF1Drivers(res.drivers);
+        setF1Constructor(res.constructors);
+      } else if (cat === 'WRC') {
+        setWrcStandings(await dataService.getWRCStandings());
+      } else if (cat === 'TC') setTcDrivers(await dataService.getTCStandings());
+      else if (cat === 'TCP') setTcpDrivers(await dataService.getTCPStandings());
+      else if (cat === 'TCM') setTcmDrivers(await dataService.getTCMStandings());
+      else if (cat === 'TCPM') setTcpmDrivers(await dataService.getTCPMStandings());
+      else if (cat === 'TCPK') setTcpkDrivers(await dataService.getTCPKStandings());
+      else if (cat === 'TCPPK') setTcppkDrivers(await dataService.getTCPPKStandings());
+      else if (cat === 'IndyCar') setIndyDrivers(await dataService.getIndyCarStandings());
+      else if (cat === 'NASCAR') setNascarStandings(await dataService.getNascarStandings());
+      else if (cat === 'TC2000') {
+        const res = await dataService.getTC2000Standings();
+        setTc2000Drivers(res.drivers);
+        setTc2000Teams(res.teams);
+        setTc2000Brands(res.brands);
+      } else if (cat === 'WEC') {
+        setWecStandings(await dataService.getWECStandings());
+      }
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
+    finally { setIsCatStandLoading(false); }
+  }, [loadedData]);
+
+  const fetchCategoryNews = useCallback(async (cat: CategoryType) => {
+    const key = `${cat}-news`;
+    if (loadedData.has(key)) return;
+    setIsCatNewsLoading(true);
+    try {
+      if (cat === 'F1') setF1News(await dataService.getF1News());
+      else if (cat === 'WRC') setWrcNews(await dataService.getWRCNews());
+      else if (cat === 'TC') setTcNews(await dataService.getTCNews());
+      else if (cat === 'TCP') setTcpNews(await dataService.getTCPNews());
+      else if (cat === 'TCM') setTcmNews(await dataService.getTCMNews());
+      else if (cat === 'TCPM') setTcpmNews(await dataService.getTCPMNews());
+      else if (cat === 'TCPK') setTcpkNews(await dataService.getTCPKNews());
+      else if (cat === 'TCPPK') setTcppkNews(await dataService.getTCPPKNews());
+      else if (cat === 'IndyCar') setIndyNews(await dataService.getIndyCarNews());
+      else if (cat === 'NASCAR') setNascarNews(await dataService.getNascarNews());
+      else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
+      else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
+      setLoadedData(prev => new Set(prev).add(key));
+    } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
+    finally { setIsCatNewsLoading(false); }
+  }, [loadedData]);
+
+  const fetchGlobalNews = useCallback(async () => {
+    if (loadedData.has('globalNews')) return;
+    setIsGlobalNewsLoading(true);
     try {
       const results = await Promise.allSettled([
-        dataService.getWeeklyCalendar(),
-        dataService.getF1Calendar(),
         dataService.getF1News(),
         dataService.getWRCNews(),
-        dataService.getF1StandingsFull(),
-        dataService.getWRCStandings(),
-        dataService.getWRCCalendar(),
         dataService.getTCNews(),
-        dataService.getTCStandings(),
-        dataService.getTCPKNews(),
-        dataService.getTCPKStandings(),
-        dataService.getTCPKCalendar(),
-        dataService.getIndyCarCalendar(),
-        dataService.getIndyCarStandings(),
         dataService.getIndyCarNews(),
         dataService.getNascarNews(),
-        dataService.getNascarStandings(),
-        dataService.getNascarCalendar(),
+        dataService.getTC2000News(),
+        dataService.getWECNews(),
       ]);
-
-      if (results[0].status === 'fulfilled') setWeeklyRaces(results[0].value);
-      if (results[1].status === 'fulfilled') setF1Calendar(results[1].value);
-      if (results[2].status === 'fulfilled') setF1News(results[2].value);
-      if (results[3].status === 'fulfilled') setWrcNews(results[3].value);
-      if (results[4].status === 'fulfilled') {
-        setF1Drivers(results[4].value.drivers);
-        setF1Constructor(results[4].value.constructors);
-      }
-      if (results[5].status === 'fulfilled') setWrcDrivers(results[5].value.drivers);
-      if (results[6].status === 'fulfilled') setWrcCalendar(results[6].value);
-      if (results[7].status === 'fulfilled') setTcNews(results[7].value);
-      if (results[8].status === 'fulfilled') setTcDrivers(results[8].value);
-      if (results[9].status === 'fulfilled') setTcpkNews(results[9].value);
-      if (results[10].status === 'fulfilled') setTcpkDrivers(results[10].value);
-      if (results[11].status === 'fulfilled') setTcpkCalendar(results[11].value);
-      if (results[12].status === 'fulfilled') setIndyCalendar(results[12].value);
-      if (results[13].status === 'fulfilled') setIndyDrivers(results[13].value);
-      if (results[14].status === 'fulfilled') setIndyNews(results[14].value);
-      if (results[15].status === 'fulfilled') setNascarNews(results[15].value);
-      if (results[16].status === 'fulfilled') setNascarStandings(results[16].value);
-      if (results[17].status === 'fulfilled') setNascarCalendar(results[17].value);
+      if (results[0].status === 'fulfilled') setF1News(results[0].value);
+      if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
+      if (results[2].status === 'fulfilled') setTcNews(results[2].value);
+      if (results[3].status === 'fulfilled') setIndyNews(results[3].value);
+      if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
+      if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
+      if (results[6]?.status === 'fulfilled') setWecNews(results[6].value);
+      setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
-      console.error('Fetch error:', e);
+      console.error('Global news fetch error:', e);
     } finally {
-      setIsLoading(false);
+      setIsGlobalNewsLoading(false);
+    }
+  }, [loadedData]);
+
+  const fetchHomeData = useCallback(async () => {
+    setIsHomeLoading(true);
+    try {
+      const weekly = await dataService.getWeeklyCalendar();
+      setWeeklyRaces(weekly);
+      setLoadedData(prev => new Set(prev).add('home'));
+    } catch (e) {
+      console.error('Home fetch error:', e);
+    } finally {
+      setIsHomeLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  const refreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    setLoadedData(new Set()); // Reset to force refetch
+    
+    if (view === 'category') {
+      const cat = selectedCategory;
+      setLoadedData(prev => {
+        const n = new Set(prev);
+        n.delete(`${cat}-calendar`);
+        n.delete(`${cat}-standings`);
+        n.delete(`${cat}-news`);
+        return n;
+      });
+      if (categorySubTab === 'calendar') await fetchCategoryCalendar(cat);
+      else if (categorySubTab === 'standings') await fetchCategoryStandings(cat);
+      else if (categorySubTab === 'news') await fetchCategoryNews(cat);
+    } else if (mainTab === 'home') {
+      await fetchHomeData();
+    } else if (mainTab === 'noticias') {
+      await fetchGlobalNews();
+    } else if (mainTab === 'calendario') {
+      // Home data is essentially the weekly calendar
+      await fetchHomeData();
+    }
+    
+    setIsRefreshing(false);
+  }, [view, mainTab, selectedCategory, fetchHomeData, fetchGlobalNews]);
+
+  useEffect(() => {
+    // Mandatory initial splash screen delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => { 
+    if (mainTab === 'calendario' || mainTab === 'home') {
+      fetchHomeData(); 
+    }
+  }, [mainTab, fetchHomeData]);
+
+  useEffect(() => {
+    if (view === 'category') {
+      if (categorySubTab === 'calendar') fetchCategoryCalendar(selectedCategory);
+      else if (categorySubTab === 'standings') fetchCategoryStandings(selectedCategory);
+      else if (categorySubTab === 'news') fetchCategoryNews(selectedCategory);
+    }
+  }, [view, selectedCategory, categorySubTab, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
+
+  useEffect(() => {
+    if (mainTab === 'noticias') {
+      fetchGlobalNews();
+    }
+  }, [mainTab, fetchGlobalNews]);
 
   const handleCategoryClick = (cat: CategoryType) => {
     setSelectedCategory(cat);
@@ -139,16 +286,16 @@ const App = () => {
           <span className="cat-label">WRC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
+        <button className="cat-card wec-card" onClick={() => handleCategoryClick('WEC')}>
           <div className="cat-card-glow" />
-          <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
-          <span className="cat-label">TC</span>
+          <img src={WEC_LOGO} alt="WEC" className="cat-logo wec-logo" />
+          <span className="cat-label">WEC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
+        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
           <div className="cat-card-glow" />
-          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
-          <span className="cat-label">TC Pick Up</span>
+          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
+          <span className="cat-label">NASCAR Cup</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
@@ -157,10 +304,46 @@ const App = () => {
           <span className="cat-label">IndyCar</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
+        <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
           <div className="cat-card-glow" />
-          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
-          <span className="cat-label">NASCAR Cup</span>
+          <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
+          <span className="cat-label">TC</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcp-card" onClick={() => handleCategoryClick('TCP')}>
+          <div className="cat-card-glow" />
+          <img src={TCP_LOGO} alt="TCP" className="cat-logo tcp-logo" />
+          <span className="cat-label">TC Pista</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcm-card" onClick={() => handleCategoryClick('TCM')}>
+          <div className="cat-card-glow" />
+          <img src="/TCM.png" alt="TCM" className="cat-logo tcm-logo" />
+          <span className="cat-label">TC Mouras</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcpm-card" onClick={() => handleCategoryClick('TCPM')}>
+          <div className="cat-card-glow" />
+          <img src="/TCPM.png" alt="TCPM" className="cat-logo tcpm-logo" />
+          <span className="cat-label">TC Pista Mouras</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
+          <div className="cat-card-glow" />
+          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
+          <span className="cat-label">TC Pick Up</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tcppk-card" onClick={() => handleCategoryClick('TCPPK')}>
+          <div className="cat-card-glow" />
+          <img src="/TCPPK.png" alt="TCPPK" className="cat-logo tcppk-logo" />
+          <span className="cat-label">TC Pista Pick Up</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
+          <div className="cat-card-glow" />
+          <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
+          <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -195,16 +378,20 @@ const App = () => {
           </button>
         </div>
 
-        {calendarViewMode === 'semanal' ? (
+        {isHomeLoading ? (
+          <div className="tab-loading-wrap">
+            {renderLoadingCircle()}
+          </div>
+        ) : calendarViewMode === 'semanal' ? (
           <div className="weekly-list">
-            {flatSchedules.length === 0 && !isLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {flatSchedules.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
             
             {/* PRÓXIMOS SECTION */}
             {flatSchedules.some(s => s.startAt >= Date.now()) && (
               <div className="weekly-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'upcoming' ? 'active' : ''}`}
-                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'upcoming' ? 'finished' : 'upcoming')}
+                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'upcoming' ? null : 'upcoming')}
                 >
                   <div className="section-title-group">
                     <Calendar size={18} />
@@ -231,7 +418,7 @@ const App = () => {
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} — {item.circuit}</p>
+                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
                             
                             {item.circuitImage && (
                               <div className="weekly-circuit-img-wrap">
@@ -269,7 +456,7 @@ const App = () => {
               <div className="weekly-section finished-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'finished' ? 'active' : ''}`}
-                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'finished' ? 'upcoming' : 'finished')}
+                  onClick={() => setExpandedWeeklySection(expandedWeeklySection === 'finished' ? null : 'finished')}
                 >
                   <div className="section-title-group">
                     <Trophy size={18} />
@@ -296,7 +483,7 @@ const App = () => {
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} — {item.circuit}</p>
+                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
                             
                             {item.circuitImage && (
                               <div className="weekly-circuit-img-wrap">
@@ -326,7 +513,7 @@ const App = () => {
           </div>
         ) : (
           <div className="category-calendar-list">
-            {weeklyRaces.length === 0 && !isLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {weeklyRaces.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
             {Object.entries(
               weeklyRaces.reduce<Record<string, Race[]>>((acc, race) => {
                 const key = race.category || 'Otros';
@@ -384,12 +571,19 @@ const App = () => {
     );
   };
 
-  // ==================== RENDER: NOTICIAS ====================
   const renderNoticias = () => {
-    const allNewsList = [...f1News, ...wrcNews, ...tcNews, ...tcpkNews, ...indyNews, ...nascarNews].sort(() => Math.random() - 0.5);
+    const allNewsList = [
+      ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
+      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews
+    ].sort(() => Math.random() - 0.5);
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
-        <div className="news-feed">
+        {isGlobalNewsLoading ? (
+          <div className="tab-loading-wrap">
+            {renderLoadingCircle()}
+          </div>
+        ) : (
+          <div className="news-feed">
           {allNewsList.map((item, idx) => (
             <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
               <div className="news-card-body">
@@ -399,41 +593,73 @@ const App = () => {
               <ExternalLink size={16} className="news-ext-icon" />
             </a>
           ))}
-          {allNewsList.length === 0 && !isLoading && <p className="empty-msg">No hay noticias disponibles.</p>}
-        </div>
+          {allNewsList.length === 0 && !isGlobalNewsLoading && <p className="empty-msg">No hay noticias disponibles.</p>}
+          </div>
+        )}
       </motion.div>
     );
   };
 
   // ==================== RENDER: CATEGORY VIEW ====================
+  const renderLoadingCircle = () => (
+    <div className="loading-circle-container">
+      <div className="loading-circle"></div>
+      <p className="loading-circle-text">Cargando datos...</p>
+    </div>
+  );
+
   const renderCategoryView = () => {
     const isF1 = selectedCategory === 'F1';
     const isWRC = selectedCategory === 'WRC';
     const isTC = selectedCategory === 'TC';
+    const isTCP = selectedCategory === 'TCP';
+    const isTCM = selectedCategory === 'TCM';
+    const isTCPM = selectedCategory === 'TCPM';
     const isTCPK = selectedCategory === 'TCPK';
+    const isTCPPK = selectedCategory === 'TCPPK';
     const isIndy = selectedCategory === 'IndyCar';
     const isNascar = selectedCategory === 'NASCAR';
+    const isTC2000 = selectedCategory === 'TC2000';
+    const isWEC = selectedCategory === 'WEC';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
     if (isTC) logo = TC_LOGO;
+    if (isTCP) logo = TCP_LOGO;
+    if (isTCM) logo = '/TCM.png';
+    if (isTCPM) logo = '/TCPM.png';
     if (isTCPK) logo = TCPK_LOGO;
+    if (isTCPPK) logo = '/TCPPK.png';
+    if (isTC2000) logo = '/TC2000.png';
     if (isIndy) logo = INDYCAR_LOGO;
     if (isNascar) logo = '/NASCAR.png';
+    if (isWEC) logo = WEC_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'WRC';
     if (isTC) catTitle = 'Turismo Carretera';
+    if (isTCP) catTitle = 'TC Pista';
+    if (isTCM) catTitle = 'TC Mouras';
+    if (isTCPM) catTitle = 'TC Pista Mouras';
     if (isTCPK) catTitle = 'TC Pick Up';
+    if (isTCPPK) catTitle = 'TC Pista Pick Up';
     if (isIndy) catTitle = 'IndyCar';
     if (isNascar) catTitle = 'NASCAR Cup Series';
+    if (isTC2000) catTitle = 'TC2000';
+    if (isWEC) catTitle = 'WEC';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
     if (isTC) news = tcNews;
+    if (isTCP) news = tcpNews;
+    if (isTCM) news = tcmNews;
+    if (isTCPM) news = tcpmNews;
     if (isTCPK) news = tcpkNews;
+    if (isTCPPK) news = tcppkNews;
     if (isIndy) news = indyNews;
     if (isNascar) news = nascarNews;
+    if (isTC2000) news = tc2000News;
+    if (isWEC) news = wecNews;
 
     return (
       <motion.div key="category" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="category-view">
@@ -441,29 +667,38 @@ const App = () => {
           <button className="back-btn" onClick={() => setView('main')}>
             <ArrowLeft size={22} />
           </button>
-          <img src={logo} alt={selectedCategory} className={`cat-header-logo ${isWRC ? 'wrc-logo' : ''} ${isTC ? 'tc-logo' : ''} ${isTCPK ? 'tcpk-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} />
+          <img 
+            src={logo} 
+            alt={selectedCategory} 
+            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} 
+          />
           <h2 className="cat-header-title">{catTitle}</h2>
         </header>
 
         <div className="cat-tabs">
-          <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
-            <Calendar size={16} /> Calendario
-          </button>
           <button className={`cat-tab ${categorySubTab === 'standings' ? 'active' : ''}`} onClick={() => setCategorySubTab('standings')}>
-            <Trophy size={16} /> Posiciones
+            <span>Posiciones</span>
+          </button>
+          <button className={`cat-tab ${categorySubTab === 'results' ? 'active' : ''}`} onClick={() => setCategorySubTab('results')}>
+            <span>Resultados</span>
+          </button>
+          <button className={`cat-tab ${categorySubTab === 'calendar' ? 'active' : ''}`} onClick={() => setCategorySubTab('calendar')}>
+            <span>Calendario</span>
           </button>
           <button className={`cat-tab ${categorySubTab === 'news' ? 'active' : ''}`} onClick={() => setCategorySubTab('news')}>
-            <Newspaper size={16} /> Noticias
+            <span>Noticias</span>
           </button>
         </div>
 
         <AnimatePresence mode="wait">
           {categorySubTab === 'calendar' && (
             <motion.div key="cat-cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
-              {isF1 ? (
+              {isCatCalLoading ? renderLoadingCircle() : (
+                <>
+                {isF1 ? (
                 <div className="f1-calendar-list">
                   {f1Calendar.map((race, idx) => (
-                    <div key={idx} className={`race-row ${race.status.toLowerCase()}`}>
+                    <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${race.status.toLowerCase()}`}>{race.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{race.race}</span>
@@ -472,7 +707,7 @@ const App = () => {
                       <div className={`race-status-badge ${race.status.toLowerCase()}`}>
                         {race.status === 'Live' ? '🔴 En curso' :
                           race.status === 'Finished' ? (race.winner || '✅ Finalizado') :
-                            race.status === 'Next' ? '➡️ Próximo' : '—'}
+                            (race.status === 'Next' || race.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
                   ))}
@@ -481,7 +716,7 @@ const App = () => {
               ) : isWRC ? (
                 <div className="wrc-calendar-list">
                   {wrcCalendar.length > 0 ? wrcCalendar.map((ev, idx) => (
-                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.rallyName}</span>
@@ -490,30 +725,72 @@ const App = () => {
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Live' ? '🔴 En curso' :
                           ev.status === 'Finished' ? '✅ Finalizado' :
-                            ev.status === 'Next' ? '➡️ Próximo' : '—'}
+                            (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
                   )) : (
                     <p className="empty-msg">{isLoading ? 'Cargando calendario WRC...' : 'No se encontró calendario WRC.'}</p>
                   )}
                 </div>
-              ) : isTC ? (
-                <div className="tc-calendar-link-view">
-                   <p className="tc-calendar-msg">El calendario oficial se encuentra en constante actualización.</p>
-                   <a 
-                    href="https://actc.org.ar/tc/index.html" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="tc-calendar-btn"
-                   >
-                     Consultar calendario oficial <ExternalLink size={16} />
-                   </a>
-                </div>
-              ) : isTCPK ? (
+      ) : (isTC || isTCP) ? (
+        <div className="tcp-calendar-list">
+          {(isTC ? tcCalendar : tcpCalendar).length > 0 ? (isTC ? tcCalendar : tcpCalendar).map((ev, idx) => (
+            <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+              <div className="race-info-block">
+                <span className="race-name-label">{ev.race}</span>
+                <span className="race-date-label">{ev.dates}</span>
+              </div>
+              <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+              </div>
+            </div>
+          )) : (
+            <p className="empty-msg">{isLoading ? `Cargando calendario ${isTC ? 'TC' : 'TCP'}...` : `No se encontró calendario ${isTC ? 'TC' : 'TCP'}.`}</p>
+          )}
+        </div>
+      ) : isTCM ? (
+        <div className="tcm-calendar-list">
+          {tcmCalendar.length > 0 ? tcmCalendar.map((ev, idx) => (
+            <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+              <div className="race-info-block">
+                <span className="race-name-label">{ev.race}</span>
+                <span className="race-date-label">{ev.dates}</span>
+              </div>
+              <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+              </div>
+            </div>
+          )) : (
+            <p className="empty-msg">{isLoading ? 'Cargando calendario TCM...' : 'No se encontró calendario TCM.'}</p>
+          )}
+        </div>
+      ) : isTCPM ? (
+        <div className="tcpm-calendar-list">
+          {tcpmCalendar.length > 0 ? tcpmCalendar.map((ev, idx) => (
+            <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+              <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+              <div className="race-info-block">
+                <span className="race-name-label">{ev.race}</span>
+                <span className="race-date-label">{ev.dates}</span>
+              </div>
+              <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+              </div>
+            </div>
+          )) : (
+            <p className="empty-msg">{isLoading ? 'Cargando calendario TCPM...' : 'No se encontró calendario TCPM.'}</p>
+          )}
+        </div>
+      ) : isTCPK ? (
                 <div className="tcpk-calendar-list">
                   {tcpkCalendar.length > 0 ? tcpkCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
-                      <div className="race-round-num">{ev.round}</div>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
                         <span className="race-name-label">{ev.race}</span>
                         <span className="race-date-label">{ev.dates}</span>
@@ -525,6 +802,24 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">{isLoading ? 'Cargando calendario TCPK...' : 'No se encontró calendario TCPK.'}</p>
+                  )}
+                </div>
+              ) : isTCPPK ? (
+                <div className="tcppk-calendar-list">
+                  {tcppkCalendar.length > 0 ? tcppkCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario TCPPK...' : 'No se encontró calendario TCPPK.'}</p>
                   )}
                 </div>
               ) : isIndy ? (
@@ -563,12 +858,52 @@ const App = () => {
                     <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR...' : 'No se encontró calendario NASCAR.'}</p>
                   )}
                 </div>
+              ) : isTC2000 ? (
+                <div className="tc2000-calendar-list">
+                  {tc2000Calendar.length > 0 ? tc2000Calendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario TC2000.</p>
+                  )}
+                </div>
+              ) : isWEC ? (
+                <div className="wec-calendar-list">
+                  {wecCalendar.length > 0 ? wecCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.rallyName}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? '✅ Finalizado' : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario WEC.</p>
+                  )}
+                </div>
               ) : null}
+              </>
+              )}
             </motion.div>
           )}
 
           {categorySubTab === 'standings' && (
             <motion.div key="cat-stand" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
+              {isCatStandLoading ? renderLoadingCircle() : (
+                <>
               {isF1 ? (
                 <>
                   <div className="f1-tabs nascar-tabs">
@@ -603,9 +938,22 @@ const App = () => {
                 </>
               ) : isWRC ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
+                  <div className="nascar-tabs wrc-tabs">
+                    <button 
+                      className={`nascar-tab-btn ${wrcStandingsTab === 'drivers' ? 'active' : ''}`}
+                      onClick={() => setWrcStandingsTab('drivers')}
+                    >
+                      Pilotos
+                    </button>
+                    <button 
+                      className={`nascar-tab-btn ${wrcStandingsTab === 'manufacturers' ? 'active' : ''}`}
+                      onClick={() => setWrcStandingsTab('manufacturers')}
+                    >
+                      Fabricantes
+                    </button>
+                  </div>
                   <div className="standings-list wrc-standings">
-                    {wrcDrivers.map((d, idx) => (
+                    {(wrcStandings[wrcStandingsTab] || []).map((d: any, idx: number) => (
                       <div key={idx} className={`stand-row wrc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                         <span className="stand-pos">{d.pos}</span>
                         <div className="stand-info">
@@ -615,12 +963,11 @@ const App = () => {
                         <span className="stand-pts">{d.points} pts</span>
                       </div>
                     ))}
-                    {wrcDrivers.length === 0 && <p className="empty-msg">Cargando posiciones WRC...</p>}
+                    {wrcStandings[wrcStandingsTab].length === 0 && <p className="empty-msg">Cargando posiciones WRC...</p>}
                   </div>
                 </>
               ) : isTC ? (
                 <>
-                  <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                   <div className="standings-list tc-standings">
                     {tcDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row tc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -634,9 +981,53 @@ const App = () => {
                     {tcDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TC...</p>}
                   </div>
                 </>
+              ) : isTCP ? (
+                <>
+                  <div className="standings-list tcp-standings">
+                    {tcpDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row tcp-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {tcpDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCP...</p>}
+                  </div>
+                </>
+              ) : isTCM ? (
+                <>
+                  <div className="standings-list tcm-standings">
+                    {tcmDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row tcm-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {tcmDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCM...</p>}
+                  </div>
+                </>
+              ) : isTCPM ? (
+                <>
+                  <div className="standings-list tcpm-standings">
+                    {tcpmDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row tcpm-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {tcpmDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCPM...</p>}
+                  </div>
+                </>
               ) : isTCPK ? (
                  <>
-                   <h3 className="standings-section-title">Campeonato de Pilotos</h3>
                    <div className="standings-list tcpk-standings">
                      {tcpkDrivers.map((d, idx) => (
                        <div key={idx} className={`stand-row tcpk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -650,12 +1041,11 @@ const App = () => {
                      {tcpkDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCPK...</p>}
                    </div>
                  </>
-                ) : isIndy ? (
+                ) : isTCPPK ? (
                   <>
-                    <h3 className="standings-section-title">Campeonato de Pilotos</h3>
-                    <div className="standings-list indy-standings">
-                      {indyDrivers.map((d, idx) => (
-                        <div key={idx} className={`stand-row indy-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                    <div className="standings-list tcppk-standings">
+                      {tcppkDrivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row tcppk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{d.pos}</span>
                           <div className="stand-info">
                             <span className="stand-name">{d.driver}</span>
@@ -663,9 +1053,70 @@ const App = () => {
                           <span className="stand-pts">{d.points} pts</span>
                         </div>
                       ))}
-                      {indyDrivers.length === 0 && <p className="empty-msg">{isLoading ? 'Cargando posiciones...' : 'No se encontraron posiciones IndyCar.'}</p>}
+                      {tcppkDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCPPK...</p>}
                     </div>
                   </>
+                ) : isTC2000 ? (
+                  <>
+                    <div className="nascar-tabs tc2000-tabs">
+                      <button className={`nascar-tab-btn ${tc2000StandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('drivers')}>Pilotos</button>
+                      <button className={`nascar-tab-btn ${tc2000StandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('teams')}>Equipos</button>
+                      <button className={`nascar-tab-btn ${tc2000StandingsTab === 'brands' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('brands')}>Marcas</button>
+                    </div>
+                    <div className="standings-list tc2000-standings">
+                      {tc2000StandingsTab === 'drivers' ? (
+                        tc2000Drivers.map((d, idx) => (
+                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                            <span className="stand-pos">{d.pos}</span>
+                            <div className="stand-info">
+                              <span className="stand-name">{d.driver}</span>
+                              {d.team && <span className="stand-sub">{d.team}</span>}
+                            </div>
+                            <span className="stand-pts">{d.points} pts</span>
+                          </div>
+                        ))
+                      ) : tc2000StandingsTab === 'teams' ? (
+                        tc2000Teams.map((t, idx) => (
+                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                            <span className="stand-pos">{t.pos}</span>
+                            <div className="stand-info">
+                              <span className="stand-name">{t.driver}</span>
+                            </div>
+                            <span className="stand-pts">{t.points} pts</span>
+                          </div>
+                        ))
+                      ) : (
+                        tc2000Brands.map((b, idx) => (
+                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                            <span className="stand-pos">{b.pos}</span>
+                            <div className="stand-info">
+                              <span className="stand-name">{b.driver}</span>
+                            </div>
+                            <span className="stand-pts">{b.points} pts</span>
+                          </div>
+                        ))
+                      )}
+                      {((tc2000StandingsTab === 'drivers' && tc2000Drivers.length === 0) ||
+                        (tc2000StandingsTab === 'teams' && tc2000Teams.length === 0) ||
+                        (tc2000StandingsTab === 'brands' && tc2000Brands.length === 0)) && !isLoading && 
+                        <p className="empty-msg">No hay posiciones disponibles.</p>}
+                    </div>
+                  </>
+              ) : isIndy ? (
+                <>
+                  <div className="standings-list indy-standings">
+                    {indyDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row indy-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {indyDrivers.length === 0 && <p className="empty-msg">{isLoading ? 'Cargando posiciones...' : 'No se encontraron posiciones IndyCar.'}</p>}
+                  </div>
+                </>
                 ) : isNascar ? (
                   <>
                     <div className="nascar-tabs">
@@ -685,24 +1136,74 @@ const App = () => {
                       {nascarStandings[nascarStandingsTab].length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
                     </div>
                   </>
+                ) : isWEC ? (
+                  <>
+                    <div className="f1-tabs nascar-tabs wec-tabs-scroll">
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-mfr' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-mfr')}>Hypercar Mfr</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-teams' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-teams')}>Hypercar Teams</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'h-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('h-drivers')}>Hypercar Drivers</button>
+                      <button className={`nascar-tab-btn ${wecStandingsTab === 'gt3-drivers' ? 'active' : ''}`} onClick={() => setWecStandingsTab('gt3-drivers')}>LMGT3 Drivers</button>
+                    </div>
+                    <div className="standings-list wec-standings">
+                      {(wecStandingsTab === 'h-mfr' ? wecStandings.hypercarMfr :
+                        wecStandingsTab === 'h-teams' ? wecStandings.hypercarTeams :
+                        wecStandingsTab === 'h-drivers' ? wecStandings.hypercarDrivers :
+                        wecStandings.lmgt3Drivers).map((d: any, idx: number) => (
+                        <div key={idx} className={`stand-row wec-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver || d.team}</span>
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))}
+                      {((wecStandingsTab === 'h-mfr' && wecStandings.hypercarMfr.length === 0) ||
+                        (wecStandingsTab === 'h-teams' && wecStandings.hypercarTeams.length === 0) ||
+                        (wecStandingsTab === 'h-drivers' && wecStandings.hypercarDrivers.length === 0) ||
+                        (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && 
+                        <p className="empty-msg">No hay posiciones disponibles.</p>}
+                    </div>
+                  </>
                 ) : null}
+                </>
+              )}
+            </motion.div>
+          )}
+
+          {categorySubTab === 'results' && (
+            <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
+              <div className="results-container">
+                <div className="tc-calendar-message results-box">
+                  <p className="tc-msg-text">Consulta los tiempos y resultados oficiales de la última sesión.</p>
+                  <a 
+                    href={dataService.CATEGORY_RESULTS_URLS[selectedCategory] || '#'} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="tc-msg-btn"
+                  >
+                    Ver resultados
+                  </a>
+                </div>
+              </div>
             </motion.div>
           )}
 
           {categorySubTab === 'news' && (
             <motion.div key="cat-news" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
-              <div className="news-feed">
-                {news.map((item, idx) => (
-                  <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
-                    <div className="news-card-body">
-                      <span className="news-badge">{selectedCategory} | {item.source}</span>
-                      <h3 className="news-headline">{item.title}</h3>
-                    </div>
-                    <ExternalLink size={16} className="news-ext-icon" />
-                  </a>
-                ))}
-                {news.length === 0 && !isLoading && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
-              </div>
+              {isCatNewsLoading ? renderLoadingCircle() : (
+                <div className="news-feed">
+                  {news.map((item, idx) => (
+                    <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
+                      <div className="news-card-body">
+                        <span className="news-badge">{selectedCategory} | {item.source}</span>
+                        <h3 className="news-headline">{item.title}</h3>
+                      </div>
+                      <ExternalLink size={16} className="news-ext-icon" />
+                    </a>
+                  ))}
+                  {news.length === 0 && <p className="empty-msg">No hay noticias disponibles para {catTitle}.</p>}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -722,15 +1223,14 @@ const App = () => {
       <div className="loading-content">
         <div className="loading-logo-wrap single-logo">
           <motion.img 
-            src={loadingLogo.url} 
-            alt={loadingLogo.name} 
-            className={`loading-logo ${loadingLogo.class}`}
+            src="/CARGA.png" 
+            alt="Cargando..." 
+            className="loading-logo-exclusive white-logo"
             animate={{ 
-              scale: [0.9, 1.1, 0.9], 
-              opacity: [0.6, 1, 0.6],
-              rotate: loadingLogo.class === 'indy' || loadingLogo.class === 'f1' ? [0, 2, -2, 0] : 0
+              scale: [0.95, 1.05, 0.95], 
+              opacity: [0.8, 1, 0.8],
             }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
         
@@ -769,24 +1269,56 @@ const App = () => {
             className="app-main-layout"
           >
             <header className="main-header">
-              <div className="header-top">
-                <h1 className="app-title">Vuelta de Instalación</h1>
-                <button className="refresh-btn" onClick={fetchData} disabled={isLoading}>
-                  <RefreshCw size={18} className={isLoading ? 'spinning' : ''} />
-                </button>
+              <div className="header-centered-logo">
+                <img src="/logo.png" alt="Vuelta de Instalación" className="app-header-logo-centered white-logo" />
               </div>
             </header>
 
             <main className="content-area">
-              <AnimatePresence mode="wait">
-                {view === 'category' ? renderCategoryView() : (
-                  <>
-                    {mainTab === 'home' && renderHome()}
-                    {mainTab === 'calendario' && renderCalendario()}
-                    {mainTab === 'noticias' && renderNoticias()}
-                  </>
-                )}
-              </AnimatePresence>
+              <div className="pull-to-refresh-container">
+                 <AnimatePresence>
+                   {isRefreshing && (
+                     <motion.div 
+                       initial={{ height: 0, opacity: 0 }}
+                       animate={{ height: 50, opacity: 1 }}
+                       exit={{ height: 0, opacity: 0 }}
+                       className="pull-to-refresh-indicator"
+                     >
+                       <RefreshCw size={20} className="spinning" />
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+
+              <div
+                onTouchStart={(e) => {
+                  if (window.scrollY === 0) {
+                    (window as any).pullStart = e.touches[0].pageY;
+                  }
+                }}
+                onTouchMove={(e) => {
+                  if ((window as any).pullStart !== undefined && window.scrollY === 0) {
+                    const pullDist = e.touches[0].pageY - (window as any).pullStart;
+                    if (pullDist > 100 && !isRefreshing) {
+                      refreshAll();
+                      (window as any).pullStart = undefined;
+                    }
+                  }
+                }}
+                onTouchEnd={() => {
+                  (window as any).pullStart = undefined;
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  {view === 'category' ? renderCategoryView() : (
+                    <>
+                      {mainTab === 'home' && renderHome()}
+                      {mainTab === 'calendario' && renderCalendario()}
+                      {mainTab === 'noticias' && renderNoticias()}
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </main>
 
             {view === 'main' && (

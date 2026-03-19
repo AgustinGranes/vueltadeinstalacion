@@ -15,8 +15,9 @@ export default defineConfig({
         background_color: '#0a0a0a',
         display: 'standalone',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: 'logo_sl.png', sizes: '192x192', type: 'image/png' },
+          { src: 'logo_sl.png', sizes: '512x512', type: 'image/png' },
+          { src: 'logo_sl.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       }
     })
@@ -32,6 +33,16 @@ export default defineConfig({
           'Origin': 'https://vueltarapida.com',
           'Referer': 'https://vueltarapida.com/',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+        }
+      },
+      '/api/vueltarapida-html': {
+        target: 'https://vueltarapida.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/vueltarapida-html/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         }
       },
       '/api/espn-json': {
@@ -113,6 +124,16 @@ export default defineConfig({
           'Accept-Language': 'en-US,en;q=0.9',
         }
       },
+      '/api/wrc-api': {
+        target: 'https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/wrc-api/, ''),
+        secure: false,
+        headers: {
+          'Origin': 'https://www.wrc.com',
+          'Referer': 'https://www.wrc.com/'
+        }
+      },
       '/api/actc-tiempos': {
         target: 'https://tiempos.actc.org.ar',
         changeOrigin: true,
@@ -168,6 +189,32 @@ export default defineConfig({
         target: 'https://latino.nascar.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/nascar-latino/, ''),
+        secure: false,
+      },
+      '/api/wec-api': {
+        target: 'https://www.fiawec.com/en',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/wec-api/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/soymotor': {
+        target: 'https://soymotor.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/soymotor/, ''),
+        secure: false,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }
+      },
+      '/api/motorsport-results': {
+        target: 'https://lat.motorsport.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/motorsport-results/, ''),
         secure: false,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
