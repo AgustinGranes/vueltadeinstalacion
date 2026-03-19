@@ -193,24 +193,27 @@ export const dataService = {
       const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
       const categoriesUrl = `/api/vueltarapida/categories`;
 
-      const [racesRes, catRes] = await Promise.all([
-        fetch(url),
-        fetch(categoriesUrl)
+      // CRITICAL: Use fetchWithProxy to include required headers (Referer, UA)
+      const [racesResText, catResText] = await Promise.all([
+        this.fetchWithProxy(url),
+        this.fetchWithProxy(categoriesUrl)
       ]);
 
-      let data;
-      if (racesRes.ok) {
-        data = await racesRes.json();
+      let data: any = [];
+      if (racesResText) {
+        try { data = JSON.parse(racesResText); } catch(e) { console.warn('Failed to parse races JSON'); }
       }
 
       let categoriesMap: Record<string, any> = {};
-      if (catRes.ok) {
-        const catData = await catRes.json();
-        if (Array.isArray(catData)) {
-          catData.forEach((c: any) => {
-            if (c.categoryId) categoriesMap[c.categoryId] = c;
-          });
-        }
+      if (catResText) {
+        try {
+          const catData = JSON.parse(catResText);
+          if (Array.isArray(catData)) {
+            catData.forEach((c: any) => {
+              if (c.categoryId) categoriesMap[c.categoryId] = c;
+            });
+          }
+        } catch(e) { console.warn('Failed to parse categories JSON'); }
       }
 
       const races = Array.isArray(data) ? data : (data?.races || data?.data || []);
@@ -244,22 +247,19 @@ export const dataService = {
           const possibleIds = [r.circuit?._id, r.circuitId, r._id].filter(Boolean);
           
           if (!circuitImage && possibleIds.length > 0) {
-            for (const cid of possibleIds) {
-              try {
-                const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
+            for (const cid of possibleIds) {                // Use direct vueltarapida proxy for circuit details
+                const circuitRes = await this.fetchWithProxy(`/api/vueltarapida/circuits/by-circuit-id/${cid}`);
                 if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
                   const circuitData = JSON.parse(circuitRes);
                   const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
                   if (imgUrl) {
-                    circuitImage = imgUrl.startsWith('/') ? `https://vueltarapida.com${imgUrl}` : imgUrl;
+                    circuitImage = imgUrl.startsWith('http') ? imgUrl : `https://vueltarapida.com${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
                     break; 
                   }
                 }
-              } catch (err) {}
             }
           }
 
-          // Format circuit name if it's missing but we have circuitId
           let circuitName = r.circuit || '';
           if (!circuitName && r.circuitId) {
             circuitName = r.circuitId.split('_').filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
@@ -288,20 +288,23 @@ export const dataService = {
 
       // FALLBACK: Scrape the HTML if API returns empty or fails
       console.log('[DataService] API empty or failed, attempting to scrape HTML...');
-      const htmlUrl = `/api/vueltarapida-html/calendario`; // Use Vercel rewrite
-      const htmlText = await (await fetch(htmlUrl)).text();
+      const htmlText = await this.fetchWithProxy('https://vueltarapida.com/calendario');
       if (!htmlText) return [];
 
       const doc = new DOMParser().parseFromString(htmlText, 'text/html');
-      const eventEls = doc.querySelectorAll('.button-day-item');
+      
+      // Try multiple selectors based on observed site changes
+      const eventEls = doc.querySelectorAll('.button-day-item, .rd-calendar-event, .rd-event-item');
       if (eventEls.length === 0) return [];
 
       const scrapedRaces: Race[] = [];
       eventEls.forEach((el, idx) => {
         const img = el.querySelector('img');
-        const category = img?.getAttribute('alt') || img?.getAttribute('title') || 'Otros';
-        const time = el.querySelector('p')?.textContent?.trim() || '';
+        const category = img?.getAttribute('alt') || img?.getAttribute('title') || el.querySelector('.rd-cat-name')?.textContent?.trim() || 'Otros';
+        const eventName = el.querySelector('.rd-event-name, h3, h4')?.textContent?.trim() || category;
+        const time = el.querySelector('p, .rd-s-time, .rd-time')?.textContent?.trim() || '';
         const logoUrl = img?.getAttribute('src') || '';
+        const circuitImg = el.querySelector('.rd-track-layout, img[src*="layout"]')?.getAttribute('src') || '';
 
         scrapedRaces.push({
           id: `scraped-${idx}`,
@@ -310,9 +313,9 @@ export const dataService = {
           categoryId: '',
           categoryColor: getCategoryColor(category),
           categoryImage: logoUrl ? (logoUrl.startsWith('/') ? `https://vueltarapida.com${logoUrl}` : logoUrl) : '',
-          event: category, 
-          circuit: '',
-          circuitImage: '',
+          event: eventName, 
+          circuit: el.querySelector('.rd-circuit-name')?.textContent?.trim() || '',
+          circuitImage: circuitImg ? (circuitImg.startsWith('/') ? `https://vueltarapida.com${circuitImg}` : circuitImg) : '',
           platforms: [],
           schedules: [{ id: `s-${idx}`, name: 'Evento', time: time, startAt: Date.now() }],
           time: time,
@@ -2146,6 +2149,8 @@ export const dataService = {
   },
 
   async fetchWithProxy(targetUrl: string): Promise<string> {
+    const cacheBuster = `t=${Date.now()}`;
+    // 1. Target URL processing
     // 1. Local/Internal
     if (targetUrl.startsWith('/')) {
       try {
@@ -2155,7 +2160,6 @@ export const dataService = {
       } catch (e) { return ''; }
     }
 
-    const cacheBuster = `cb=${Date.now()}`;
     const cleanUrl = targetUrl.includes('?') ? `${targetUrl}&${cacheBuster}` : `${targetUrl}?${cacheBuster}`;
 
     // 2. PRIMARY: Our Serverless Proxy (bypass CORS & 403)
@@ -2215,7 +2219,15 @@ export const dataService = {
         .replace('https://campeones.com.ar', '/api/campeones');
 
         if (proxyPath !== targetUrl) {
-        const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`);
+        // MUST include Referer and User-Agent to bypass upstream validation (F-1738884619)
+        const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Referer': 'https://vueltarapida.com/',
+            'Origin': 'https://vueltadeinstalacion.vercel.app'
+          }
+        });
         if (res.ok) return await res.text();
       }
     } catch (e) {}
