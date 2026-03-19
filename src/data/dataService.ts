@@ -189,37 +189,27 @@ export const dataService = {
       sunday.setDate(monday.getDate() + 6);
       sunday.setHours(23, 59, 59, 999);
 
-      const url = `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
+      // USE VERCEL REWRITES (AS IN WORKING VERSION)
+      const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
+      const categoriesUrl = `/api/vueltarapida/categories`;
 
-      const [racesResText, catResText] = await Promise.all([
-        this.fetchWithProxy(url),
-        this.fetchWithProxy('https://api.vueltarapida.com/api/categories')
+      const [racesRes, catRes] = await Promise.all([
+        fetch(url),
+        fetch(categoriesUrl)
       ]);
 
       let data;
-      if (racesResText && racesResText.trim() !== '') {
-        try {
-          if (racesResText.trim().startsWith('{') || racesResText.trim().startsWith('[')) {
-            data = JSON.parse(racesResText);
-          }
-        } catch (e) {
-          console.error('[DataService] Failed to parse races JSON:', e);
-        }
+      if (racesRes.ok) {
+        data = await racesRes.json();
       }
 
       let categoriesMap: Record<string, any> = {};
-      if (catResText && catResText.trim() !== '') {
-        try {
-          if (catResText.trim().startsWith('{') || catResText.trim().startsWith('[')) {
-            const catData = JSON.parse(catResText);
-            if (Array.isArray(catData)) {
-              catData.forEach((c: any) => {
-                if (c.categoryId) categoriesMap[c.categoryId] = c;
-              });
-            }
-          }
-        } catch (e) {
-          console.error('[DataService] Failed to parse categories JSON:', e);
+      if (catRes.ok) {
+        const catData = await catRes.json();
+        if (Array.isArray(catData)) {
+          catData.forEach((c: any) => {
+            if (c.categoryId) categoriesMap[c.categoryId] = c;
+          });
         }
       }
 
@@ -297,18 +287,14 @@ export const dataService = {
       }
 
       // FALLBACK: Scrape the HTML if API returns empty or fails
-      console.log('[DataService] JSON API empty or failed, attempting to scrape HTML...');
-      const html = await this.fetchWithProxy('https://vueltarapida.com/calendario');
-      if (!html) return [];
+      console.log('[DataService] API empty or failed, attempting to scrape HTML...');
+      const htmlUrl = `/api/vueltarapida-html/calendario`; // Use Vercel rewrite
+      const htmlText = await (await fetch(htmlUrl)).text();
+      if (!htmlText) return [];
 
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      // NEW structure uses .button-day-item
+      const doc = new DOMParser().parseFromString(htmlText, 'text/html');
       const eventEls = doc.querySelectorAll('.button-day-item');
-      if (eventEls.length === 0) {
-        // Try old structure just in case
-        const oldEls = doc.querySelectorAll('.rd-calendar-event');
-        if (oldEls.length === 0) return [];
-      }
+      if (eventEls.length === 0) return [];
 
       const scrapedRaces: Race[] = [];
       eventEls.forEach((el, idx) => {
@@ -324,7 +310,7 @@ export const dataService = {
           categoryId: '',
           categoryColor: getCategoryColor(category),
           categoryImage: logoUrl ? (logoUrl.startsWith('/') ? `https://vueltarapida.com${logoUrl}` : logoUrl) : '',
-          event: category, // We don't have the full event name on the grid
+          event: category, 
           circuit: '',
           circuitImage: '',
           platforms: [],
