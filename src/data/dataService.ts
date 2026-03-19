@@ -196,31 +196,27 @@ export const dataService = {
         this.fetchWithProxy('https://api.vueltarapida.com/api/categories')
       ]);
 
-      if (!racesResText || racesResText.trim() === '') return [];
-      
       let data;
-      try {
-        if (!racesResText.trim().startsWith('{') && !racesResText.trim().startsWith('[')) {
-          console.error('[DataService] Races response is not JSON:', racesResText.substring(0, 100));
-          return [];
+      if (racesResText && racesResText.trim() !== '') {
+        try {
+          if (racesResText.trim().startsWith('{') || racesResText.trim().startsWith('[')) {
+            data = JSON.parse(racesResText);
+          }
+        } catch (e) {
+          console.error('[DataService] Failed to parse races JSON:', e);
         }
-        data = JSON.parse(racesResText);
-      } catch (e) {
-        console.error('[DataService] Failed to parse races JSON:', e);
-        return [];
       }
 
       let categoriesMap: Record<string, any> = {};
       if (catResText && catResText.trim() !== '') {
         try {
-          if (!catResText.trim().startsWith('{') && !catResText.trim().startsWith('[')) {
-            throw new Error('Not JSON');
-          }
-          const catData = JSON.parse(catResText);
-          if (Array.isArray(catData)) {
-            catData.forEach((c: any) => {
-              if (c.categoryId) categoriesMap[c.categoryId] = c;
-            });
+          if (catResText.trim().startsWith('{') || catResText.trim().startsWith('[')) {
+            const catData = JSON.parse(catResText);
+            if (Array.isArray(catData)) {
+              catData.forEach((c: any) => {
+                if (c.categoryId) categoriesMap[c.categoryId] = c;
+              });
+            }
           }
         } catch (e) {
           console.error('[DataService] Failed to parse categories JSON:', e);
@@ -228,114 +224,98 @@ export const dataService = {
       }
 
       const races = Array.isArray(data) ? data : (data?.races || data?.data || []);
-      if (!races || !Array.isArray(races)) return [];
+      
+      if (races && Array.isArray(races) && races.length > 0) {
+        const racesWithImages = await Promise.all(races.map(async (r: any) => {
+          const catInfo = categoriesMap[r.categoryId] || {};
+          const schedulesList = (r.schedules || []).map((s: any) => {
+            const d = new Date(s.startAt || s.start);
+            const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+            const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+            const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const timeStr = (s.time === '-' || s.time === '' || isNaN(d.getTime())) ? '' : rawTime;
+            
+            return {
+              id: s._id || s.id || Math.random().toString(),
+              name: s.name || s.title || '',
+              time: timeStr ? `${dayStr}, ${timeStr}` : dayStr,
+              startAt: s.startAt || s.start || d.getTime()
+            };
+          });
 
-      const racesWithImages = await Promise.all(races.map(async (r: any) => {
-        const catInfo = categoriesMap[r.categoryId] || {};
-        const schedulesList = (r.schedules || []).map((s: any) => {
-          const d = new Date(s.startAt || s.start);
-          const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-          const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
-          const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-          // If time is invalid or undefined in source, show nothing or dash
-          const timeStr = (s.time === '-' || s.time === '' || isNaN(d.getTime())) ? '' : rawTime;
+          const watchLinks = (r.links || [])
+            .filter((l: any) => l.url || l.link)
+            .map((l: any) => ({
+              platform: l.platform || l.name || 'Ver',
+              url: l.url || l.link || ''
+            }));
+
+          let circuitImage = r.circuitImage || '';
+          const possibleIds = [r.circuit?._id, r.circuitId, r._id].filter(Boolean);
           
-          return {
-            id: s._id || s.id || Math.random().toString(),
-            name: s.name || s.title || '',
-            time: timeStr ? `${dayStr}, ${timeStr}` : dayStr,
-            startAt: s.startAt || s.start || d.getTime()
-          };
-        });
-
-        const watchLinks = (r.links || [])
-          .filter((l: any) => l.url || l.link)
-          .map((l: any) => ({
-            platform: l.platform || l.name || 'Ver',
-            url: l.url || l.link || ''
-          }));
-
-        // Scrape circuit image using VueltaRapida's internal circuit API via proxy
-        let circuitImage = r.circuitImage || '';
-        const possibleIds = [r.circuit?._id, r.circuit?._id, r.circuitId, r._id].filter(Boolean);
-        
-        if (!circuitImage && possibleIds.length > 0) {
-          for (const cid of possibleIds) {
-            try {
-              const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
-              if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
-                if (!circuitRes.trim().startsWith('{')) throw new Error('Not JSON');
-                const circuitData = JSON.parse(circuitRes);
-                const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
-                if (imgUrl) {
-                  circuitImage = imgUrl.startsWith('/') ? `https://vueltarapida.com${imgUrl}` : imgUrl;
-                  break; 
+          if (!circuitImage && possibleIds.length > 0) {
+            for (const cid of possibleIds) {
+              try {
+                const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
+                if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
+                  const circuitData = JSON.parse(circuitRes);
+                  const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
+                  if (imgUrl) {
+                    circuitImage = imgUrl.startsWith('/') ? `https://vueltarapida.com${imgUrl}` : imgUrl;
+                    break; 
+                  }
                 }
-              }
-            } catch (err) {
-               console.warn(`Failed to fetch circuit image for circuit ${cid} via API`);
+              } catch (err) {}
             }
           }
-        }
 
-        // Fallback if API fails
-        if (!circuitImage) {
-           try {
-              const detailHtml = await this.fetchWithProxy(`https://vueltarapida.com/calendario?race=${r.id}`);
-              const detailDoc = new DOMParser().parseFromString(detailHtml, 'text/html');
-              const imgEl = detailDoc.querySelector('img.rd-header-track-layout');
-              if (imgEl) {
-                const src = imgEl.getAttribute('src');
-                if (src) circuitImage = src.startsWith('/') ? `https://vueltarapida.com${src}` : src;
-              }
-           } catch (e2) {
-              console.warn(`Failed to scrape circuit image for race ${r.id}`);
-           }
-        }
+          // Format circuit name if it's missing but we have circuitId
+          let circuitName = r.circuit || '';
+          if (!circuitName && r.circuitId) {
+            circuitName = r.circuitId.split('_').filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+          }
 
-        return {
-          id: r._id || r.id || '',
-          categoryId: r.categoryId || '',
-          categoryColor: catInfo.categoryColor || r.categoryColor,
-          categoryImage: catInfo.categoryImage || r.categoryImage,
-          category: r.category || r.name || '',
-          categoryShort: r.categoryShort || r.name || '',
-          event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
-          circuit: (r.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
-          circuitId: r.circuitId,
-          circuitImage,
-          platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
-          schedules: schedulesList,
-          time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
-          ticketLink: r.ticketLink || '',
-          watchLinks,
-        };
-      }));
+          return {
+            id: r._id || r.id || '',
+            categoryId: r.categoryId || '',
+            categoryColor: catInfo.categoryColor || r.categoryColor,
+            categoryImage: catInfo.categoryImage || r.categoryImage || (r.categoryId ? `https://api.vueltarapida.com/logos/${r.categoryId}.png` : ''),
+            category: r.category || r.name || '',
+            categoryShort: r.categoryShort || r.name || '',
+            event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+            circuit: circuitName.replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+            circuitId: r.circuitId,
+            circuitImage,
+            platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
+            schedules: schedulesList,
+            time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
+            ticketLink: r.ticketLink || '',
+            watchLinks,
+          };
+        }));
+        return racesWithImages;
+      }
 
-      if (racesWithImages.length > 0) return racesWithImages;
-
-      // FALLBACK: Scrape the HTML if API returns empty
-      console.log('[DataService] JSON API empty, attempting to scrape HTML...');
+      // FALLBACK: Scrape the HTML if API returns empty or fails
+      console.log('[DataService] JSON API empty or failed, attempting to scrape HTML...');
       const html = await this.fetchWithProxy('https://vueltarapida.com/calendario');
-      if (!html || !html.includes('<div class="rd-calendar-event"')) return [];
+      if (!html) return [];
 
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const eventEls = doc.querySelectorAll('.rd-calendar-event');
+      // NEW structure uses .button-day-item
+      const eventEls = doc.querySelectorAll('.button-day-item');
+      if (eventEls.length === 0) {
+        // Try old structure just in case
+        const oldEls = doc.querySelectorAll('.rd-calendar-event');
+        if (oldEls.length === 0) return [];
+      }
+
       const scrapedRaces: Race[] = [];
-
       eventEls.forEach((el, idx) => {
-        const category = el.querySelector('.rd-cat-name')?.textContent?.trim() || 'Otros';
-        const eventName = el.querySelector('.rd-event-name')?.textContent?.trim() || '';
-        const circuitName = el.querySelector('.rd-circuit-name')?.textContent?.trim() || '';
-        const logoUrl = el.querySelector('.rd-cat-logo')?.getAttribute('src') || '';
-        const circuitImg = el.querySelector('.rd-track-layout')?.getAttribute('src') || '';
-
-        const schedules: any[] = [];
-        el.querySelectorAll('.rd-schedule-item').forEach((s, sidx) => {
-           const sName = s.querySelector('.rd-s-name')?.textContent?.trim() || '';
-           const sTime = s.querySelector('.rd-s-time')?.textContent?.trim() || '';
-           schedules.push({ id: `s-${idx}-${sidx}`, name: sName, time: sTime, startAt: Date.now() });
-        });
+        const img = el.querySelector('img');
+        const category = img?.getAttribute('alt') || img?.getAttribute('title') || 'Otros';
+        const time = el.querySelector('p')?.textContent?.trim() || '';
+        const logoUrl = img?.getAttribute('src') || '';
 
         scrapedRaces.push({
           id: `scraped-${idx}`,
@@ -343,13 +323,13 @@ export const dataService = {
           categoryShort: category,
           categoryId: '',
           categoryColor: getCategoryColor(category),
-          categoryImage: logoUrl.startsWith('/') ? `https://vueltarapida.com${logoUrl}` : logoUrl,
-          event: eventName,
-          circuit: circuitName,
-          circuitImage: circuitImg.startsWith('/') ? `https://vueltarapida.com${circuitImg}` : circuitImg,
+          categoryImage: logoUrl ? (logoUrl.startsWith('/') ? `https://vueltarapida.com${logoUrl}` : logoUrl) : '',
+          event: category, // We don't have the full event name on the grid
+          circuit: '',
+          circuitImage: '',
           platforms: [],
-          schedules,
-          time: schedules.length > 0 ? schedules[0].time : '',
+          schedules: [{ id: `s-${idx}`, name: 'Evento', time: time, startAt: Date.now() }],
+          time: time,
           watchLinks: [],
         });
       });
