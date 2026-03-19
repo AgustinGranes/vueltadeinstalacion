@@ -6,91 +6,91 @@
     },
     {
       "source": "/api/vueltarapida/(.*)",
-      "destination": "https://api.vueltarapida.com/api/$1"
+      "destination": "/api/proxy?url=https://api.vueltarapida.com/api/$1"
     },
     {
       "source": "/api/vueltarapida-html/(.*)",
-      "destination": "https://vueltarapida.com/$1"
+      "destination": "/api/proxy?url=https://vueltarapida.com/$1"
     },
     {
       "source": "/api/espn-json/(.*)",
-      "destination": "https://site.api.espn.com/$1"
+      "destination": "/api/proxy?url=https://site.api.espn.com/$1"
     },
     {
       "source": "/api/espn-html/(.*)",
-      "destination": "https://www.espn.com.ar/$1"
+      "destination": "/api/proxy?url=https://www.espn.com.ar/$1"
     },
     {
       "source": "/api/espn/(.*)",
-      "destination": "https://www.espn.com.ar/$1"
+      "destination": "/api/proxy?url=https://www.espn.com.ar/$1"
     },
     {
       "source": "/api/as/(.*)",
-      "destination": "https://as.com/$1"
+      "destination": "/api/proxy?url=https://as.com/$1"
     },
     {
       "source": "/api/motorsport/(.*)",
-      "destination": "https://lat.motorsport.com/$1"
+      "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
       "source": "/api/motorsport-es/(.*)",
-      "destination": "https://es.motorsport.com/$1"
+      "destination": "/api/proxy?url=https://es.motorsport.com/$1"
     },
     {
       "source": "/api/marca/(.*)",
-      "destination": "https://www.marca.com/$1"
+      "destination": "/api/proxy?url=https://www.marca.com/$1"
     },
     {
       "source": "/api/wrc/(.*)",
-      "destination": "https://www.wrc.com/$1"
+      "destination": "/api/proxy?url=https://www.wrc.com/$1"
     },
     {
       "source": "/api/actc-tiempos/(.*)",
-      "destination": "https://tiempos.actc.org.ar/$1"
+      "destination": "/api/proxy?url=https://tiempos.actc.org.ar/$1"
     },
     {
       "source": "/api/actc/(.*)",
-      "destination": "https://actc.org.ar/$1"
+      "destination": "/api/proxy?url=https://actc.org.ar/$1"
     },
     {
       "source": "/api/solotc/(.*)",
-      "destination": "https://www.solotc.com.ar/$1"
+      "destination": "/api/proxy?url=https://www.solotc.com.ar/$1"
     },
     {
       "source": "/api/campeones/(.*)",
-      "destination": "https://campeones.com.ar/$1"
+      "destination": "/api/proxy?url=https://campeones.com.ar/$1"
     },
     {
       "source": "/api/tc2000/(.*)",
-      "destination": "https://tc2000.com.ar/$1"
+      "destination": "/api/proxy?url=https://tc2000.com.ar/$1"
     },
     {
       "source": "/api/carburando/(.*)",
-      "destination": "https://carburando.com/$1"
+      "destination": "/api/proxy?url=https://carburando.com/$1"
     },
     {
       "source": "/api/wrc-api/(.*)",
-      "destination": "https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/$1"
+      "destination": "/api/proxy?url=https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/$1"
     },
     {
       "source": "/api/nascar/(.*)",
-      "destination": "https://www.nascar.com/$1"
+      "destination": "/api/proxy?url=https://www.nascar.com/$1"
     },
     {
       "source": "/api/nascar-latino/(.*)",
-      "destination": "https://latino.nascar.com/$1"
+      "destination": "/api/proxy?url=https://latino.nascar.com/$1"
     },
     {
       "source": "/api/wec-api/(.*)",
-      "destination": "https://www.fiawec.com/en/$1"
+      "destination": "/api/proxy?url=https://www.fiawec.com/en/$1"
     },
     {
       "source": "/api/soymotor/(.*)",
-      "destination": "https://soymotor.com/$1"
+      "destination": "/api/proxy?url=https://soymotor.com/$1"
     },
     {
       "source": "/api/motorsport-results/(.*)",
-      "destination": "https://lat.motorsport.com/$1"
+      "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
       "source": "/(.*)",

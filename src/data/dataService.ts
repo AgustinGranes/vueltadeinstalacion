@@ -189,9 +189,9 @@ export const dataService = {
       sunday.setDate(monday.getDate() + 6);
       sunday.setHours(23, 59, 59, 999);
 
-      // USE ABSOLUTE URLS TO FORCE fetchWithProxy TO USE SERVERLESS PROXY ON VERCEL
-      const url = `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
-      const categoriesUrl = `https://api.vueltarapida.com/api/categories`;
+      // USE UNIFIED PROXY PATHS (HANDLED BY VITE LOCALLY AND VERCEL REWRITES IN PROD)
+      const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
+      const categoriesUrl = `/api/vueltarapida/categories`;
 
       // CRITICAL: Use fetchWithProxy to include required headers (Referer, UA)
       const [racesResText, catResText] = await Promise.all([
@@ -247,8 +247,8 @@ export const dataService = {
           const possibleIds = [r.circuit?._id, r.circuitId, r._id].filter(Boolean);
           
           if (!circuitImage && possibleIds.length > 0) {
-            for (const cid of possibleIds) {                // Use absolute URL to force proxy and avoid CORS
-                const circuitRes = await this.fetchWithProxy(`https://api.vueltarapida.com/api/circuits/by-circuit-id/${cid}`);
+            for (const cid of possibleIds) {                // Use unified proxy path
+                const circuitRes = await this.fetchWithProxy(`/api/vueltarapida/circuits/by-circuit-id/${cid}`);
                 if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
                   const circuitData = JSON.parse(circuitRes);
                   const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
@@ -332,7 +332,7 @@ export const dataService = {
 
   async getF1Calendar(): Promise<CalendarRace[]> {
     try {
-      const resText = await this.fetchWithProxy(`https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard`);
+      const resText = await this.fetchWithProxy(`/api/espn-json/apis/site/v2/sports/racing/f1/scoreboard`);
       if (!resText) throw new Error("Empty response from ESPN");
       const data = JSON.parse(resText);
       const races: CalendarRace[] = [];
@@ -601,7 +601,7 @@ export const dataService = {
 
     // Source 1: AS.com
     try {
-      const html = await this.fetchWithProxy('https://as.com/motor/formula_1/');
+      const html = await this.fetchWithProxy('/api/as/motor/formula_1/');
       if (!html) throw new Error("Empty response from AS.com");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       doc.querySelectorAll('article').forEach(art => {
@@ -620,7 +620,7 @@ export const dataService = {
 
     // Source 2: lat.motorsport.com
     try {
-      const html = await this.fetchWithProxy('https://lat.motorsport.com/f1/news/');
+      const html = await this.fetchWithProxy('/api/motorsport/f1/news/');
       if (!html) throw new Error("Empty response from Motorsport.com");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       doc.querySelectorAll('.ms-item, .ms-item_link, article, [class*="article"], [class*="news"]').forEach(art => {
@@ -708,7 +708,7 @@ export const dataService = {
     const constructors: F1ConstructorRow[] = [];
 
     try {
-      const resText = await this.fetchWithProxy('https://site.api.espn.com/apis/v2/sports/racing/f1/standings');
+      const resText = await this.fetchWithProxy('/api/espn-json/apis/v2/sports/racing/f1/standings');
       if (!resText) throw new Error("Empty response from ESPN standings");
       const data = JSON.parse(resText);
 
