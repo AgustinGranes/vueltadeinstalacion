@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -76,6 +76,16 @@ const App = () => {
   const [wecCalendar, setWecCalendar] = useState<WRCCalendarEvent[]>([]);
   const [wecStandings, setWecStandings] = useState<any>({ hypercarMfr: [], hypercarTeams: [], hypercarDrivers: [], lmgt3Drivers: [] });
   const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-drivers'>('h-mfr');
+  
+  const [imsaCalendar, setImsaCalendar] = useState<CalendarRace[]>([]);
+  const [imsaStandings, setImsaStandings] = useState<any>({ 
+    gtpDrivers: [], gtpTeams: [], gtpManufacturers: [],
+    lmp2Drivers: [], lmp2Teams: [],
+    gtdProDrivers: [], gtdProTeams: [], gtdProManufacturers: [],
+    gtdDrivers: [], gtdTeams: [], gtdManufacturers: [] 
+  });
+  const [imsaStandingsTab, setImsaStandingsTab] = useState<'gtp' | 'lmp2' | 'gtd-pro' | 'gtd'>('gtp');
+  const [imsaNews, setImsaNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -107,6 +117,7 @@ const App = () => {
       else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
       else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
       else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
+      else if (cat === 'IMSA') setImsaCalendar(await dataService.getIMSACalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -138,6 +149,8 @@ const App = () => {
         setTc2000Brands(res.brands);
       } else if (cat === 'WEC') {
         setWecStandings(await dataService.getWECStandings());
+      } else if (cat === 'IMSA') {
+        setImsaStandings(await dataService.getIMSAStandings());
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -161,6 +174,7 @@ const App = () => {
       else if (cat === 'NASCAR') setNascarNews(await dataService.getNascarNews());
       else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
       else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
+      else if (cat === 'IMSA') setImsaNews(await dataService.getIMSANews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -178,6 +192,7 @@ const App = () => {
         dataService.getNascarNews(),
         dataService.getTC2000News(),
         dataService.getWECNews(),
+        dataService.getIMSANews(),
       ]);
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
@@ -186,6 +201,7 @@ const App = () => {
       if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
       if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
       if (results[6]?.status === 'fulfilled') setWecNews(results[6].value);
+      if (results[7]?.status === 'fulfilled') setImsaNews(results[7].value);
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
       console.error('Global news fetch error:', e);
@@ -345,6 +361,12 @@ const App = () => {
           <div className="cat-card-glow" />
           <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
           <span className="cat-label">TC2000</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card imsa-card" onClick={() => handleCategoryClick('IMSA')}>
+          <div className="cat-card-glow" />
+          <img src="/IMSA.png" alt="IMSA" className="cat-logo imsa-logo" />
+          <span className="cat-label">IMSA</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -572,7 +594,7 @@ const App = () => {
   const renderNoticias = () => {
     const allNewsList = [
       ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
-      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews
+      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews
     ].sort(() => Math.random() - 0.5);
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
@@ -619,6 +641,7 @@ const App = () => {
     const isNascar = selectedCategory === 'NASCAR';
     const isTC2000 = selectedCategory === 'TC2000';
     const isWEC = selectedCategory === 'WEC';
+    const isIMSA = selectedCategory === 'IMSA';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -629,12 +652,13 @@ const App = () => {
     if (isTCPK) logo = TCPK_LOGO;
     if (isTCPPK) logo = '/TCPPK.png';
     if (isTC2000) logo = '/TC2000.png';
-    if (isIndy) logo = INDYCAR_LOGO;
+    if (isIndy) logo = '/IndyCar_Series.png';
     if (isNascar) logo = '/NASCAR.png';
-    if (isWEC) logo = WEC_LOGO;
+    if (isWEC) logo = '/WEC.png';
+    if (isIMSA) logo = '/IMSA.png';
 
     let catTitle = 'Formula 1';
-    if (isWRC) catTitle = 'WRC';
+    if (isWRC) catTitle = 'World Rally Championship';
     if (isTC) catTitle = 'Turismo Carretera';
     if (isTCP) catTitle = 'TC Pista';
     if (isTCM) catTitle = 'TC Mouras';
@@ -645,6 +669,7 @@ const App = () => {
     if (isNascar) catTitle = 'NASCAR Cup Series';
     if (isTC2000) catTitle = 'TC2000';
     if (isWEC) catTitle = 'WEC';
+    if (isIMSA) catTitle = 'IMSA';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -658,6 +683,7 @@ const App = () => {
     if (isNascar) news = nascarNews;
     if (isTC2000) news = tc2000News;
     if (isWEC) news = wecNews;
+    if (isIMSA) news = imsaNews;
 
     return (
       <motion.div key="category" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="category-view">
@@ -890,6 +916,24 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">No se encontró calendario WEC.</p>
+                  )}
+                </div>
+              ) : isIMSA ? (
+                <div className="imsa-calendar-list">
+                  {imsaCalendar.length > 0 ? imsaCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario IMSA...' : 'No se encontró calendario IMSA.'}</p>
                   )}
                 </div>
               ) : null}
@@ -1132,6 +1176,125 @@ const App = () => {
                         </div>
                       ))}
                       {nascarStandings[nascarStandingsTab].length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
+                    </div>
+                  </>
+                ) : isIMSA ? (
+                  <>
+                    <div className="nascar-tabs imsa-tabs">
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtp' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtp')}>GTP</button>
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'lmp2' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('lmp2')}>LMP2</button>
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtd-pro' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtd-pro')}>GTD PRO</button>
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtd' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtd')}>GTD</button>
+                    </div>
+                    <div className="standings-list imsa-standings">
+                      {imsaStandingsTab === 'gtp' && (
+                        <>
+                          <h4 className="imsa-sub-header">Pilotos GTP</h4>
+                          {imsaStandings.gtpDrivers.length > 0 ? imsaStandings.gtpDrivers.map((d: any, idx: number) => (
+                            <div key={`gtp-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
+
+                          <h4 className="imsa-sub-header">Equipos GTP</h4>
+                          {imsaStandings.gtpTeams.length > 0 ? imsaStandings.gtpTeams.map((d: any, idx: number) => (
+                            <div key={`gtp-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
+
+                          <h4 className="imsa-sub-header">Fabricantes GTP</h4>
+                          {imsaStandings.gtpManufacturers.length > 0 ? imsaStandings.gtpManufacturers.map((d: any, idx: number) => (
+                            <div key={`gtp-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
+                        </>
+                      )}
+                      {imsaStandingsTab === 'lmp2' && (
+                        <>
+                          <h4 className="imsa-sub-header">Pilotos LMP2</h4>
+                          {imsaStandings.lmp2Drivers.length > 0 ? imsaStandings.lmp2Drivers.map((d: any, idx: number) => (
+                            <div key={`lmp2-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
+
+                          <h4 className="imsa-sub-header">Equipos LMP2</h4>
+                          {imsaStandings.lmp2Teams.length > 0 ? imsaStandings.lmp2Teams.map((d: any, idx: number) => (
+                            <div key={`lmp2-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
+                        </>
+                      )}
+                      {imsaStandingsTab === 'gtd-pro' && (
+                        <>
+                          <h4 className="imsa-sub-header">Pilotos GTD PRO</h4>
+                          {imsaStandings.gtdProDrivers.length > 0 ? imsaStandings.gtdProDrivers.map((d: any, idx: number) => (
+                            <div key={`gtdp-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
+
+                          <h4 className="imsa-sub-header">Fabricantes GTD PRO</h4>
+                          {imsaStandings.gtdProManufacturers.length > 0 ? imsaStandings.gtdProManufacturers.map((d: any, idx: number) => (
+                            <div key={`gtdp-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
+                        </>
+                      )}
+                      {imsaStandingsTab === 'gtd' && (
+                        <>
+                          <h4 className="imsa-sub-header">Pilotos GTD</h4>
+                          {imsaStandings.gtdDrivers.length > 0 ? imsaStandings.gtdDrivers.map((d: any, idx: number) => (
+                            <div key={`gtd-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
+
+                          <h4 className="imsa-sub-header">Equipos GTD</h4>
+                          {imsaStandings.gtdTeams.length > 0 ? imsaStandings.gtdTeams.map((d: any, idx: number) => (
+                            <div key={`gtd-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
+
+                          <h4 className="imsa-sub-header">Fabricantes GTD</h4>
+                          {imsaStandings.gtdManufacturers.length > 0 ? imsaStandings.gtdManufacturers.map((d: any, idx: number) => (
+                            <div key={`gtd-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                              <span className="stand-pos">{d.pos}</span>
+                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                              <span className="stand-pts">{d.points} pts</span>
+                            </div>
+                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
+                        </>
+                      )}
+                      {(
+                        (imsaStandingsTab === 'gtp' && imsaStandings.gtpDrivers.length === 0 && imsaStandings.gtpTeams.length === 0 && imsaStandings.gtpManufacturers.length === 0) ||
+                        (imsaStandingsTab === 'lmp2' && imsaStandings.lmp2Drivers.length === 0 && imsaStandings.lmp2Teams.length === 0) ||
+                        (imsaStandingsTab === 'gtd-pro' && imsaStandings.gtdProDrivers.length === 0 && imsaStandings.gtdProManufacturers.length === 0) ||
+                        (imsaStandingsTab === 'gtd' && imsaStandings.gtdDrivers.length === 0 && imsaStandings.gtdTeams.length === 0 && imsaStandings.gtdManufacturers.length === 0)
+                      ) && !isLoading && <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
                 ) : isWEC ? (

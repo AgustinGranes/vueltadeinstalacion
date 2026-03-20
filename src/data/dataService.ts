@@ -145,7 +145,8 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TCPM': 'https://tiempos.actc.org.ar/resultados',
   'TCPK': 'https://tiempos.actc.org.ar/resultados',
   'TCPPK': 'https://tiempos.actc.org.ar/resultados',
-  'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#'
+  'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#',
+  'IMSA': 'https://lat.motorsport.com/imsa/results/2026'
 };
 
 export type TC2000Standings = {
@@ -165,6 +166,20 @@ export type WRCRallyResult = {
   rallyName: string;
   fullResultsUrl: string;
   results: { pos: string; driver: string; codriver: string; team: string; time: string; diff: string }[];
+};
+
+export type IMSAStandings = {
+  gtpDrivers: TCStandingRow[];
+  gtpTeams: TCStandingRow[];
+  gtpManufacturers: TCStandingRow[];
+  lmp2Drivers: TCStandingRow[];
+  lmp2Teams: TCStandingRow[];
+  gtdProDrivers: TCStandingRow[];
+  gtdProTeams: TCStandingRow[];
+  gtdProManufacturers: TCStandingRow[];
+  gtdDrivers: TCStandingRow[];
+  gtdTeams: TCStandingRow[];
+  gtdManufacturers: TCStandingRow[];
 };
 
 // ========== DATA SERVICE ==========
@@ -1148,10 +1163,15 @@ export const dataService = {
   // === UNIFIED ACTC CALENDAR HELPER ===
   async _getACTCCalendar(categorySlug: string): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
+    console.log('[DataService] Fetching TC calendar...');
     try {
-      const html = await this.fetchWithProxy(`https://actc.org.ar/${categorySlug}/calendario.html`);
+      // Use the rewrite to avoid CORS/403 issues more reliably
+      const html = await this.fetchWithProxy(`/api/actc/${categorySlug}/calendario.html`);
+      console.log(`[DataService] Loaded ${html ? html.length : 0} chars for ${categorySlug} calendar`);
+      if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const elements = doc.querySelectorAll('.info-race');
+      console.log(`[DataService] Found ${elements.length} race elements`);
       const now = new Date();
       now.setHours(0, 0, 0, 0);
 
@@ -1878,7 +1898,6 @@ export const dataService = {
     return standings;
   },
 
-  // === TCM CALENDAR ===
   async getTCMCalendar(): Promise<CalendarRace[]> {
     return this._getACTCCalendar('tcm');
   },
@@ -1989,6 +2008,114 @@ export const dataService = {
   // === TCPPK CALENDAR ===
   async getTCPPKCalendar(): Promise<CalendarRace[]> {
     return this._getACTCCalendar('tcppk');
+  },
+
+  // === IMSA NEWS ===
+  async getIMSANews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/imsa/news/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const articles = doc.querySelectorAll('.ms-item, .ms-article-list-item');
+      articles.forEach(el => {
+        const titleLink = el.querySelector('a.ms-item--title, a.ms-article-list-item--title');
+        const title = titleLink?.textContent?.trim();
+        const href = titleLink?.getAttribute('href');
+        if (title && href) {
+          allNews.push({
+            title,
+            summary: '',
+            link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
+            source: 'Motorsport Lat',
+            category: 'IMSA',
+            imageUrl: el.querySelector('img')?.getAttribute('src') || undefined
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('[DataService] IMSA news error:', e);
+    }
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i);
+  },
+
+  // === IMSA CALENDAR ===
+  async getIMSACalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    const year = new Date().getFullYear();
+    try {
+      const html = await this.fetchWithProxy(`https://lat.motorsport.com/imsa/results/${year}/`);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = doc.querySelectorAll('.ms-item--event, .ms-event-list-item');
+      items.forEach((el, idx) => {
+        const title = el.querySelector('.ms-item--title, .ms-event-list-item--title')?.textContent?.trim() || 'Carrera';
+        const date = el.querySelector('.ms-item--date, .ms-event-list-item--date')?.textContent?.trim() || '';
+        const winner = el.querySelector('.ms-item--winner-name, .ms-event-list-item--winner-name')?.textContent?.trim() || '';
+        
+        let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
+        if (winner) status = 'Finished';
+        
+        calendar.push({ round: idx + 1, race: title, dates: date, status, winner });
+      });
+    } catch (e) {
+      console.error('[DataService] IMSA calendar error:', e);
+    }
+    return calendar;
+  },
+
+  async getIMSAStandings(): Promise<IMSAStandings> {
+    const year = new Date().getFullYear();
+    const fetchTable = async (type: string, cls: string): Promise<TCStandingRow[]> => {
+      const rows: TCStandingRow[] = [];
+      try {
+        const url = `https://lat.motorsport.com/imsa/standings/${year}/?type=${type}&class=${cls.replace(' ', '+')}`;
+        const html = await this.fetchWithProxy(url);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const tableRows = doc.querySelectorAll('.ms-table_row');
+        tableRows.forEach(row => {
+          const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim() || '';
+          const name = row.querySelector('.ms-table_cell--driver .ms-table_cell--name, .ms-table_cell--team .ms-table_cell--name, .ms-table_cell--constructor .ms-table_cell--name')?.textContent?.trim() || '';
+          const points = row.querySelector('.ms-table_cell--pts')?.textContent?.trim() || '0';
+          if (pos && name) {
+            rows.push({ pos, driver: name, points });
+          }
+        });
+      } catch (e) {
+        console.warn(`[DataService] IMSA standings error (${type}/${cls}):`, e);
+      }
+      return rows;
+    };
+
+    const gtpD = await fetchTable('Driver', 'GTP');
+    await new Promise(r => setTimeout(r, 500));
+    const gtpT = await fetchTable('Team', 'GTP');
+    await new Promise(r => setTimeout(r, 500));
+    const gtpM = await fetchTable('Constructor', 'GTP');
+    await new Promise(r => setTimeout(r, 500));
+    
+    const lmp2D = await fetchTable('Driver', 'LMP2');
+    await new Promise(r => setTimeout(r, 500));
+    const lmp2T = await fetchTable('Team', 'LMP2');
+    await new Promise(r => setTimeout(r, 500));
+
+    const gtdProD = await fetchTable('Driver', 'GTD PRO');
+    await new Promise(r => setTimeout(r, 500));
+    const gtdProT = await fetchTable('Team', 'GTD PRO');
+    await new Promise(r => setTimeout(r, 500));
+    const gtdProM = await fetchTable('Constructor', 'GTD PRO');
+    await new Promise(r => setTimeout(r, 500));
+
+    const gtdD = await fetchTable('Driver', 'GTD');
+    await new Promise(r => setTimeout(r, 500));
+    const gtdT = await fetchTable('Team', 'GTD');
+    await new Promise(r => setTimeout(r, 500));
+    const gtdM = await fetchTable('Constructor', 'GTD');
+
+    return {
+      gtpDrivers: gtpD, gtpTeams: gtpT, gtpManufacturers: gtpM,
+      lmp2Drivers: lmp2D, lmp2Teams: lmp2T,
+      gtdProDrivers: gtdProD, gtdProTeams: gtdProT, gtdProManufacturers: gtdProM,
+      gtdDrivers: gtdD, gtdTeams: gtdT, gtdManufacturers: gtdM
+    };
   },
 
   // === TC2000 ===
@@ -2177,7 +2304,7 @@ export const dataService = {
       console.warn(`[DataService] Serverless proxy exception:`, e);
     }
 
-    // 3. FALLBACK: Public CORS Proxies with different IPs
+    // 3. FALLBACK: Public CORS Proxies
     const publicProxies = [
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
       (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -2192,7 +2319,12 @@ export const dataService = {
 
         if (proxyUrl.includes('allorigins')) {
           const data = await res.json();
-          if (data && data.contents) return data.contents;
+          if (data && data.contents) {
+            const text = data.contents;
+            if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
+              return text;
+            }
+          }
           continue;
         }
         
@@ -2213,8 +2345,9 @@ export const dataService = {
         .replace('https://api.vueltarapida.com', '/api/vueltarapida')
         .replace('https://actc.org.ar', '/api/actc')
         .replace('https://vueltarapida.com', '/api/vueltarapida-html')
-        .replace('https://www.fiawec.com/en', '/api/wec-api')
+        .replace('https://wec.com', '/api/wec-api')
         .replace('https://soymotor.com', '/api/soymotor')
+        .replace('https://lat.motorsport.com', '/api/motorsport')
         .replace('https://campeones.com.ar', '/api/campeones');
 
         if (proxyPath !== targetUrl) {
