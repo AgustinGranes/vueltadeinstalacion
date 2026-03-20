@@ -244,7 +244,7 @@ export const dataService = {
             }));
 
           let circuitImage = r.circuitImage || '';
-          const possibleIds = [r.circuit?._id, r.circuitId, r._id].filter(Boolean);
+          const possibleIds = [r.circuit?._id, r.circuitId].filter(Boolean);
           
           if (!circuitImage && possibleIds.length > 0) {
             for (const cid of possibleIds) {                // Use unified proxy path
