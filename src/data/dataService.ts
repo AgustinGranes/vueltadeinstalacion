@@ -2016,11 +2016,11 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy('https://lat.motorsport.com/imsa/news/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('.ms-item, .ms-article-list-item');
+      const articles = doc.querySelectorAll('a.ms-item');
       articles.forEach(el => {
-        const titleLink = el.querySelector('a.ms-item--title, a.ms-article-list-item--title');
-        const title = titleLink?.textContent?.trim();
-        const href = titleLink?.getAttribute('href');
+        const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
+        const href = el.getAttribute('href');
+        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
         if (title && href) {
           allNews.push({
             title,
@@ -2028,7 +2028,7 @@ export const dataService = {
             link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
             source: 'Motorsport Lat',
             category: 'IMSA',
-            imageUrl: el.querySelector('img')?.getAttribute('src') || undefined
+            imageUrl: img || undefined
           });
         }
       });
@@ -2043,19 +2043,40 @@ export const dataService = {
     const calendar: CalendarRace[] = [];
     const year = new Date().getFullYear();
     try {
-      const html = await this.fetchWithProxy(`https://lat.motorsport.com/imsa/results/${year}/`);
+      // Try official site first
+      const html = await this.fetchWithProxy(`https://www.imsa.com/weathertech/weathertech-${year}-schedule/`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const items = doc.querySelectorAll('.ms-item--event, .ms-event-list-item');
-      items.forEach((el, idx) => {
-        const title = el.querySelector('.ms-item--title, .ms-event-list-item--title')?.textContent?.trim() || 'Carrera';
-        const date = el.querySelector('.ms-item--date, .ms-event-list-item--date')?.textContent?.trim() || '';
-        const winner = el.querySelector('.ms-item--winner-name, .ms-event-list-item--winner-name')?.textContent?.trim() || '';
-        
-        let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
-        if (winner) status = 'Finished';
-        
-        calendar.push({ round: idx + 1, race: title, dates: date, status, winner });
-      });
+      
+      const officialItems = doc.querySelectorAll('.schedule-item, .event-list__item, .schedule-event');
+      if (officialItems.length > 1) { // 1 might be a header
+        officialItems.forEach((el, idx) => {
+          const race = el.querySelector('.event-title, .schedule-event__title, h2, h3, .title')?.textContent?.trim() || 'Carrera';
+          const dates = el.querySelector('.event-date, .schedule-event__date, .date, .time')?.textContent?.trim() || '';
+          let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
+          const isFinished = el.classList.contains('is-past') || el.querySelector('.results-link');
+          if (isFinished) status = 'Finished';
+          calendar.push({ round: idx + 1, race, dates, status, winner: '' });
+        });
+        if (calendar.length > 0) return calendar;
+      }
+
+      // Fallback to Motorsport.com results page
+      const msHtml = await this.fetchWithProxy(`https://lat.motorsport.com/imsa/results/${year}/`);
+      if (msHtml) {
+        const msDoc = new DOMParser().parseFromString(msHtml, 'text/html');
+        // More robust selectors for the results table or list
+        const msItems = msDoc.querySelectorAll('tr.ms-table_row, a.ms-item, .ms-event-list-item');
+        msItems.forEach((el, idx) => {
+          const race = el.querySelector('.ms-table_field--event, .ms-item--title, .ms-event-list-item--title, .name')?.textContent?.trim() || 'Carrera';
+          const dates = el.querySelector('.ms-table_field--date, .ms-item--date, .ms-event-list-item--date, .date')?.textContent?.trim() || '';
+          const winner = el.querySelector('.ms-table_field--winner, .ms-item--winner-name, .ms-event-list-item--winner-name')?.textContent?.trim() || '';
+          if (race !== 'Carrera' || dates) {
+            let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
+            if (winner && winner !== '-') status = 'Finished';
+            calendar.push({ round: idx + 1, race, dates, status, winner });
+          }
+        });
+      }
     } catch (e) {
       console.error('[DataService] IMSA calendar error:', e);
     }
@@ -2070,12 +2091,12 @@ export const dataService = {
         const url = `https://lat.motorsport.com/imsa/standings/${year}/?type=${type}&class=${cls.replace(' ', '+')}`;
         const html = await this.fetchWithProxy(url);
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const tableRows = doc.querySelectorAll('.ms-table_row');
+        const tableRows = doc.querySelectorAll('tr.ms-table_row');
         tableRows.forEach(row => {
-          const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim() || '';
-          const name = row.querySelector('.ms-table_cell--driver .ms-table_cell--name, .ms-table_cell--team .ms-table_cell--name, .ms-table_cell--constructor .ms-table_cell--name')?.textContent?.trim() || '';
-          const points = row.querySelector('.ms-table_cell--pts')?.textContent?.trim() || '0';
-          if (pos && name) {
+          const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
+          const name = row.querySelector('.name-short, .name, .ms-table_field--driver .name, .ms-table_field--team .name, .ms-table_field--constructor .name')?.textContent?.trim() || '';
+          const points = row.querySelector('.ms-table_field--total_points, .ms-table_field--pts')?.textContent?.trim() || '0';
+          if (pos && name && !isNaN(parseInt(pos))) {
             rows.push({ pos, driver: name, points });
           }
         });
@@ -2085,36 +2106,20 @@ export const dataService = {
       return rows;
     };
 
-    const gtpD = await fetchTable('Driver', 'GTP');
-    await new Promise(r => setTimeout(r, 500));
-    const gtpT = await fetchTable('Team', 'GTP');
-    await new Promise(r => setTimeout(r, 500));
-    const gtpM = await fetchTable('Constructor', 'GTP');
-    await new Promise(r => setTimeout(r, 500));
-    
-    const lmp2D = await fetchTable('Driver', 'LMP2');
-    await new Promise(r => setTimeout(r, 500));
-    const lmp2T = await fetchTable('Team', 'LMP2');
-    await new Promise(r => setTimeout(r, 500));
+    const results = await Promise.allSettled([
+      fetchTable('Driver', 'GTP'), fetchTable('Team', 'GTP'), fetchTable('Constructor', 'GTP'),
+      fetchTable('Driver', 'LMP2'), fetchTable('Team', 'LMP2'),
+      fetchTable('Driver', 'GTD PRO'), fetchTable('Team', 'GTD PRO'), fetchTable('Constructor', 'GTD PRO'),
+      fetchTable('Driver', 'GTD'), fetchTable('Team', 'GTD'), fetchTable('Constructor', 'GTD')
+    ]);
 
-    const gtdProD = await fetchTable('Driver', 'GTD PRO');
-    await new Promise(r => setTimeout(r, 500));
-    const gtdProT = await fetchTable('Team', 'GTD PRO');
-    await new Promise(r => setTimeout(r, 500));
-    const gtdProM = await fetchTable('Constructor', 'GTD PRO');
-    await new Promise(r => setTimeout(r, 500));
-
-    const gtdD = await fetchTable('Driver', 'GTD');
-    await new Promise(r => setTimeout(r, 500));
-    const gtdT = await fetchTable('Team', 'GTD');
-    await new Promise(r => setTimeout(r, 500));
-    const gtdM = await fetchTable('Constructor', 'GTD');
+    const getData = (idx: number) => results[idx].status === 'fulfilled' ? (results[idx] as any).value : [];
 
     return {
-      gtpDrivers: gtpD, gtpTeams: gtpT, gtpManufacturers: gtpM,
-      lmp2Drivers: lmp2D, lmp2Teams: lmp2T,
-      gtdProDrivers: gtdProD, gtdProTeams: gtdProT, gtdProManufacturers: gtdProM,
-      gtdDrivers: gtdD, gtdTeams: gtdT, gtdManufacturers: gtdM
+      gtpDrivers: getData(0), gtpTeams: getData(1), gtpManufacturers: getData(2),
+      lmp2Drivers: getData(3), lmp2Teams: getData(4),
+      gtdProDrivers: getData(5), gtdProTeams: getData(6), gtdProManufacturers: getData(7),
+      gtdDrivers: getData(8), gtdTeams: getData(9), gtdManufacturers: getData(10)
     };
   },
 
@@ -2306,6 +2311,7 @@ export const dataService = {
 
     // 3. FALLBACK: Public CORS Proxies
     const publicProxies = [
+      (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}&t=${Date.now()}`,
       (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
       (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
       (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
@@ -2318,11 +2324,14 @@ export const dataService = {
         if (!res.ok) continue;
 
         if (proxyUrl.includes('allorigins')) {
-          const data = await res.json();
-          if (data && data.contents) {
-            const text = data.contents;
-            if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
-              return text;
+          if (proxyUrl.includes('/raw')) {
+            const text = await res.text();
+            if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) return text;
+          } else {
+            const data = await res.json();
+            if (data && data.contents) {
+              const text = data.contents;
+              if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) return text;
             }
           }
           continue;
