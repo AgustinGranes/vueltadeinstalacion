@@ -419,12 +419,7 @@ const App = () => {
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
-                            
-                            {item.circuitImage && (
-                              <div className="weekly-circuit-img-wrap">
-                                <img src={item.circuitImage} alt="Circuito" className="weekly-circuit-img-v2" />
-                              </div>
-                            )}
+                            {/* CIRCUIT IMAGES REMOVED FROM WEEKLY VIEW */}
 
                             <div className="weekly-details-footer">
                               {item.watchLinks && item.watchLinks.length > 0 && (
@@ -484,12 +479,7 @@ const App = () => {
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
-                            
-                            {item.circuitImage && (
-                              <div className="weekly-circuit-img-wrap">
-                                <img src={item.circuitImage} alt="Circuito" className="weekly-circuit-img-v2" />
-                              </div>
-                            )}
+                            {/* CIRCUIT IMAGES REMOVED FROM WEEKLY VIEW */}
 
                             <div className="weekly-details-footer">
                               {item.watchLinks && item.watchLinks.length > 0 && (
@@ -525,10 +515,17 @@ const App = () => {
               <div key={category} className="cat-event-card">
                 <div className="cat-event-header" style={{ borderColor: getCategoryColor(category) }}>
                   {races[0]?.categoryImage && <img src={races[0].categoryImage} alt="" className="cat-event-logo" />}
-                  <div className="cat-event-title-block" onClick={() => setExpandedEvent(expandedEvent === category ? null : category)}>
+                  <div className="cat-event-title-block" onClick={() => {
+                    const hasDetails = races[0]?.circuitImage || (races[0]?.watchLinks ?? []).length > 0 || races[0]?.ticketLink;
+                    if (hasDetails) {
+                      setExpandedEvent(expandedEvent === category ? null : category);
+                    }
+                  }}>
                     <div className="cat-event-category-row">
                       <h3 className="cat-event-category">{category}</h3>
-                      <ChevronRight size={16} className={`expand-chevron ${expandedEvent === category ? 'open' : ''}`} />
+                      { (races[0]?.circuitImage || (races[0]?.watchLinks ?? []).length > 0 || races[0]?.ticketLink) && (
+                        <ChevronRight size={16} className={`expand-chevron ${expandedEvent === category ? 'open' : ''}`} />
+                      )}
                     </div>
                     <p className="cat-event-circuit">{races[0]?.circuit}</p>
                   </div>
