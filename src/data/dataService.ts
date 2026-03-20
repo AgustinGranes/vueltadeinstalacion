@@ -1105,7 +1105,7 @@ export const dataService = {
     const standings: TCStandingRow[] = [];
     console.log('[DataService] Fetching TC standings (Live)...');
     try {
-      const html = await this.fetchWithProxy('https://tiempos.actc.org.ar/campeonato-tc/campeonato');
+      const html = await this.fetchWithProxy('https://tiempos.actc.org.ar/campeonato-de-tc/campeonato');
       console.log(`[DataService] Loaded ${html.length} chars from ACTC Tiempos`);
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
