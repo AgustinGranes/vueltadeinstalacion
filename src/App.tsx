@@ -266,8 +266,9 @@ const App = () => {
 
   const handleCategoryClick = (cat: CategoryType) => {
     setSelectedCategory(cat);
-    setCategorySubTab('calendar');
+    setCategorySubTab('standings');
     setView('category');
+    window.scrollTo({ top: 0, behavior: 'instant' as any });
   };
 
   // ==================== RENDER: HOME ====================
@@ -659,7 +660,7 @@ const App = () => {
     if (isWEC) news = wecNews;
 
     return (
-      <motion.div key="category" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="category-view">
+      <motion.div key="category" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="category-view">
         <header className="cat-header">
           <button className="back-btn" onClick={() => setView('main')}>
             <ArrowLeft size={22} />
