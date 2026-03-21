@@ -1183,7 +1183,10 @@ const App = () => {
                   <>
                     <div className="imsa-class-tabs nascar-tabs">
                       <button className={`nascar-tab-btn ${imsaClass === 'gtp' ? 'active' : ''}`} onClick={() => setImsaClass('gtp')}>GTP</button>
-                      <button className={`nascar-tab-btn ${imsaClass === 'lmp2' ? 'active' : ''}`} onClick={() => setImsaClass('lmp2')}>LMP2</button>
+                      <button className={`nascar-tab-btn ${imsaClass === 'lmp2' ? 'active' : ''}`} onClick={() => {
+                        setImsaClass('lmp2');
+                        if (imsaStandingsTab === 'manufacturers') setImsaStandingsTab('drivers');
+                      }}>LMP2</button>
                       <button className={`nascar-tab-btn ${imsaClass === 'gtdpro' ? 'active' : ''}`} onClick={() => setImsaClass('gtdpro')}>GTD PRO</button>
                       <button className={`nascar-tab-btn ${imsaClass === 'gtd' ? 'active' : ''}`} onClick={() => setImsaClass('gtd')}>GTD</button>
                     </div>
