@@ -79,12 +79,13 @@ const App = () => {
   
   const [imsaCalendar, setImsaCalendar] = useState<CalendarRace[]>([]);
   const [imsaStandings, setImsaStandings] = useState<any>({ 
-    gtpDrivers: [], gtpTeams: [], gtpManufacturers: [],
-    lmp2Drivers: [], lmp2Teams: [],
-    gtdProDrivers: [], gtdProTeams: [], gtdProManufacturers: [],
-    gtdDrivers: [], gtdTeams: [], gtdManufacturers: [] 
+    gtp: { drivers: [], teams: [], manufacturers: [] },
+    lmp2: { drivers: [], teams: [], manufacturers: [] },
+    gtdpro: { drivers: [], teams: [], manufacturers: [] },
+    gtd: { drivers: [], teams: [], manufacturers: [] }
   });
-  const [imsaStandingsTab, setImsaStandingsTab] = useState<'gtp' | 'lmp2' | 'gtd-pro' | 'gtd'>('gtp');
+  const [imsaStandingsTab, setImsaStandingsTab] = useState<'drivers' | 'teams' | 'manufacturers'>('drivers');
+  const [imsaClass, setImsaClass] = useState<'gtp' | 'lmp2' | 'gtdpro' | 'gtd'>('gtp');
   const [imsaNews, setImsaNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -928,7 +929,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? '✅ Finalizado' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1178,59 +1179,39 @@ const App = () => {
                       {nascarStandings[nascarStandingsTab].length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
                     </div>
                   </>
-                ) : isIMSA ? (
+                ) : (isIMSA && categorySubTab === 'standings') ? (
                   <>
-                    <div className="nascar-tabs imsa-tabs">
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtp' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtp')}>GTP</button>
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'lmp2' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('lmp2')}>LMP2</button>
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtd-pro' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtd-pro')}>GTD PRO</button>
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'gtd' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('gtd')}>GTD</button>
+                    <div className="imsa-class-tabs nascar-tabs">
+                      <button className={`nascar-tab-btn ${imsaClass === 'gtp' ? 'active' : ''}`} onClick={() => setImsaClass('gtp')}>GTP</button>
+                      <button className={`nascar-tab-btn ${imsaClass === 'lmp2' ? 'active' : ''}`} onClick={() => setImsaClass('lmp2')}>LMP2</button>
+                      <button className={`nascar-tab-btn ${imsaClass === 'gtdpro' ? 'active' : ''}`} onClick={() => setImsaClass('gtdpro')}>GTD PRO</button>
+                      <button className={`nascar-tab-btn ${imsaClass === 'gtd' ? 'active' : ''}`} onClick={() => setImsaClass('gtd')}>GTD</button>
                     </div>
+
+                    <div className="nascar-tabs imsa-tabs">
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('drivers')}>Pilotos</button>
+                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('teams')}>Equipos</button>
+                      {imsaClass !== 'lmp2' && (
+                        <button className={`nascar-tab-btn ${imsaStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('manufacturers')}>Fabricantes</button>
+                      )}
+                    </div>
+                    
                     <div className="standings-list imsa-standings">
-                      {imsaStandingsTab === 'gtp' && (
+                      {imsaStandingsTab === 'drivers' && (
                         <>
-                          <h4 className="imsa-sub-header">Pilotos GTP</h4>
-                          {imsaStandings.gtpDrivers.length > 0 ? imsaStandings.gtpDrivers.map((d: any, idx: number) => (
-                            <div key={`gtp-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          {(imsaStandings[imsaClass]?.drivers || []).length > 0 ? (imsaStandings[imsaClass].drivers).map((d: any, idx: number) => (
+                            <div key={`imsa-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                               <span className="stand-pos">{d.pos}</span>
                               <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
                               <span className="stand-pts">{d.points} pts</span>
                             </div>
                           )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
-
-                          <h4 className="imsa-sub-header">Equipos GTP</h4>
-                          {imsaStandings.gtpTeams.length > 0 ? imsaStandings.gtpTeams.map((d: any, idx: number) => (
-                            <div key={`gtp-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
-
-                          <h4 className="imsa-sub-header">Fabricantes GTP</h4>
-                          {imsaStandings.gtpManufacturers.length > 0 ? imsaStandings.gtpManufacturers.map((d: any, idx: number) => (
-                            <div key={`gtp-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
                         </>
                       )}
-                      {imsaStandingsTab === 'lmp2' && (
+                      {imsaStandingsTab === 'teams' && (
                         <>
-                          <h4 className="imsa-sub-header">Pilotos LMP2</h4>
-                          {imsaStandings.lmp2Drivers.length > 0 ? imsaStandings.lmp2Drivers.map((d: any, idx: number) => (
-                            <div key={`lmp2-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
-
-                          <h4 className="imsa-sub-header">Equipos LMP2</h4>
-                          {imsaStandings.lmp2Teams.length > 0 ? imsaStandings.lmp2Teams.map((d: any, idx: number) => (
-                            <div key={`lmp2-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          {(imsaStandings[imsaClass]?.teams || []).length > 0 ? (imsaStandings[imsaClass].teams).map((d: any, idx: number) => (
+                            <div key={`imsa-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                               <span className="stand-pos">{d.pos}</span>
                               <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
                               <span className="stand-pts">{d.points} pts</span>
@@ -1238,63 +1219,22 @@ const App = () => {
                           )) : <p className="empty-msg-inner">Cargando equipos...</p>}
                         </>
                       )}
-                      {imsaStandingsTab === 'gtd-pro' && (
+                      {imsaStandingsTab === 'manufacturers' && imsaClass !== 'lmp2' && (
                         <>
-                          <h4 className="imsa-sub-header">Pilotos GTD PRO</h4>
-                          {imsaStandings.gtdProDrivers.length > 0 ? imsaStandings.gtdProDrivers.map((d: any, idx: number) => (
-                            <div key={`gtdp-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          {(imsaStandings[imsaClass]?.manufacturers || []).length > 0 ? (imsaStandings[imsaClass].manufacturers).map((d: any, idx: number) => (
+                            <div key={`imsa-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                               <span className="stand-pos">{d.pos}</span>
                               <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
                               <span className="stand-pts">{d.points} pts</span>
                             </div>
-                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
-
-                          <h4 className="imsa-sub-header">Fabricantes GTD PRO</h4>
-                          {imsaStandings.gtdProManufacturers.length > 0 ? imsaStandings.gtdProManufacturers.map((d: any, idx: number) => (
-                            <div key={`gtdp-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
-                        </>
-                      )}
-                      {imsaStandingsTab === 'gtd' && (
-                        <>
-                          <h4 className="imsa-sub-header">Pilotos GTD</h4>
-                          {imsaStandings.gtdDrivers.length > 0 ? imsaStandings.gtdDrivers.map((d: any, idx: number) => (
-                            <div key={`gtd-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
-
-                          <h4 className="imsa-sub-header">Equipos GTD</h4>
-                          {imsaStandings.gtdTeams.length > 0 ? imsaStandings.gtdTeams.map((d: any, idx: number) => (
-                            <div key={`gtd-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
-
-                          <h4 className="imsa-sub-header">Fabricantes GTD</h4>
-                          {imsaStandings.gtdManufacturers.length > 0 ? imsaStandings.gtdManufacturers.map((d: any, idx: number) => (
-                            <div key={`gtd-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando fabricantes...</p>}
+                          )) : <p className="empty-msg-inner">No hay datos de fabricantes.</p>}
                         </>
                       )}
                       {(
-                        (imsaStandingsTab === 'gtp' && imsaStandings.gtpDrivers.length === 0 && imsaStandings.gtpTeams.length === 0 && imsaStandings.gtpManufacturers.length === 0) ||
-                        (imsaStandingsTab === 'lmp2' && imsaStandings.lmp2Drivers.length === 0 && imsaStandings.lmp2Teams.length === 0) ||
-                        (imsaStandingsTab === 'gtd-pro' && imsaStandings.gtdProDrivers.length === 0 && imsaStandings.gtdProManufacturers.length === 0) ||
-                        (imsaStandingsTab === 'gtd' && imsaStandings.gtdDrivers.length === 0 && imsaStandings.gtdTeams.length === 0 && imsaStandings.gtdManufacturers.length === 0)
-                      ) && !isLoading && <p className="empty-msg">No hay posiciones disponibles.</p>}
+                        (imsaStandingsTab === 'drivers' && (imsaStandings[imsaClass]?.drivers || []).length === 0) ||
+                        (imsaStandingsTab === 'teams' && (imsaStandings[imsaClass]?.teams || []).length === 0) ||
+                        (imsaStandingsTab === 'manufacturers' && (imsaStandings[imsaClass]?.manufacturers || []).length === 0)
+                      ) && !isLoading && !isCatStandLoading && <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
                 ) : isWEC ? (

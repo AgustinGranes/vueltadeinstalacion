@@ -1,0 +1,80 @@
+{
+  "calendar": [
+    { "round": 1, "race": "The Roar Before The 24", "dates": "Ene 16 - Ene 18", "status": "Finished", "winner": "Porsche Penske" },
+    { "round": 2, "race": "24 Horas de Daytona", "dates": "Ene 22 - Ene 25", "status": "Finished", "winner": "Porsche Penske" },
+    { "round": 3, "race": "12 Horas de Sebring", "dates": "Mar 18 - Mar 21", "status": "Upcoming", "winner": "" },
+    { "round": 4, "race": "Long Beach", "dates": "Abr 17 - Abr 18", "status": "Upcoming", "winner": "" },
+    { "round": 5, "race": "Laguna Seca", "dates": "May 09 - May 11", "status": "Upcoming", "winner": "" },
+    { "round": 6, "race": "Detroit", "dates": "May 30 - May 31", "status": "Upcoming", "winner": "" },
+    { "round": 7, "race": "Watkins Glen", "dates": "Jun 26 - Jun 29", "status": "Upcoming", "winner": "" },
+    { "round": 8, "race": "Mosport", "dates": "Jul 11 - Jul 13", "status": "Upcoming", "winner": "" },
+    { "round": 9, "race": "Road America", "dates": "Jul 31 - Ago 03", "status": "Upcoming", "winner": "" },
+    { "round": 10, "race": "Virginia", "dates": "Ago 22 - Ago 24", "status": "Upcoming", "winner": "" },
+    { "round": 11, "race": "Indianápolis", "dates": "Sep 19 - Sep 21", "status": "Upcoming", "winner": "" },
+    { "round": 12, "race": "Petit Le Mans", "dates": "Oct 08 - Oct 11", "status": "Upcoming", "winner": "" }
+  ],
+  "standings": {
+    "gtp": {
+      "drivers": [
+        { "pos": "1", "driver": "F. Nasr", "points": "350" },
+        { "pos": "2", "driver": "J. Andlauer", "points": "320" },
+        { "pos": "3", "driver": "L. Heinrich", "points": "300" },
+        { "pos": "4", "driver": "J. Aitken", "points": "280" },
+        { "pos": "5", "driver": "E. Bamber", "points": "260" }
+      ],
+      "teams": [
+        { "pos": "1", "driver": "Porsche Penske Motorsport", "points": "350" },
+        { "pos": "2", "driver": "Cadillac Whelen", "points": "320" }
+      ],
+      "manufacturers": [
+        { "pos": "1", "driver": "Porsche", "points": "380" },
+        { "pos": "2", "driver": "Cadillac", "points": "350" }
+      ]
+    },
+    "lmp2": {
+      "drivers": [
+        { "pos": "1", "driver": "G. Kurtz", "points": "350" },
+        { "pos": "2", "driver": "T. Sowery", "points": "320" },
+        { "pos": "3", "driver": "M. Jakobsen", "points": "310" },
+        { "pos": "4", "driver": "T. Dillmann", "points": "300" }
+      ],
+      "teams": [
+        { "pos": "1", "driver": "Crowdstrike Racing by APR", "points": "350" },
+        { "pos": "2", "driver": "Inter Europol Competition", "points": "320" }
+      ],
+      "manufacturers": []
+    },
+    "gtdpro": {
+      "drivers": [
+        { "pos": "1", "driver": "N. Verhagen", "points": "350" },
+        { "pos": "2", "driver": "C. de Phillippi", "points": "320" },
+        { "pos": "3", "driver": "M. Hesse", "points": "310" },
+        { "pos": "4", "driver": "D. Harper", "points": "300" }
+      ],
+      "teams": [
+        { "pos": "1", "driver": "Paul Miller Racing", "points": "350" },
+        { "pos": "2", "driver": "75 Express", "points": "320" }
+      ],
+      "manufacturers": [
+        { "pos": "1", "driver": "BMW", "points": "350" },
+        { "pos": "2", "driver": "Mercedes-AMG", "points": "320" }
+      ]
+    },
+    "gtd": {
+      "drivers": [
+        { "pos": "1", "driver": "R. Ward", "points": "350" },
+        { "pos": "2", "driver": "P. Ellis", "points": "320" },
+        { "pos": "3", "driver": "I. Dontje", "points": "310" },
+        { "pos": "4", "driver": "L. Auer", "points": "300" }
+      ],
+      "teams": [
+        { "pos": "1", "driver": "Winward Racing", "points": "350" },
+        { "pos": "2", "driver": "Magnus Racing", "points": "320" }
+      ],
+      "manufacturers": [
+        { "pos": "1", "driver": "Mercedes-AMG", "points": "350" },
+        { "pos": "2", "driver": "Aston Martin", "points": "320" }
+      ]
+    }
+  }
+}

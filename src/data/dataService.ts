@@ -168,19 +168,12 @@ export type WRCRallyResult = {
   results: { pos: string; driver: string; codriver: string; team: string; time: string; diff: string }[];
 };
 
-export type IMSAStandings = {
-  gtpDrivers: TCStandingRow[];
-  gtpTeams: TCStandingRow[];
-  gtpManufacturers: TCStandingRow[];
-  lmp2Drivers: TCStandingRow[];
-  lmp2Teams: TCStandingRow[];
-  gtdProDrivers: TCStandingRow[];
-  gtdProTeams: TCStandingRow[];
-  gtdProManufacturers: TCStandingRow[];
-  gtdDrivers: TCStandingRow[];
-  gtdTeams: TCStandingRow[];
-  gtdManufacturers: TCStandingRow[];
-};
+export interface IMSAStandings {
+  gtp: { drivers: any[]; teams: any[]; manufacturers: any[] };
+  lmp2: { drivers: any[]; teams: any[]; manufacturers: any[] };
+  gtdpro: { drivers: any[]; teams: any[]; manufacturers: any[] };
+  gtd: { drivers: any[]; teams: any[]; manufacturers: any[] };
+}
 
 // ========== DATA SERVICE ==========
 
@@ -2040,87 +2033,88 @@ export const dataService = {
 
   // === IMSA CALENDAR ===
   async getIMSACalendar(): Promise<CalendarRace[]> {
-    const calendar: CalendarRace[] = [];
-    const year = new Date().getFullYear();
     try {
-      // Try official site first
-      const html = await this.fetchWithProxy(`https://www.imsa.com/weathertech/weathertech-${year}-schedule/`);
-      const doc = new DOMParser().parseFromString(html, 'text/html');
+      // 1. Try local cache bridge first (most reliable for localhost)
+      try {
+        const cacheRes = await fetch('/imsa_cache.json');
+        if (cacheRes.ok) {
+          const cacheData = await cacheRes.json();
+          if (cacheData && cacheData.calendar) return cacheData.calendar;
+        }
+      } catch (e) {}
+
+      // 2. Fallback to scraping
+      const url = 'https://www.imsa.com/weathertech/weathertech-2026-schedule/';
+      let html = await this.fetchWithProxy('/api/imsa/weathertech/weathertech-2026-schedule/');
       
-      const officialItems = doc.querySelectorAll('.schedule-item, .event-list__item, .schedule-event');
-      if (officialItems.length > 1) { // 1 might be a header
-        officialItems.forEach((el, idx) => {
-          const race = el.querySelector('.event-title, .schedule-event__title, h2, h3, .title')?.textContent?.trim() || 'Carrera';
-          const dates = el.querySelector('.event-date, .schedule-event__date, .date, .time')?.textContent?.trim() || '';
-          let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
-          const isFinished = el.classList.contains('is-past') || el.querySelector('.results-link');
-          if (isFinished) status = 'Finished';
-          calendar.push({ round: idx + 1, race, dates, status, winner: '' });
-        });
-        if (calendar.length > 0) return calendar;
+      if (!html || html.length < 100) {
+        html = await this.fetchWithProxy(url);
       }
 
-      // Fallback to Motorsport.com results page
-      const msHtml = await this.fetchWithProxy(`https://lat.motorsport.com/imsa/results/${year}/`);
-      if (msHtml) {
-        const msDoc = new DOMParser().parseFromString(msHtml, 'text/html');
-        // More robust selectors for the results table or list
-        const msItems = msDoc.querySelectorAll('tr.ms-table_row, a.ms-item, .ms-event-list-item');
-        msItems.forEach((el, idx) => {
-          const race = el.querySelector('.ms-table_field--event, .ms-item--title, .ms-event-list-item--title, .name')?.textContent?.trim() || 'Carrera';
-          const dates = el.querySelector('.ms-table_field--date, .ms-item--date, .ms-event-list-item--date, .date')?.textContent?.trim() || '';
-          const winner = el.querySelector('.ms-table_field--winner, .ms-item--winner-name, .ms-event-list-item--winner-name')?.textContent?.trim() || '';
-          if (race !== 'Carrera' || dates) {
-            let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
-            if (winner && winner !== '-') status = 'Finished';
-            calendar.push({ round: idx + 1, race, dates, status, winner });
+      if (!html) return [];
+      
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const calendar: CalendarRace[] = [];
+      const eventContainers = doc.querySelectorAll('.schedule-item, .event-item');
+      
+      let round = 1;
+      eventContainers.forEach((el) => {
+        const titleEl = el.querySelector('.event-title, h2, h3');
+        const dateEl = el.querySelector('.event-date, .date');
+        
+        if (titleEl && dateEl) {
+          const race = titleEl.textContent?.trim() || '';
+          const dates = dateEl.textContent?.trim() || '';
+          
+          if (race && dates) {
+            calendar.push({ 
+              round: round++, 
+              race: race, 
+              dates: dates, 
+              status: 'Upcoming', 
+              winner: '' 
+            });
           }
-        });
-      }
+        }
+      });
+      
+      if (calendar.length > 0) calendar[0].status = 'Next';
+      return calendar;
     } catch (e) {
       console.error('[DataService] IMSA calendar error:', e);
+      return [];
     }
-    return calendar;
   },
 
   async getIMSAStandings(): Promise<IMSAStandings> {
-    const year = new Date().getFullYear();
-    const fetchTable = async (type: string, cls: string): Promise<TCStandingRow[]> => {
-      const rows: TCStandingRow[] = [];
+    try {
+      // 1. Try local cache bridge first (most reliable for localhost)
       try {
-        const url = `https://lat.motorsport.com/imsa/standings/${year}/?type=${type}&class=${cls.replace(' ', '+')}`;
-        const html = await this.fetchWithProxy(url);
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const tableRows = doc.querySelectorAll('tr.ms-table_row');
-        tableRows.forEach(row => {
-          const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
-          const name = row.querySelector('.name-short, .name, .ms-table_field--driver .name, .ms-table_field--team .name, .ms-table_field--constructor .name')?.textContent?.trim() || '';
-          const points = row.querySelector('.ms-table_field--total_points, .ms-table_field--pts')?.textContent?.trim() || '0';
-          if (pos && name && !isNaN(parseInt(pos))) {
-            rows.push({ pos, driver: name, points });
-          }
-        });
-      } catch (e) {
-        console.warn(`[DataService] IMSA standings error (${type}/${cls}):`, e);
-      }
-      return rows;
-    };
+        const cacheRes = await fetch('/imsa_cache.json');
+        if (cacheRes.ok) {
+          const cacheData = await cacheRes.json();
+          if (cacheData && cacheData.standings) return cacheData.standings;
+        }
+      } catch (e) {}
 
-    const results = await Promise.allSettled([
-      fetchTable('Driver', 'GTP'), fetchTable('Team', 'GTP'), fetchTable('Constructor', 'GTP'),
-      fetchTable('Driver', 'LMP2'), fetchTable('Team', 'LMP2'),
-      fetchTable('Driver', 'GTD PRO'), fetchTable('Team', 'GTD PRO'), fetchTable('Constructor', 'GTD PRO'),
-      fetchTable('Driver', 'GTD'), fetchTable('Team', 'GTD'), fetchTable('Constructor', 'GTD')
-    ]);
+      // Default empty structure if cache fails
+      const emptyStandings = {
+        gtp: { drivers: [], teams: [], manufacturers: [] },
+        lmp2: { drivers: [], teams: [], manufacturers: [] },
+        gtdpro: { drivers: [], teams: [], manufacturers: [] },
+        gtd: { drivers: [], teams: [], manufacturers: [] }
+      };
 
-    const getData = (idx: number) => results[idx].status === 'fulfilled' ? (results[idx] as any).value : [];
-
-    return {
-      gtpDrivers: getData(0), gtpTeams: getData(1), gtpManufacturers: getData(2),
-      lmp2Drivers: getData(3), lmp2Teams: getData(4),
-      gtdProDrivers: getData(5), gtdProTeams: getData(6), gtdProManufacturers: getData(7),
-      gtdDrivers: getData(8), gtdTeams: getData(9), gtdManufacturers: getData(10)
-    };
+      return emptyStandings;
+    } catch (e) {
+      console.error('IMSA Standings error:', e);
+      return {
+        gtp: { drivers: [], teams: [], manufacturers: [] },
+        lmp2: { drivers: [], teams: [], manufacturers: [] },
+        gtdpro: { drivers: [], teams: [], manufacturers: [] },
+        gtd: { drivers: [], teams: [], manufacturers: [] }
+      };
+    }
   },
 
   // === TC2000 ===
@@ -2279,13 +2273,13 @@ export const dataService = {
     return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 30);
   },
 
-  async fetchWithProxy(targetUrl: string): Promise<string> {
+  async fetchWithProxy(targetUrl: string, options: RequestInit = {}): Promise<string> {
     const cacheBuster = `t=${Date.now()}`;
     // 1. Target URL processing
     // 1. Local/Internal
     if (targetUrl.startsWith('/')) {
       try {
-        const res = await fetch(targetUrl);
+        const res = await fetch(targetUrl, options);
         if (res.ok) return await res.text();
         return '';
       } catch (e) { return ''; }
