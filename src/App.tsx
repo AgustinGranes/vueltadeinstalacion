@@ -695,7 +695,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={selectedCategory} 
-            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''}`} 
+            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''}`} 
           />
           <h2 className="cat-header-title">{catTitle}</h2>
         </header>

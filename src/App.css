@@ -1602,3 +1602,9 @@
 .imsa-tabs { margin-top: 0 !important; margin-bottom: 2px !important; }
 .imsa-class-tabs { margin-bottom: 2px !important; }
 .imsa-standings { padding-top: 2px !important; gap: 6px !important; }
+
+.imsa-logo {
+  height: 85px !important;
+  width: auto !important;
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
+}
