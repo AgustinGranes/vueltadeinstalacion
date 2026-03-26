@@ -1604,7 +1604,7 @@
 .imsa-standings { padding-top: 2px !important; gap: 6px !important; }
 
 .imsa-logo {
-  height: 85px !important;
+  height: 120px !important;
   width: auto !important;
-  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3)) !important;
 }
