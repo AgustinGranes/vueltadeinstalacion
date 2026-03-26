@@ -149,6 +149,8 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'IMSA': 'https://lat.motorsport.com/imsa/results/2026'
 };
 
+export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
+
 export type TC2000Standings = {
   drivers: TCStandingRow[];
   teams: TCStandingRow[];
@@ -168,12 +170,7 @@ export type WRCRallyResult = {
   results: { pos: string; driver: string; codriver: string; team: string; time: string; diff: string }[];
 };
 
-export interface IMSAStandings {
-  gtp: { drivers: any[]; teams: any[]; manufacturers: any[] };
-  lmp2: { drivers: any[]; teams: any[]; manufacturers: any[] };
-  gtdpro: { drivers: any[]; teams: any[]; manufacturers: any[] };
-  gtd: { drivers: any[]; teams: any[]; manufacturers: any[] };
-}
+
 
 // ========== DATA SERVICE ==========
 
@@ -2086,36 +2083,7 @@ export const dataService = {
     }
   },
 
-  async getIMSAStandings(): Promise<IMSAStandings> {
-    try {
-      // 1. Try local cache bridge first (most reliable for localhost)
-      try {
-        const cacheRes = await fetch('/imsa_cache.json');
-        if (cacheRes.ok) {
-          const cacheData = await cacheRes.json();
-          if (cacheData && cacheData.standings) return cacheData.standings;
-        }
-      } catch (e) {}
 
-      // Default empty structure if cache fails
-      const emptyStandings = {
-        gtp: { drivers: [], teams: [], manufacturers: [] },
-        lmp2: { drivers: [], teams: [], manufacturers: [] },
-        gtdpro: { drivers: [], teams: [], manufacturers: [] },
-        gtd: { drivers: [], teams: [], manufacturers: [] }
-      };
-
-      return emptyStandings;
-    } catch (e) {
-      console.error('IMSA Standings error:', e);
-      return {
-        gtp: { drivers: [], teams: [], manufacturers: [] },
-        lmp2: { drivers: [], teams: [], manufacturers: [] },
-        gtdpro: { drivers: [], teams: [], manufacturers: [] },
-        gtd: { drivers: [], teams: [], manufacturers: [] }
-      };
-    }
-  },
 
   // === TC2000 ===
   async getTC2000Calendar(): Promise<CalendarRace[]> {

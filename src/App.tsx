@@ -17,6 +17,7 @@ const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
 const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
+const IMSA_LOGO = '/IMSA.png';
 
 
 
@@ -78,14 +79,6 @@ const App = () => {
   const [wecStandingsTab, setWecStandingsTab] = useState<'h-mfr' | 'h-teams' | 'h-drivers' | 'gt3-drivers'>('h-mfr');
   
   const [imsaCalendar, setImsaCalendar] = useState<CalendarRace[]>([]);
-  const [imsaStandings, setImsaStandings] = useState<any>({ 
-    gtp: { drivers: [], teams: [], manufacturers: [] },
-    lmp2: { drivers: [], teams: [], manufacturers: [] },
-    gtdpro: { drivers: [], teams: [], manufacturers: [] },
-    gtd: { drivers: [], teams: [], manufacturers: [] }
-  });
-  const [imsaStandingsTab, setImsaStandingsTab] = useState<'drivers' | 'teams' | 'manufacturers'>('drivers');
-  const [imsaClass, setImsaClass] = useState<'gtp' | 'lmp2' | 'gtdpro' | 'gtd'>('gtp');
   const [imsaNews, setImsaNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -150,8 +143,6 @@ const App = () => {
         setTc2000Brands(res.brands);
       } else if (cat === 'WEC') {
         setWecStandings(await dataService.getWECStandings());
-      } else if (cat === 'IMSA') {
-        setImsaStandings(await dataService.getIMSAStandings());
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -656,7 +647,7 @@ const App = () => {
     if (isIndy) logo = '/IndyCar_Series.png';
     if (isNascar) logo = '/NASCAR.png';
     if (isWEC) logo = '/WEC.png';
-    if (isIMSA) logo = '/IMSA.png';
+    if (isIMSA) logo = IMSA_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -1180,66 +1171,19 @@ const App = () => {
                     </div>
                   </>
                 ) : (isIMSA && categorySubTab === 'standings') ? (
-                  <>
-                    <div className="imsa-class-tabs nascar-tabs">
-                      <button className={`nascar-tab-btn ${imsaClass === 'gtp' ? 'active' : ''}`} onClick={() => setImsaClass('gtp')}>GTP</button>
-                      <button className={`nascar-tab-btn ${imsaClass === 'lmp2' ? 'active' : ''}`} onClick={() => {
-                        setImsaClass('lmp2');
-                        if (imsaStandingsTab === 'manufacturers') setImsaStandingsTab('drivers');
-                      }}>LMP2</button>
-                      <button className={`nascar-tab-btn ${imsaClass === 'gtdpro' ? 'active' : ''}`} onClick={() => setImsaClass('gtdpro')}>GTD PRO</button>
-                      <button className={`nascar-tab-btn ${imsaClass === 'gtd' ? 'active' : ''}`} onClick={() => setImsaClass('gtd')}>GTD</button>
+                  <div className="results-container">
+                    <div className="tc-calendar-message results-box">
+                      <p className="tc-msg-text">Consulta las posiciones oficiales del campeonato IMSA.</p>
+                      <a 
+                        href="https://www.imsa.com/standings/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="tc-msg-btn"
+                      >
+                        Ver posiciones
+                      </a>
                     </div>
-
-                    <div className="nascar-tabs imsa-tabs">
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('drivers')}>Pilotos</button>
-                      <button className={`nascar-tab-btn ${imsaStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('teams')}>Equipos</button>
-                      {imsaClass !== 'lmp2' && (
-                        <button className={`nascar-tab-btn ${imsaStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setImsaStandingsTab('manufacturers')}>Fabricantes</button>
-                      )}
-                    </div>
-                    
-                    <div className="standings-list imsa-standings">
-                      {imsaStandingsTab === 'drivers' && (
-                        <>
-                          {(imsaStandings[imsaClass]?.drivers || []).length > 0 ? (imsaStandings[imsaClass].drivers).map((d: any, idx: number) => (
-                            <div key={`imsa-d-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando pilotos...</p>}
-                        </>
-                      )}
-                      {imsaStandingsTab === 'teams' && (
-                        <>
-                          {(imsaStandings[imsaClass]?.teams || []).length > 0 ? (imsaStandings[imsaClass].teams).map((d: any, idx: number) => (
-                            <div key={`imsa-t-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">Cargando equipos...</p>}
-                        </>
-                      )}
-                      {imsaStandingsTab === 'manufacturers' && imsaClass !== 'lmp2' && (
-                        <>
-                          {(imsaStandings[imsaClass]?.manufacturers || []).length > 0 ? (imsaStandings[imsaClass].manufacturers).map((d: any, idx: number) => (
-                            <div key={`imsa-m-${idx}`} className={`stand-row imsa-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                              <span className="stand-pos">{d.pos}</span>
-                              <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
-                              <span className="stand-pts">{d.points} pts</span>
-                            </div>
-                          )) : <p className="empty-msg-inner">No hay datos de fabricantes.</p>}
-                        </>
-                      )}
-                      {(
-                        (imsaStandingsTab === 'drivers' && (imsaStandings[imsaClass]?.drivers || []).length === 0) ||
-                        (imsaStandingsTab === 'teams' && (imsaStandings[imsaClass]?.teams || []).length === 0) ||
-                        (imsaStandingsTab === 'manufacturers' && (imsaStandings[imsaClass]?.manufacturers || []).length === 0)
-                      ) && !isLoading && !isCatStandLoading && <p className="empty-msg">No hay posiciones disponibles.</p>}
-                    </div>
-                  </>
+                  </div>
                 ) : isWEC ? (
                   <>
                     <div className="f1-tabs nascar-tabs wec-tabs-scroll">
