@@ -89,7 +89,7 @@ const App = () => {
   const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
-  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>(null);
+  const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>('upcoming');
 
   const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
 
@@ -285,13 +285,25 @@ const App = () => {
       <div className="categories-grid">
         <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')}>
           <div className="cat-card-glow" />
-          <img src={F1_LOGO} alt="F1" className="cat-logo" />
+          <img 
+            src={F1_LOGO} 
+            alt="F1" 
+            className="cat-logo f1-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">Formula 1</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
           <div className="cat-card-glow" />
-          <img src={WRC_LOGO} alt="WRC" className="cat-logo wrc-logo" />
+          <img 
+            src={WRC_LOGO} 
+            alt="WRC" 
+            className="cat-logo wrc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">WRC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
@@ -303,61 +315,121 @@ const App = () => {
         </button>
         <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
           <div className="cat-card-glow" />
-          <img src="/NASCAR.png" alt="NASCAR" className="cat-logo nascar-logo" />
+          <img 
+            src="/NASCAR.png" 
+            alt="NASCAR" 
+            className="cat-logo nascar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">NASCAR Cup</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
           <div className="cat-card-glow" />
-          <img src={INDYCAR_LOGO} alt="IndyCar" className="cat-logo indycar-logo" />
+          <img 
+            src={INDYCAR_LOGO} 
+            alt="IndyCar" 
+            className="cat-logo indycar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">IndyCar</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
           <div className="cat-card-glow" />
-          <img src={TC_LOGO} alt="TC" className="cat-logo tc-logo" />
+          <img 
+            src={TC_LOGO} 
+            alt="TC" 
+            className="cat-logo tc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcp-card" onClick={() => handleCategoryClick('TCP')}>
           <div className="cat-card-glow" />
-          <img src={TCP_LOGO} alt="TCP" className="cat-logo tcp-logo" />
+          <img 
+            src={TCP_LOGO} 
+            alt="TCP" 
+            className="cat-logo tcp-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC Pista</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcm-card" onClick={() => handleCategoryClick('TCM')}>
           <div className="cat-card-glow" />
-          <img src="/TCM.png" alt="TCM" className="cat-logo tcm-logo" />
+          <img 
+            src="/TCM.png" 
+            alt="TCM" 
+            className="cat-logo tcm-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC Mouras</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcpm-card" onClick={() => handleCategoryClick('TCPM')}>
           <div className="cat-card-glow" />
-          <img src="/TCPM.png" alt="TCPM" className="cat-logo tcpm-logo" />
+          <img 
+            src="/TCPM.png" 
+            alt="TCPM" 
+            className="cat-logo tcpm-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC Pista Mouras</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcpk-card" onClick={() => handleCategoryClick('TCPK')}>
           <div className="cat-card-glow" />
-          <img src={TCPK_LOGO} alt="TCPK" className="cat-logo tcpk-logo" />
+          <img 
+            src={TCPK_LOGO} 
+            alt="TCPK" 
+            className="cat-logo tcpk-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC Pick Up</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tcppk-card" onClick={() => handleCategoryClick('TCPPK')}>
           <div className="cat-card-glow" />
-          <img src="/TCPPK.png" alt="TCPPK" className="cat-logo tcppk-logo" />
+          <img 
+            src="/TCPPK.png" 
+            alt="TCPPK" 
+            className="cat-logo tcppk-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC Pista Pick Up</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
           <div className="cat-card-glow" />
-          <img src="/TC2000.png" alt="TC2000" className="cat-logo tc2000-logo" />
+          <img 
+            src="/TC2000.png" 
+            alt="TC2000" 
+            className="cat-logo tc2000-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card imsa-card" onClick={() => handleCategoryClick('IMSA')}>
           <div className="cat-card-glow" />
-          <img src="/IMSA.png" alt="IMSA" className="cat-logo imsa-logo" />
+          <img 
+            src="/IMSA.png" 
+            alt="IMSA" 
+            className="cat-logo imsa-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
           <span className="cat-label">IMSA</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
@@ -428,7 +500,15 @@ const App = () => {
                           <div className="weekly-color-bar" style={{ background: item.categoryColor }} />
                           <div className="weekly-body">
                             <div className="weekly-top">
-                              {item.categoryImage && <img src={item.categoryImage} alt="" className="weekly-cat-img" />}
+                              {item.categoryImage && (
+                                <img 
+                                  src={item.categoryImage} 
+                                  alt="" 
+                                  className="weekly-cat-img" 
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
@@ -488,7 +568,15 @@ const App = () => {
                           <div className="weekly-color-bar" style={{ background: item.categoryColor }} />
                           <div className="weekly-body">
                             <div className="weekly-top">
-                              {item.categoryImage && <img src={item.categoryImage} alt="" className="weekly-cat-img" />}
+                              {item.categoryImage && (
+                                <img 
+                                  src={item.categoryImage} 
+                                  alt="" 
+                                  className="weekly-cat-img" 
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                                />
+                              )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
                               <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
@@ -529,7 +617,15 @@ const App = () => {
             ).map(([category, races]) => (
               <div key={category} className="cat-event-card">
                 <div className="cat-event-header" style={{ borderColor: getCategoryColor(category) }}>
-                  {races[0]?.categoryImage && <img src={races[0].categoryImage} alt="" className="cat-event-logo" />}
+                  {races[0]?.categoryImage && (
+                    <img 
+                      src={races[0].categoryImage} 
+                      alt="" 
+                      className="cat-event-logo" 
+                      referrerPolicy="no-referrer"
+                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                    />
+                  )}
                   <div className="cat-event-title-block" onClick={() => {
                     const hasDetails = races[0]?.circuitImage || (races[0]?.watchLinks ?? []).length > 0 || races[0]?.ticketLink;
                     if (hasDetails) {
@@ -547,7 +643,15 @@ const App = () => {
                 </div>
                 {expandedEvent === category && (
                   <div className="cat-event-expanded-details">
-                    {races[0]?.circuitImage && <img src={races[0].circuitImage} alt="Circuito" className="circuit-image" />}
+                    {races[0]?.circuitImage && (
+                      <img 
+                        src={races[0].circuitImage} 
+                        alt="Circuito" 
+                        className="circuit-image" 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                    )}
                     {((races[0]?.watchLinks ?? []).length > 0 || races[0]?.ticketLink) && (
                       <div className="weekly-links">
                         {races[0]?.watchLinks?.map((wl: any, wi: number) => (
@@ -685,8 +789,10 @@ const App = () => {
           </button>
           <img 
             src={logo} 
-            alt={selectedCategory} 
+            alt={catTitle} 
             className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''}`} 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <h2 className="cat-header-title">{catTitle}</h2>
         </header>
@@ -1318,7 +1424,13 @@ const App = () => {
           >
             <header className="main-header">
               <div className="header-centered-logo">
-                <img src="/logo.png" alt="Vuelta de Instalación" className="app-header-logo-centered white-logo" />
+                <img 
+                  src="/logo.png" 
+                  alt="Vuelta de Instalación" 
+                  className="app-header-logo-centered white-logo" 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => (e.currentTarget.style.display = 'none')}
+                />
               </div>
             </header>
 

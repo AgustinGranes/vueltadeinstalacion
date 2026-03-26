@@ -2068,19 +2068,64 @@ export const dataService = {
               round: round++, 
               race: race, 
               dates: dates, 
-              status: 'Upcoming', 
+              status: this.calculateIMSAStatus(dates), 
               winner: '' 
             });
           }
         }
       });
       
-      if (calendar.length > 0) calendar[0].status = 'Next';
+      const upcoming = calendar.filter(r => r.status === 'Upcoming');
+      if (upcoming.length > 0) upcoming[0].status = 'Next';
+      
       return calendar;
     } catch (e) {
       console.error('[DataService] IMSA calendar error:', e);
       return [];
     }
+  },
+
+  calculateIMSAStatus(dateStr: string): CalendarRace['status'] {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const months: Record<string, number> = {
+      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+    };
+
+    const parts = dateStr.split(/[-–]| to /).map(s => s.trim());
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    const parseDatePart = (part: string, fallbackMonth?: number) => {
+      const match = part.match(/([A-Z][a-z]{2})\s*(\d+)/);
+      if (match) {
+        return new Date(currentYear, months[match[1]], parseInt(match[2]));
+      }
+      const dayMatch = part.match(/(\d+)/);
+      if (dayMatch && fallbackMonth !== undefined) {
+        return new Date(currentYear, fallbackMonth, parseInt(dayMatch[1]));
+      }
+      return null;
+    };
+
+    if (parts.length >= 2) {
+      startDate = parseDatePart(parts[0]);
+      endDate = parseDatePart(parts[parts.length - 1], startDate?.getMonth());
+      if (!startDate && endDate) startDate = endDate;
+    } else {
+      startDate = parseDatePart(parts[0]);
+      endDate = startDate;
+    }
+
+    if (!startDate || !endDate) return 'Upcoming';
+
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    if (now > endDate) return 'Finished';
+    if (now >= startDate && now <= endDate) return 'Live';
+    return 'Upcoming';
   },
 
 
