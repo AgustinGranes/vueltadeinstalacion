@@ -45,6 +45,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'IMSA': '#E42526',
   'TCPM': '#990000',
   'TCPPK': '#006633',
+  'NASCARO': '#FFD659',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -146,10 +147,12 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TCPK': 'https://tiempos.actc.org.ar/resultados',
   'TCPPK': 'https://tiempos.actc.org.ar/resultados',
   'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#',
-  'IMSA': 'https://lat.motorsport.com/imsa/results/2026'
+  'IMSA': 'https://lat.motorsport.com/imsa/results/2026',
+  'NASCARO': 'https://www.nascar.com/live-results/nascar-oreilly-auto-parts-series/2026-bennett-transportation-and-logistics-250/'
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
+export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -2036,7 +2039,15 @@ export const dataService = {
         const cacheRes = await fetch('/imsa_cache.json');
         if (cacheRes.ok) {
           const cacheData = await cacheRes.json();
-          if (cacheData && cacheData.calendar) return cacheData.calendar;
+          if (cacheData && cacheData.calendar) {
+            const cal = cacheData.calendar.map((r: any) => ({
+              ...r,
+              status: this.calculateIMSAStatus(r.dates)
+            }));
+            const upcoming = cal.filter((r: any) => r.status === 'Upcoming');
+            if (upcoming.length > 0) upcoming[0].status = 'Next';
+            return cal;
+          }
         }
       } catch (e) {}
 
@@ -2128,7 +2139,89 @@ export const dataService = {
     return 'Upcoming';
   },
 
+  // === NASCAR O'REILLY NEWS ===
+  async getNASCARONews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const articles = doc.querySelectorAll('article.post-item, .ms-item, a.ms-item');
+      articles.forEach(el => {
+        const titleEl = el.querySelector('h1, h2, h3, .title');
+        const title = titleEl?.textContent?.trim() || el.getAttribute('title');
+        const href = el.querySelector('a')?.getAttribute('href') || el.getAttribute('href');
+        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
+        if (title && href) {
+          allNews.push({
+            title,
+            summary: '',
+            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
+            source: 'Latino NASCAR',
+            category: 'NASCARO',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('[DataService] NASCARO news error:', e);
+    }
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i);
+  },
 
+  // === NASCAR O'REILLY CALENDAR ===
+  async getNASCAROCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('http://www.espn.com.ar/deporte-motor/calendario/_/series/xfinity');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('tr.Table__TR--sm');
+      
+      const now = new Date();
+      now.setHours(0,0,0,0);
+
+      rows.forEach((row, idx) => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 3) {
+          const dateStr = cells[0].textContent?.trim() || ''; // "Mar 21"
+          const raceName = cells[1].textContent?.trim() || '';
+          const winner = cells[3]?.textContent?.trim() || '';
+          
+          if (raceName && dateStr) {
+            // Parse date "Mar 21"
+            const months: Record<string, number> = {
+              'ENE': 0, 'FEB': 1, 'MAR': 2, 'ABR': 3, 'MAY': 4, 'JUN': 5,
+              'JUL': 6, 'AGO': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DIC': 11
+            };
+            const match = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d+)/);
+            let status: CalendarRace['status'] = 'Upcoming';
+            if (match) {
+              const day = parseInt(match[2]);
+              const month = months[match[1]];
+              if (month !== undefined) {
+                const raceDate = new Date(now.getFullYear(), month, day);
+                raceDate.setHours(0,0,0,0);
+                if (raceDate < now) status = 'Finished';
+                else if (raceDate.getTime() === now.getTime()) status = 'Live';
+              }
+            }
+            
+            calendar.push({
+              round: idx + 1,
+              race: raceName.replace('NASCAR Xfinity Series - ', ''),
+              dates: dateStr,
+              status,
+              winner: status === 'Finished' ? (winner || '✅ Finalizado') : ''
+            });
+          }
+        }
+      });
+      
+      const nextIdx = calendar.findIndex(r => r.status === 'Upcoming');
+      if (nextIdx !== -1) calendar[nextIdx].status = 'Next';
+      
+    } catch (e) { console.error('[DataService] NASCARO calendar error:', e); }
+    return calendar;
+  },
 
   // === TC2000 ===
   async getTC2000Calendar(): Promise<CalendarRace[]> {

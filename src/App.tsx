@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { dataService, getCategoryColor } from './data/dataService';
+import { dataService, getCategoryColor, NASCARO_STANDINGS_URL } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -80,6 +80,8 @@ const App = () => {
   
   const [imsaCalendar, setImsaCalendar] = useState<CalendarRace[]>([]);
   const [imsaNews, setImsaNews] = useState<NewsItem[]>([]);
+  const [nascarOCalendar, setNascarOCalendar] = useState<CalendarRace[]>([]);
+  const [nascarONews, setNascarONews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -112,6 +114,7 @@ const App = () => {
       else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
       else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
       else if (cat === 'IMSA') setImsaCalendar(await dataService.getIMSACalendar());
+      else if (cat === 'NASCARO') setNascarOCalendar(await dataService.getNASCAROCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -167,6 +170,7 @@ const App = () => {
       else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
       else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
       else if (cat === 'IMSA') setImsaNews(await dataService.getIMSANews());
+      else if (cat === 'NASCARO') setNascarONews(await dataService.getNASCARONews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -433,6 +437,18 @@ const App = () => {
           <span className="cat-label">IMSA</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCARO')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/NASCARO.png" 
+            alt="NASCAR O'Reilly" 
+            className="cat-logo nascar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">NASCAR O'Reilly</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -690,7 +706,7 @@ const App = () => {
   const renderNoticias = () => {
     const allNewsList = [
       ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
-      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews
+      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews, ...nascarONews
     ].sort(() => Math.random() - 0.5);
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
@@ -738,6 +754,7 @@ const App = () => {
     const isTC2000 = selectedCategory === 'TC2000';
     const isWEC = selectedCategory === 'WEC';
     const isIMSA = selectedCategory === 'IMSA';
+    const isNASCARO = selectedCategory === 'NASCARO';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -752,6 +769,7 @@ const App = () => {
     if (isNascar) logo = '/NASCAR.png';
     if (isWEC) logo = '/WEC.png';
     if (isIMSA) logo = IMSA_LOGO;
+    if (isNASCARO) logo = '/NASCARO.png';
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -766,6 +784,7 @@ const App = () => {
     if (isTC2000) catTitle = 'TC2000';
     if (isWEC) catTitle = 'WEC';
     if (isIMSA) catTitle = 'IMSA';
+    if (isNASCARO) catTitle = 'NASCAR O\'Reilly';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -780,6 +799,8 @@ const App = () => {
     if (isTC2000) news = tc2000News;
     if (isWEC) news = wecNews;
     if (isIMSA) news = imsaNews;
+    if (isNASCARO) news = nascarONews;
+
 
     return (
       <motion.div key="category" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="category-view">
@@ -1032,6 +1053,24 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">{isLoading ? 'Cargando calendario IMSA...' : 'No se encontró calendario IMSA.'}</p>
+                  )}
+                </div>
+              ) : isNASCARO ? (
+                <div className="nascar-calendar-list">
+                  {nascarOCalendar.length > 0 ? nascarOCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR...' : 'No se encontró calendario NASCAR.'}</p>
                   )}
                 </div>
               ) : null}
@@ -1318,6 +1357,13 @@ const App = () => {
                         <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
+                ) : isNASCARO ? (
+                  <div className="results-container">
+                    <div className="tc-calendar-message results-box">
+                      <p className="tc-msg-text">Consulta las posiciones oficiales en NASCAR.com</p>
+                      <a href={NASCARO_STANDINGS_URL} target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver posiciones</a>
+                    </div>
+                  </div>
                 ) : null}
                 </>
               )}
