@@ -148,7 +148,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TCPPK': 'https://tiempos.actc.org.ar/resultados',
   'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#',
   'IMSA': 'https://lat.motorsport.com/imsa/results/2026',
-  'NASCARO': 'https://www.nascar.com/live-results/nascar-oreilly-auto-parts-series/2026-bennett-transportation-and-logistics-250/'
+  'NASCARO': 'https://www.nascar.com/results/nascar-oreilly-auto-parts-series/'
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
@@ -2100,8 +2100,18 @@ export const dataService = {
     const now = new Date();
     const currentYear = now.getFullYear();
     const months: Record<string, number> = {
-      'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
-      'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+      'Jan': 0, 'Ene': 0,
+      'Feb': 1,
+      'Mar': 2,
+      'Apr': 3, 'Abr': 3,
+      'May': 4,
+      'Jun': 5,
+      'Jul': 6,
+      'Aug': 7, 'Ago': 7,
+      'Set': 8, 'Sep': 8,
+      'Oct': 9,
+      'Nov': 10,
+      'Dec': 11, 'Dic': 11
     };
 
     const parts = dateStr.split(/[-–]| to /).map(s => s.trim());
@@ -2129,7 +2139,7 @@ export const dataService = {
       endDate = startDate;
     }
 
-    if (!startDate || !endDate) return 'Upcoming';
+    if (!startDate || isNaN(startDate.getTime()) || !endDate || isNaN(endDate.getTime())) return 'Upcoming';
 
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
@@ -2143,20 +2153,20 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
+      const html = await this.fetchWithProxy('https://www.nascar.com/news/nascar-oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('article.post-item, .ms-item, a.ms-item');
+      const articles = doc.querySelectorAll('article, .news-article, .ms-item');
       articles.forEach(el => {
-        const titleEl = el.querySelector('h1, h2, h3, .title');
+        const titleEl = el.querySelector('h1, h2, h3, .title, .article-title');
         const title = titleEl?.textContent?.trim() || el.getAttribute('title');
         const href = el.querySelector('a')?.getAttribute('href') || el.getAttribute('href');
-        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
-        if (title && href) {
+        const img = el.querySelector('img')?.getAttribute('src') || el.querySelector('img')?.getAttribute('data-src');
+        if (title && href && title.length > 10) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
-            source: 'Latino NASCAR',
+            link: href.startsWith('http') ? href : `https://www.nascar.com${href}`,
+            source: 'NASCAR.com',
             category: 'NASCARO',
             imageUrl: img || undefined
           });
@@ -2166,6 +2176,40 @@ export const dataService = {
       console.warn('[DataService] NASCARO news error:', e);
     }
     return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i);
+  },
+
+  // === NASCAR O'REILLY STANDINGS ===
+  async getNASCAROStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('.standings-row');
+      
+      rows.forEach(row => {
+        const posEl = row.querySelector('.ra-pos');
+        const nameEl = row.querySelector('a.driver-page-link, .driver-name');
+        const pointsEl = row.querySelector('.ra-points');
+        
+        if (posEl && nameEl && pointsEl) {
+          const pos = posEl.textContent?.trim() || '';
+          const name = nameEl.textContent?.trim() || '';
+          const pts = pointsEl.textContent?.trim() || '0';
+          
+          if (pos && name) {
+            standings.push({ 
+              pos: pos.replace('.', ''), 
+              driver: name, 
+              points: pts 
+            });
+          }
+        }
+      });
+    } catch (e) {
+      console.error('[DataService] NASCARO standings error:', e);
+    }
+    return standings;
   },
 
   // === NASCAR O'REILLY CALENDAR ===

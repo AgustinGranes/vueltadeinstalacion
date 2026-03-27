@@ -82,6 +82,7 @@ const App = () => {
   const [imsaNews, setImsaNews] = useState<NewsItem[]>([]);
   const [nascarOCalendar, setNascarOCalendar] = useState<CalendarRace[]>([]);
   const [nascarONews, setNascarONews] = useState<NewsItem[]>([]);
+  const [nascarOStandings, setNascarOStandings] = useState<TCStandingRow[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -146,6 +147,8 @@ const App = () => {
         setTc2000Brands(res.brands);
       } else if (cat === 'WEC') {
         setWecStandings(await dataService.getWECStandings());
+      } else if (cat === 'NASCARO') {
+        setNascarOStandings(await dataService.getNASCAROStandings());
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -1358,10 +1361,36 @@ const App = () => {
                     </div>
                   </>
                 ) : isNASCARO ? (
-                  <div className="results-container">
-                    <div className="tc-calendar-message results-box">
-                      <p className="tc-msg-text">Consulta las posiciones oficiales en NASCAR.com</p>
-                      <a href={NASCARO_STANDINGS_URL} target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver posiciones</a>
+                  <div className="standings-container">
+                    <div className="standings-table-wrapper transparent">
+                      <table className="standings-table">
+                        <thead>
+                          <tr>
+                            <th className="pos-col">POS</th>
+                            <th className="driver-col">PILOTO</th>
+                            <th className="pts-col">PTS</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {nascarOStandings.map((row, idx) => (
+                            <motion.tr 
+                              key={idx}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.03 }}
+                              className="standing-row"
+                            >
+                              <td className="pos-col">{row.pos}</td>
+                              <td className="driver-col">
+                                <div className="driver-info">
+                                  <span className="driver-name">{row.driver}</span>
+                                </div>
+                              </td>
+                              <td className="pts-col highlight-pts">{row.points}</td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 ) : null}
