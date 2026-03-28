@@ -2153,25 +2153,46 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://www.nascar.com/news/nascar-oreilly-auto-parts-series/');
+      // Use motorsport.com (server-rendered) instead of nascar.com (JS-rendered)
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-xfinity/news/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('article, .news-article, .ms-item');
+      const articles = doc.querySelectorAll('a.ms-item');
       articles.forEach(el => {
-        const titleEl = el.querySelector('h1, h2, h3, .title, .article-title');
-        const title = titleEl?.textContent?.trim() || el.getAttribute('title');
-        const href = el.querySelector('a')?.getAttribute('href') || el.getAttribute('href');
-        const img = el.querySelector('img')?.getAttribute('src') || el.querySelector('img')?.getAttribute('data-src');
-        if (title && href && title.length > 10) {
+        const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
+        const href = el.getAttribute('href');
+        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
+        if (title && href) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://www.nascar.com${href}`,
-            source: 'NASCAR.com',
+            link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
+            source: 'Motorsport Lat',
             category: 'NASCARO',
             imageUrl: img || undefined
           });
         }
       });
+      // Fallback: try general NASCAR news from motorsport
+      if (allNews.length === 0) {
+        const html2 = await this.fetchWithProxy('https://lat.motorsport.com/nascar/news/');
+        const doc2 = new DOMParser().parseFromString(html2, 'text/html');
+        const articles2 = doc2.querySelectorAll('a.ms-item');
+        articles2.forEach(el => {
+          const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
+          const href = el.getAttribute('href');
+          const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
+          if (title && href) {
+            allNews.push({
+              title,
+              summary: '',
+              link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
+              source: 'Motorsport Lat',
+              category: 'NASCARO',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
@@ -2182,27 +2203,40 @@ export const dataService = {
   async getNASCAROStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      const html = await this.fetchWithProxy('https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/');
+      // Use ESPN AR (server-rendered) instead of nascar.com (JS-rendered)
+      const html = await this.fetchWithProxy('http://www.espn.com.ar/deporte-motor/posiciones/_/series/xfinity');
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('.standings-row');
+      
+      // ESPN AR renders standings in a table — look for table rows
+      const rows = doc.querySelectorAll('tr');
+      let pos = 1;
       
       rows.forEach(row => {
-        const posEl = row.querySelector('.ra-pos');
-        const nameEl = row.querySelector('a.driver-page-link, .driver-name');
-        const pointsEl = row.querySelector('.ra-points');
-        
-        if (posEl && nameEl && pointsEl) {
-          const pos = posEl.textContent?.trim() || '';
-          const name = nameEl.textContent?.trim() || '';
-          const pts = pointsEl.textContent?.trim() || '0';
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 2) {
+          // Try to find the driver link/name
+          const driverLink = row.querySelector('a[href*="/piloto/"]');
+          const driverName = driverLink?.textContent?.trim();
           
-          if (pos && name) {
-            standings.push({ 
-              pos: pos.replace('.', ''), 
-              driver: name, 
-              points: pts 
+          if (driverName && driverName.length > 1) {
+            // Points are usually in the last meaningful column
+            let points = '0';
+            // Check cells for numeric values — points is typically the first numeric cell after the driver name
+            for (let i = 0; i < cells.length; i++) {
+              const cellText = cells[i].textContent?.trim() || '';
+              if (/^\d+$/.test(cellText) && parseInt(cellText) > 0 && cellText !== String(pos)) {
+                points = cellText;
+                break;
+              }
+            }
+            
+            standings.push({
+              pos: String(pos),
+              driver: driverName,
+              points
             });
+            pos++;
           }
         }
       });
@@ -2218,24 +2252,38 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy('http://www.espn.com.ar/deporte-motor/calendario/_/series/xfinity');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('tr.Table__TR--sm');
       
       const now = new Date();
       now.setHours(0,0,0,0);
 
-      rows.forEach((row, idx) => {
+      const months: Record<string, number> = {
+        'ENE': 0, 'FEB': 1, 'MAR': 2, 'ABR': 3, 'MAY': 4, 'JUN': 5,
+        'JUL': 6, 'AGO': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DIC': 11
+      };
+
+      // ESPN AR uses traditional table rows — try multiple selector strategies
+      let rows = doc.querySelectorAll('tr.Table__TR--sm');
+      if (rows.length === 0) {
+        rows = doc.querySelectorAll('table tr');
+      }
+      if (rows.length === 0) {
+        // Fallback: try all <tr> that contain <td> elements
+        rows = doc.querySelectorAll('tr');
+      }
+
+      let round = 1;
+      rows.forEach((row) => {
         const cells = row.querySelectorAll('td');
         if (cells.length >= 3) {
-          const dateStr = cells[0].textContent?.trim() || ''; // "Mar 21"
-          const raceName = cells[1].textContent?.trim() || '';
-          const winner = cells[3]?.textContent?.trim() || '';
+          const dateStr = cells[0].textContent?.trim() || '';
+          const raceName = cells[1]?.textContent?.trim() || '';
+          // Winner/track info might be in different columns depending on layout
+          let winner = '';
+          if (cells.length >= 4) {
+            winner = cells[3]?.textContent?.trim() || '';
+          }
           
-          if (raceName && dateStr) {
-            // Parse date "Mar 21"
-            const months: Record<string, number> = {
-              'ENE': 0, 'FEB': 1, 'MAR': 2, 'ABR': 3, 'MAY': 4, 'JUN': 5,
-              'JUL': 6, 'AGO': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DIC': 11
-            };
+          if (raceName && dateStr && dateStr.length > 2) {
             const match = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d+)/);
             let status: CalendarRace['status'] = 'Upcoming';
             if (match) {
@@ -2249,9 +2297,15 @@ export const dataService = {
               }
             }
             
+            // Check if a results link exists (indicating race is finished)
+            const hasResults = row.querySelector('a[href*="resultados"]') !== null;
+            if (hasResults && status === 'Upcoming') {
+              status = 'Finished';
+            }
+            
             calendar.push({
-              round: idx + 1,
-              race: raceName.replace('NASCAR Xfinity Series - ', ''),
+              round: round++,
+              race: raceName.replace('NASCAR Xfinity Series - ', '').replace('NASCAR O\'Reilly Auto Parts Series - ', ''),
               dates: dateStr,
               status,
               winner: status === 'Finished' ? (winner || '✅ Finalizado') : ''

@@ -2,7 +2,7 @@
   "calendar": [
     { "round": 1, "race": "The Roar Before The 24", "dates": "Ene 16 - Ene 18", "status": "Finished", "winner": "Porsche Penske" },
     { "round": 2, "race": "24 Horas de Daytona", "dates": "Ene 22 - Ene 25", "status": "Finished", "winner": "Porsche Penske" },
-    { "round": 3, "race": "12 Horas de Sebring", "dates": "Mar 18 - Mar 21", "status": "Upcoming", "winner": "" },
+    { "round": 3, "race": "12 Horas de Sebring", "dates": "Mar 18 - Mar 21", "status": "Finished", "winner": "Porsche Penske" },
     { "round": 4, "race": "Long Beach", "dates": "Abr 17 - Abr 18", "status": "Upcoming", "winner": "" },
     { "round": 5, "race": "Laguna Seca", "dates": "May 09 - May 11", "status": "Upcoming", "winner": "" },
     { "round": 6, "race": "Detroit", "dates": "May 30 - May 31", "status": "Upcoming", "winner": "" },
