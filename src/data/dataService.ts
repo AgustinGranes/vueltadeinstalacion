@@ -2153,21 +2153,24 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      // latino.nascar.com is Cloudflare-blocked, use motorsport.com NASCAR feed
-      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-cup/news/');
+      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('a.ms-item');
+      const articles = doc.querySelectorAll('article');
       articles.forEach(el => {
-        const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
-        const href = el.getAttribute('href');
-        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
+        const titleEl = el.querySelector('h3');
+        const title = titleEl?.textContent?.trim();
+        const linkEl = el.querySelector('a');
+        const href = linkEl?.getAttribute('href');
+        const imgEl = el.querySelector('img');
+        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        
         if (title && href) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
-            source: 'Motorsport Lat',
-            category: 'NASCAR O\'Reilly',
+            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
+            source: 'NASCAR Latino',
+            category: 'NASCAR O REILLY',
             imageUrl: img || undefined
           });
         }
@@ -2247,10 +2250,13 @@ export const dataService = {
         if (cells.length < 3) return;
         
         // === DATE: extract from first cell ===
-        // Raw text is like "sáb, feb 14\n5:00 PM ET" (the <br> becomes whitespace in textContent)
-        // We need to find the 3-letter month and 1-2 digit day
-        const rawDate = cells[0]?.textContent?.trim() || '';
-        const dateMatch = rawDate.toUpperCase().match(/\b([A-Z]{3})\s+(\d{1,2})\b/);
+        // Extract before <br> to prevent merging "feb 14" and "5:00 PM" into "feb 145:00"
+        const cellHtml = cells[0]?.innerHTML || '';
+        const brMatch = cellHtml.match(/<br\s*\/?>/i);
+        const dateHtmlPart = brMatch ? cellHtml.substring(0, brMatch.index) : cellHtml;
+        const rawDate = new DOMParser().parseFromString(dateHtmlPart, 'text/html').body.textContent?.trim() || '';
+        
+        const dateMatch = rawDate.toUpperCase().match(/([A-Z]{3})\s+(\d{1,2})/);
         
         let displayDate = rawDate;
         if (dateMatch) {
