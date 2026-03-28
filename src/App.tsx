@@ -1073,7 +1073,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR...' : 'No se encontró calendario NASCAR.'}</p>
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR O\'Reilly...' : 'No se encontró calendario NASCAR O\'Reilly.'}</p>
                   )}
                 </div>
               ) : null}
@@ -1361,37 +1361,23 @@ const App = () => {
                     </div>
                   </>
                 ) : isNASCARO ? (
-                  <div className="standings-container">
-                    <div className="standings-table-wrapper transparent">
-                      <table className="standings-table">
-                        <thead>
-                          <tr>
-                            <th className="pos-col">POS</th>
-                            <th className="driver-col">PILOTO</th>
-                            <th className="pts-col">PTS</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {nascarOStandings.map((row, idx) => (
-                            <motion.tr 
-                              key={idx}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.03 }}
-                              className="standing-row"
-                            >
-                              <td className="pos-col">{row.pos}</td>
-                              <td className="driver-col">
-                                <div className="driver-info">
-                                  <span className="driver-name">{row.driver}</span>
-                                </div>
-                              </td>
-                              <td className="pts-col highlight-pts">{row.points}</td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div className="standings-list nascar-standings">
+                    {nascarOStandings.map((d, idx) => (
+                      <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}
+                      >
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </motion.div>
+                    ))}
+                    {nascarOStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
                   </div>
                 ) : null}
                 </>

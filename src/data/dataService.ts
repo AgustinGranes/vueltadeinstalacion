@@ -2153,46 +2153,28 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      // Use motorsport.com (server-rendered) instead of nascar.com (JS-rendered)
-      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-xfinity/news/');
+      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('a.ms-item');
+      const articles = doc.querySelectorAll('article');
       articles.forEach(el => {
-        const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
-        const href = el.getAttribute('href');
-        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
+        const titleEl = el.querySelector('h3');
+        const title = titleEl?.textContent?.trim();
+        const linkEl = el.querySelector('a');
+        const href = linkEl?.getAttribute('href');
+        const imgEl = el.querySelector('img');
+        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        
         if (title && href) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
-            source: 'Motorsport Lat',
-            category: 'NASCARO',
+            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
+            source: 'NASCAR Latino',
+            category: 'NASCAR O\'Reilly',
             imageUrl: img || undefined
           });
         }
       });
-      // Fallback: try general NASCAR news from motorsport
-      if (allNews.length === 0) {
-        const html2 = await this.fetchWithProxy('https://lat.motorsport.com/nascar/news/');
-        const doc2 = new DOMParser().parseFromString(html2, 'text/html');
-        const articles2 = doc2.querySelectorAll('a.ms-item');
-        articles2.forEach(el => {
-          const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
-          const href = el.getAttribute('href');
-          const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
-          if (title && href) {
-            allNews.push({
-              title,
-              summary: '',
-              link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
-              source: 'Motorsport Lat',
-              category: 'NASCARO',
-              imageUrl: img || undefined
-            });
-          }
-        });
-      }
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
@@ -2272,47 +2254,66 @@ export const dataService = {
       }
 
       let round = 1;
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 3) {
-          const dateStr = cells[0].textContent?.trim() || '';
-          const raceName = cells[1]?.textContent?.trim() || '';
-          // Winner/track info might be in different columns depending on layout
-          let winner = '';
-          if (cells.length >= 4) {
-            winner = cells[3]?.textContent?.trim() || '';
-          }
-          
-          if (raceName && dateStr && dateStr.length > 2) {
-            const match = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d+)/);
-            let status: CalendarRace['status'] = 'Upcoming';
-            if (match) {
-              const day = parseInt(match[2]);
-              const month = months[match[1]];
-              if (month !== undefined) {
-                const raceDate = new Date(now.getFullYear(), month, day);
-                raceDate.setHours(0,0,0,0);
-                if (raceDate < now) status = 'Finished';
-                else if (raceDate.getTime() === now.getTime()) status = 'Live';
-              }
-            }
-            
-            // Check if a results link exists (indicating race is finished)
-            const hasResults = row.querySelector('a[href*="resultados"]') !== null;
-            if (hasResults && status === 'Upcoming') {
-              status = 'Finished';
-            }
-            
-            calendar.push({
-              round: round++,
-              race: raceName.replace('NASCAR Xfinity Series - ', '').replace('NASCAR O\'Reilly Auto Parts Series - ', ''),
-              dates: dateStr,
-              status,
-              winner: status === 'Finished' ? (winner || '✅ Finalizado') : ''
-            });
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 3) {
+        // Skip header rows
+        const firstCellText = (cells[0].textContent || '').toUpperCase();
+        if (firstCellText.includes('FECHA') || firstCellText.includes('DATE')) return;
+        
+        let rawDate = cells[0].textContent?.trim() || '';
+        const raceNameRaw = cells[1]?.textContent?.trim() || '';
+        
+        // Skip rows that look like section titles (colspan)
+        if (!raceNameRaw || raceNameRaw === 'Carrera') return;
+        
+        // Clean Date: "sáb, feb 14\n5:00 PM ET" -> "Feb 14"
+        let displayDate = rawDate;
+        const dateMatch = rawDate.toUpperCase().match(/([A-Z]{3})\s+(\d+)/);
+        if (dateMatch) {
+          const monthKey = dateMatch[1];
+          const dayNum = dateMatch[2];
+          displayDate = `${monthKey.charAt(0) + monthKey.slice(1).toLowerCase()} ${dayNum}`;
+        }
+        
+        // Clean Race Name: remove doubled text and specific unwanted parts
+        const raceName = raceNameRaw
+          .split('\n')[0]
+          .replace('NASCAR Xfinity Series - ', '')
+          .replace('NASCAR O\'Reilly Auto Parts Series - ', '')
+          .replace('NASCAR O\'Reilly Auto Parts Series at ', '')
+          .trim();
+
+        const winnerRaw = cells.length >= 4 ? cells[3]?.textContent?.trim() || '' : '';
+        
+        // Reliable Status Detection: check for "Resultados" link in 4th cell
+        const resultLink = cells[3]?.querySelector('a[href*="resultados"], a[href*="recap"]');
+        let status: CalendarRace['status'] = resultLink ? 'Finished' : 'Upcoming';
+        
+        if (dateMatch) {
+          const month = months[dateMatch[1]];
+          const day = parseInt(dateMatch[2]);
+          if (month !== undefined) {
+             const raceDate = new Date(now.getFullYear(), month, day);
+             raceDate.setHours(0,0,0,0);
+             if (raceDate < now) {
+                // Keep 'Finished' if resultLink is present, or if it's clearly past
+                status = 'Finished';
+             } else if (raceDate.getTime() === now.getTime()) {
+                status = 'Live';
+             }
           }
         }
-      });
+        
+        calendar.push({
+          round: round++,
+          race: raceName,
+          dates: displayDate,
+          status,
+          winner: status === 'Finished' ? (winnerRaw.replace('Resultados de la Carrera', '').trim() || '✅ Finalizado') : ''
+        });
+      }
+    });
       
       const nextIdx = calendar.findIndex(r => r.status === 'Upcoming');
       if (nextIdx !== -1) calendar[nextIdx].status = 'Next';
