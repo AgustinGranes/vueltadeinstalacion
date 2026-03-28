@@ -2153,14 +2153,14 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
+      const html = await this.fetchWithProxy('https://www.jayski.com/oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('article');
+      
+      const articles = doc.querySelectorAll('a[title^="Click to read"]');
       articles.forEach(el => {
         const titleEl = el.querySelector('h3');
-        const title = titleEl?.textContent?.trim();
-        const linkEl = el.querySelector('a');
-        const href = linkEl?.getAttribute('href');
+        let title = titleEl?.textContent?.trim() || el.getAttribute('title')?.replace('Click to read ', '')?.trim();
+        const href = el.getAttribute('href');
         const imgEl = el.querySelector('img');
         const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
         
@@ -2168,8 +2168,8 @@ export const dataService = {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
-            source: 'NASCAR Latino',
+            link: href.startsWith('http') ? href : `https://www.jayski.com${href}`,
+            source: 'Jayski (NASCAR)',
             category: 'NASCAR O REILLY',
             imageUrl: img || undefined
           });
