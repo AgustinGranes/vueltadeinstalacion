@@ -2153,23 +2153,20 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://latino.nascar.com/news-media/category/series/nascar-oreilly-auto-parts-series/');
+      // latino.nascar.com is Cloudflare-blocked, use motorsport.com NASCAR feed
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-cup/news/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const articles = doc.querySelectorAll('article');
+      const articles = doc.querySelectorAll('a.ms-item');
       articles.forEach(el => {
-        const titleEl = el.querySelector('h3');
-        const title = titleEl?.textContent?.trim();
-        const linkEl = el.querySelector('a');
-        const href = linkEl?.getAttribute('href');
-        const imgEl = el.querySelector('img');
-        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
-        
+        const title = el.querySelector('.ms-item--title, .ms-article-list-item--title, .ms-item__title')?.textContent?.trim() || el.getAttribute('title');
+        const href = el.getAttribute('href');
+        const img = el.querySelector('img')?.getAttribute('data-src') || el.querySelector('img')?.getAttribute('src');
         if (title && href) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://latino.nascar.com${href}`,
-            source: 'NASCAR Latino',
+            link: href.startsWith('http') ? href : `https://lat.motorsport.com${href}`,
+            source: 'Motorsport Lat',
             category: 'NASCAR O\'Reilly',
             imageUrl: img || undefined
           });
@@ -2178,33 +2175,31 @@ export const dataService = {
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
-    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i);
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i).slice(0, 15);
   },
 
   // === NASCAR O'REILLY STANDINGS ===
   async getNASCAROStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      // Use ESPN AR (server-rendered) instead of nascar.com (JS-rendered)
       const html = await this.fetchWithProxy('http://www.espn.com.ar/deporte-motor/posiciones/_/series/xfinity');
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // ESPN AR renders standings in a table — look for table rows
       const rows = doc.querySelectorAll('tr');
       let pos = 1;
       
       rows.forEach(row => {
+        // Skip header rows
+        if (row.classList.contains('stathead') || row.classList.contains('colhead')) return;
+        
         const cells = row.querySelectorAll('td');
         if (cells.length >= 2) {
-          // Try to find the driver link/name
           const driverLink = row.querySelector('a[href*="/piloto/"]');
           const driverName = driverLink?.textContent?.trim();
           
           if (driverName && driverName.length > 1) {
-            // Points are usually in the last meaningful column
             let points = '0';
-            // Check cells for numeric values — points is typically the first numeric cell after the driver name
             for (let i = 0; i < cells.length; i++) {
               const cellText = cells[i].textContent?.trim() || '';
               if (/^\d+$/.test(cellText) && parseInt(cellText) > 0 && cellText !== String(pos)) {
@@ -2243,77 +2238,82 @@ export const dataService = {
         'JUL': 6, 'AGO': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DIC': 11
       };
 
-      // ESPN AR uses traditional table rows — try multiple selector strategies
-      let rows = doc.querySelectorAll('tr.Table__TR--sm');
-      if (rows.length === 0) {
-        rows = doc.querySelectorAll('table tr');
-      }
-      if (rows.length === 0) {
-        // Fallback: try all <tr> that contain <td> elements
-        rows = doc.querySelectorAll('tr');
-      }
+      // Get only data rows — skip stathead and colhead by class
+      const rows = doc.querySelectorAll('tr.oddrow, tr.evenrow');
 
       let round = 1;
-    rows.forEach((row) => {
-      const cells = row.querySelectorAll('td');
-      if (cells.length >= 3) {
-        // Skip header rows
-        const firstCellText = (cells[0].textContent || '').toUpperCase();
-        if (firstCellText.includes('FECHA') || firstCellText.includes('DATE')) return;
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 3) return;
         
-        let rawDate = cells[0].textContent?.trim() || '';
-        const raceNameRaw = cells[1]?.textContent?.trim() || '';
+        // === DATE: extract from first cell ===
+        // Raw text is like "sáb, feb 14\n5:00 PM ET" (the <br> becomes whitespace in textContent)
+        // We need to find the 3-letter month and 1-2 digit day
+        const rawDate = cells[0]?.textContent?.trim() || '';
+        const dateMatch = rawDate.toUpperCase().match(/\b([A-Z]{3})\s+(\d{1,2})\b/);
         
-        // Skip rows that look like section titles (colspan)
-        if (!raceNameRaw || raceNameRaw === 'Carrera') return;
-        
-        // Clean Date: "sáb, feb 14\n5:00 PM ET" -> "Feb 14"
         let displayDate = rawDate;
-        const dateMatch = rawDate.toUpperCase().match(/([A-Z]{3})\s+(\d+)/);
         if (dateMatch) {
           const monthKey = dateMatch[1];
           const dayNum = dateMatch[2];
+          // Capitalize first letter only: "Feb 14"
           displayDate = `${monthKey.charAt(0) + monthKey.slice(1).toLowerCase()} ${dayNum}`;
         }
         
-        // Clean Race Name: remove doubled text and specific unwanted parts
-        const raceName = raceNameRaw
-          .split('\n')[0]
-          .replace('NASCAR Xfinity Series - ', '')
-          .replace('NASCAR O\'Reilly Auto Parts Series - ', '')
-          .replace('NASCAR O\'Reilly Auto Parts Series at ', '')
+        // === RACE NAME: use only the <b> text to avoid doubling with venue ===
+        const boldEl = cells[1]?.querySelector('b');
+        let raceName = '';
+        if (boldEl) {
+          raceName = boldEl.textContent?.trim() || '';
+        } else {
+          // Fallback: take first line
+          raceName = (cells[1]?.textContent?.trim() || '').split(/[\n\r]/)[0].trim();
+        }
+        // Clean prefix
+        raceName = raceName
+          .replace(/^NASCAR O'Reilly Auto Parts Series at\s*/i, '')
+          .replace(/^NASCAR Xfinity Series at\s*/i, '')
+          .replace(/^NASCAR O'Reilly Auto Parts Series -\s*/i, '')
+          .replace(/^NASCAR Xfinity Series -\s*/i, '')
           .trim();
-
-        const winnerRaw = cells.length >= 4 ? cells[3]?.textContent?.trim() || '' : '';
         
-        // Reliable Status Detection: check for "Resultados" link in 4th cell
-        const resultLink = cells[3]?.querySelector('a[href*="resultados"], a[href*="recap"]');
-        let status: CalendarRace['status'] = resultLink ? 'Finished' : 'Upcoming';
+        if (!raceName) return;
+
+        // === STATUS: check results link + date comparison ===
+        const resultLinks = cells[3]?.querySelectorAll('a') || [];
+        let hasResults = false;
+        resultLinks.forEach(a => {
+          const text = a.textContent?.toLowerCase() || '';
+          if (text.includes('resultado')) hasResults = true;
+        });
+        
+        let status: CalendarRace['status'] = 'Upcoming';
         
         if (dateMatch) {
           const month = months[dateMatch[1]];
           const day = parseInt(dateMatch[2]);
           if (month !== undefined) {
-             const raceDate = new Date(now.getFullYear(), month, day);
-             raceDate.setHours(0,0,0,0);
-             if (raceDate < now) {
-                // Keep 'Finished' if resultLink is present, or if it's clearly past
-                status = 'Finished';
-             } else if (raceDate.getTime() === now.getTime()) {
-                status = 'Live';
-             }
+            const raceDate = new Date(now.getFullYear(), month, day);
+            raceDate.setHours(0,0,0,0);
+            if (raceDate < now) {
+              status = 'Finished';
+            } else if (raceDate.getTime() === now.getTime()) {
+              status = 'Live';
+            }
           }
         }
+        
+        // Override with results link if ESPN says it's done
+        if (hasResults) status = 'Finished';
         
         calendar.push({
           round: round++,
           race: raceName,
           dates: displayDate,
           status,
-          winner: status === 'Finished' ? (winnerRaw.replace('Resultados de la Carrera', '').trim() || '✅ Finalizado') : ''
+          winner: status === 'Finished' ? '✅ Finalizado' : ''
         });
-      }
-    });
+      });
       
       const nextIdx = calendar.findIndex(r => r.status === 'Upcoming');
       if (nextIdx !== -1) calendar[nextIdx].status = 'Next';
