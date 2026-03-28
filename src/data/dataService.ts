@@ -2156,20 +2156,22 @@ export const dataService = {
       const html = await this.fetchWithProxy('https://www.jayski.com/oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const articles = doc.querySelectorAll('a[title^="Click to read"]');
-      articles.forEach(el => {
-        const titleEl = el.querySelector('h3');
-        let title = titleEl?.textContent?.trim() || el.getAttribute('title')?.replace('Click to read ', '')?.trim();
+      const elements = doc.querySelectorAll('a');
+      elements.forEach(el => {
+        const titleEl = el.querySelector('h3, .post-title, .title');
+        // Ensure we remove the generic prefix if we have to use the title attribute
+        let title = titleEl?.textContent?.trim() || el.getAttribute('title')?.replace(/Click to read/i, '')?.trim();
         const href = el.getAttribute('href');
         const imgEl = el.querySelector('img');
         const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
         
-        if (title && href) {
+        // Strict validation: must look like an article URL (usually contains year or long string)
+        if (title && href && title.length > 15 && (href.includes('/20') || href.split('/').length > 2) && !title.toLowerCase().includes('jayski')) {
           allNews.push({
             title,
             summary: '',
             link: href.startsWith('http') ? href : `https://www.jayski.com${href}`,
-            source: 'Jayski (NASCAR)',
+            source: 'Jayski',
             category: 'NASCAR O REILLY',
             imageUrl: img || undefined
           });
