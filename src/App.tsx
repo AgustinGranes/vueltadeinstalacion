@@ -11,7 +11,7 @@ type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
 const WRC_LOGO = '/WRC.png';
-const F1_LOGO = 'https://upload.wikimedia.org/wikipedia/commons/3/33/F1.svg';
+const F1_LOGO = '/F1.svg';
 const TC_LOGO = '/TC.png';
 const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
@@ -320,6 +320,18 @@ const App = () => {
           <span className="cat-label">WEC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card imsa-card" onClick={() => handleCategoryClick('IMSA')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/IMSA.png" 
+            alt="IMSA" 
+            className="cat-logo imsa-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">IMSA</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCAR')}>
           <div className="cat-card-glow" />
           <img 
@@ -330,6 +342,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">NASCAR Cup</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card nascaro-card" onClick={() => handleCategoryClick('NASCARO')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/NASCARO.png" 
+            alt="NASCAR O'Reilly" 
+            className="cat-logo nascar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">NASCAR O'Reilly</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
@@ -428,41 +452,33 @@ const App = () => {
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card imsa-card" onClick={() => handleCategoryClick('IMSA')}>
-          <div className="cat-card-glow" />
-          <img 
-            src="/IMSA.png" 
-            alt="IMSA" 
-            className="cat-logo imsa-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">IMSA</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card nascar-card" onClick={() => handleCategoryClick('NASCARO')}>
-          <div className="cat-card-glow" />
-          <img 
-            src="/NASCARO.png" 
-            alt="NASCAR O'Reilly" 
-            className="cat-logo nascar-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">NASCAR O'Reilly</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
       </div>
     </motion.div>
   );
 
-  // ==================== RENDER: CALENDARIO ====================
+  const getLocalFallbackImage = (cat: string) => {
+    const c = cat?.toUpperCase() || '';
+    if (c.includes('F1') || c.includes('FORMULA 1')) return F1_LOGO;
+    if (c.includes('WRC')) return WRC_LOGO;
+    if (c.includes('INDYCAR')) return INDYCAR_LOGO;
+    if (c.includes('WEC')) return WEC_LOGO;
+    if (c.includes('NASCAR')) return '/NASCAR.png';
+    if (c.includes('IMSA')) return IMSA_LOGO;
+    if (c.includes('TC2000')) return '/TC2000.png';
+    if (c.includes('TCPK') || c.includes('TC PICK UP')) return TCPK_LOGO;
+    if (c.includes('TCPM') || c.includes('PISTA MOURAS')) return '/TCPM.png';
+    if (c.includes('TCM') || c.includes('MOURAS')) return '/TCM.png';
+    if (c.includes('TCP') || c.includes('PISTA')) return TCP_LOGO;
+    if (c === 'TC' || c.includes('TURISMO CARRETERA')) return TC_LOGO;
+    return null;
+  };
+
   const renderCalendario = () => {
     const flatSchedules = weeklyRaces.flatMap(race =>
       race.schedules.map(s => ({
         ...s,
         category: race.category,
-        categoryImage: race.categoryImage,
+        categoryImage: getLocalFallbackImage(race.category) || race.categoryImage,
         categoryColor: getCategoryColor(race.category),
         event: race.event,
         circuit: race.circuit,
@@ -768,7 +784,7 @@ const App = () => {
     if (isTCPK) logo = TCPK_LOGO;
     if (isTCPPK) logo = '/TCPPK.png';
     if (isTC2000) logo = '/TC2000.png';
-    if (isIndy) logo = '/IndyCar_Series.png';
+    if (isIndy) logo = INDYCAR_LOGO;
     if (isNascar) logo = '/NASCAR.png';
     if (isWEC) logo = '/WEC.png';
     if (isIMSA) logo = IMSA_LOGO;

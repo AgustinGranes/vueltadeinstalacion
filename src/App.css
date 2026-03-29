@@ -128,38 +128,38 @@
 }
 
 .tc-card {
-  background: linear-gradient(145deg, #1a1a1a 0%, #333333 50%, #1a1a1a 100%);
-  border-color: rgba(255, 255, 0, 0.2);
+  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
+  border-color: rgba(255, 0, 0, 0.2);
 }
 
 .tcp-card {
-  background: linear-gradient(145deg, #0f0f0f 0%, #2a2a2a 50%, #0f0f0f 100%);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, #002200 0%, #004400 50%, #002200 100%);
+  border-color: rgba(0, 255, 0, 0.2);
 }
 
 .tcm-card {
-  background: linear-gradient(145deg, #200a0a 0%, #401010 50%, #200a0a 100%);
-  border-color: rgba(204, 0, 0, 0.2);
+  background: linear-gradient(145deg, #331a00 0%, #663300 50%, #331a00 100%);
+  border-color: rgba(255, 165, 0, 0.2);
 }
 
 .tcpm-card {
-  background: linear-gradient(145deg, #2a0a0a 0%, #501515 50%, #2a0a0a 100%);
-  border-color: rgba(153, 0, 0, 0.2);
+  background: linear-gradient(145deg, #001a33 0%, #003366 50%, #001a33 100%);
+  border-color: rgba(0, 191, 255, 0.2);
 }
 
 .tcpk-card {
-  background: linear-gradient(145deg, #0a1a0f 0%, #103015 50%, #0a1a0f 100%);
-  border-color: rgba(0, 204, 102, 0.2);
+  background: linear-gradient(145deg, #333300 0%, #666600 50%, #333300 100%);
+  border-color: rgba(255, 255, 0, 0.2);
 }
 
 .tcppk-card {
-  background: linear-gradient(145deg, #051a0a 0%, #0d3a15 50%, #051a0a 100%);
-  border-color: rgba(0, 102, 51, 0.2);
+  background: linear-gradient(145deg, #1a0033 0%, #330066 50%, #1a0033 100%);
+  border-color: rgba(138, 43, 226, 0.2);
 }
 
 .indycar-card {
-  background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
-  border-color: rgba(0, 161, 222, 0.2);
+  background: linear-gradient(145deg, #000000 0%, #111111 50%, #000000 100%);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .nascar-card {
@@ -167,9 +167,19 @@
   border-color: rgba(255, 215, 0, 0.2);
 }
 
+.nascaro-card {
+  background: linear-gradient(145deg, #002200 0%, #004400 50%, #002200 100%);
+  border-color: rgba(0, 255, 0, 0.2);
+}
+
 .tc2000-card {
-  background: linear-gradient(135deg, rgba(224, 32, 32, 0.1) 0%, rgba(224, 32, 32, 0.05) 100%);
-  border: 1px solid rgba(224, 32, 32, 0.15);
+  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
+  border-color: rgba(255, 0, 0, 0.2);
+}
+
+.imsa-card {
+  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
+  border-color: rgba(255, 0, 0, 0.2);
 }
 
 .wec-card {
@@ -217,7 +227,17 @@
 }
 
 .wrc-logo {
-  height: 80px; /* Much bigger specifically for WRC */
+  height: 160px; /* Much bigger specifically for WRC */
+  max-width: 100%;
+}
+
+.indycar-logo {
+  height: 80px !important;
+  max-width: 100%;
+}
+
+.tcpk-logo {
+  height: 80px !important;
   max-width: 100%;
 }
 

@@ -2156,17 +2156,17 @@ export const dataService = {
       const html = await this.fetchWithProxy('https://www.jayski.com/oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const elements = doc.querySelectorAll('a');
-      elements.forEach(el => {
-        const titleEl = el.querySelector('h3, .post-title, .title');
-        // Ensure we remove the generic prefix if we have to use the title attribute
-        let title = titleEl?.textContent?.trim() || el.getAttribute('title')?.replace(/Click to read/i, '')?.trim();
-        const href = el.getAttribute('href');
-        const imgEl = el.querySelector('img');
+      const elements = doc.querySelectorAll('.recent-news-item');
+      elements.forEach(container => {
+        const titleEl = container.querySelector('h3');
+        const linkEl = container.querySelector('a');
+        
+        let title = titleEl?.textContent?.trim();
+        const href = linkEl?.getAttribute('href');
+        const imgEl = container.querySelector('img');
         const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
         
-        // Strict validation: must look like an article URL (usually contains year or long string)
-        if (title && href && title.length > 15 && (href.includes('/20') || href.split('/').length > 2) && !title.toLowerCase().includes('jayski')) {
+        if (title && href) {
           allNews.push({
             title,
             summary: '',
