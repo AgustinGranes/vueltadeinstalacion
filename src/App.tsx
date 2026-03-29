@@ -260,10 +260,9 @@ const App = () => {
   }, []);
 
   useEffect(() => { 
-    if (mainTab === 'calendario' || mainTab === 'home') {
-      fetchHomeData(); 
-    }
-  }, [mainTab, fetchHomeData]);
+    // Eagerly preload home calendar events regardless of active tab
+    fetchHomeData(); 
+  }, [fetchHomeData]);
 
   useEffect(() => {
     if (view === 'category') {
@@ -274,10 +273,9 @@ const App = () => {
   }, [view, selectedCategory, categorySubTab, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
 
   useEffect(() => {
-    if (mainTab === 'noticias') {
-      fetchGlobalNews();
-    }
-  }, [mainTab, fetchGlobalNews]);
+    // Eagerly preload global news regardless of active tab
+    fetchGlobalNews();
+  }, [fetchGlobalNews]);
 
   const handleCategoryClick = (cat: CategoryType) => {
     setSelectedCategory(cat);
