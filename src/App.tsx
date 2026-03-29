@@ -1426,7 +1426,7 @@ const App = () => {
                   {news.map((item, idx) => (
                     <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
                       <div className="news-card-body">
-                        <span className="news-badge">{selectedCategory} | {item.source}</span>
+                        <span className="news-badge">{item.category} | {item.source}</span>
                         <h3 className="news-headline">{item.title}</h3>
                       </div>
                       <ExternalLink size={16} className="news-ext-icon" />
