@@ -118,17 +118,17 @@
 }
 
 .f1-card {
-  background: linear-gradient(145deg, #1a0810 0%, #2d0a15 50%, #1a0810 100%);
-  border-color: rgba(232, 0, 45, 0.2);
+  background: #e42526;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wrc-card {
-  background: linear-gradient(145deg, #0a1520 0%, #0d1e30 50%, #0a1520 100%);
-  border-color: rgba(0, 102, 204, 0.2);
+  background: #0066cc;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tc-card {
-  background: #d32f2f;
+  background: #ff0000;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -148,7 +148,7 @@
 }
 
 .tcpk-card {
-  background: #fbc02d;
+  background: #ffcc00;
   border-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -163,8 +163,8 @@
 }
 
 .nascar-card {
-  background: linear-gradient(145deg, #1a1a0a 0%, #333110 50%, #1a1a0a 100%);
-  border-color: rgba(255, 215, 0, 0.2);
+  background: #ffd659;
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .nascaro-card {
@@ -173,18 +173,18 @@
 }
 
 .tc2000-card {
-  background: #d32f2f;
+  background: #e42526;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .imsa-card {
-  background: #d32f2f;
+  background: #e42526;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wec-card {
-  background: linear-gradient(145deg, #002d50 0%, #004c97 50%, #002d50 100%) !important;
-  border-color: rgba(0, 76, 151, 0.4) !important;
+  background: #004c97 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .wec-logo {
