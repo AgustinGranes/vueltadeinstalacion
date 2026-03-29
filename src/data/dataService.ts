@@ -2153,17 +2153,25 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-cup/');
+      const html = await this.fetchWithProxy('https://www.jayski.com/oreilly-auto-parts-series/');
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a.ms-item').forEach(art => {
-        const title = art.querySelector('.ms-item__title')?.textContent?.trim();
-        const link = art.getAttribute('href');
-        const img = art.querySelector('img')?.getAttribute('data-src') || art.querySelector('img')?.getAttribute('src');
-        if (title && link) {
+      
+      const elements = doc.querySelectorAll('.recent-news-item');
+      elements.forEach(container => {
+        const linkEl = container.querySelector('a');
+        const titleEl = container.querySelector('h3');
+        const imgEl = container.querySelector('img');
+        
+        const title = titleEl?.textContent?.trim();
+        const href = linkEl?.getAttribute('href');
+        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        
+        if (title && href) {
           allNews.push({
-            title, summary: '',
-            link: link.startsWith('/') ? `https://lat.motorsport.com${link}` : link,
-            source: 'Nascar (Motorsport)',
+            title,
+            summary: '',
+            link: href.startsWith('http') ? href : `https://www.jayski.com${href}`,
+            source: 'Jayski',
             category: 'NASCAR O REILLY',
             imageUrl: img || undefined
           });
@@ -2172,7 +2180,7 @@ export const dataService = {
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
-    return allNews.slice(0, 15);
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i).slice(0, 15);
   },
 
   // === NASCAR O'REILLY STANDINGS ===
@@ -2554,6 +2562,7 @@ export const dataService = {
         .replace('https://actc.org.ar', '/api/actc')
         .replace('https://vueltarapida.com', '/api/vueltarapida-html')
         .replace('https://wec.com', '/api/wec-api')
+        .replace('https://www.jayski.com', '/api/jayski')
         .replace('https://soymotor.com', '/api/soymotor')
         .replace('https://lat.motorsport.com', '/api/motorsport')
         .replace('https://campeones.com.ar', '/api/campeones');

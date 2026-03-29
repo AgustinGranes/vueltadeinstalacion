@@ -1325,8 +1325,8 @@
 
 /* =============== TC SPECIFIC =============== */
 .tc-card {
-  background: linear-gradient(145deg, #051c2c 0%, #08304a 50%, #051c2c 100%) !important;
-  border-color: rgba(0, 91, 172, 0.3) !important;
+  background: #ff0000 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .tc-logo {
@@ -1405,8 +1405,8 @@
 
 /* =============== TCPK SPECIFIC =============== */
 .tcpk-card {
-  background: linear-gradient(145deg, #1a0a05 0%, #2d140a 50%, #1a0a05 100%) !important;
-  border-color: rgba(255, 69, 0, 0.3) !important;
+  background: #ffcc00 !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 .tcpk-logo {
@@ -1433,8 +1433,8 @@
 
 /* =============== INDYCAR SPECIFIC =============== */
 .indycar-card {
-  background: linear-gradient(145deg, #003a70 0%, #005696 50%, #003a70 100%) !important;
-  border-color: rgba(228, 0, 43, 0.3) !important;
+  background: #000000 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .indycar-logo {
