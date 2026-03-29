@@ -128,37 +128,37 @@
 }
 
 .tc-card {
-  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
-  border-color: rgba(255, 0, 0, 0.2);
+  background: #d32f2f;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcp-card {
-  background: linear-gradient(145deg, #002200 0%, #004400 50%, #002200 100%);
-  border-color: rgba(0, 255, 0, 0.2);
+  background: #388e3c;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcm-card {
-  background: linear-gradient(145deg, #331a00 0%, #663300 50%, #331a00 100%);
-  border-color: rgba(255, 165, 0, 0.2);
+  background: #f57c00;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcpm-card {
-  background: linear-gradient(145deg, #001a33 0%, #003366 50%, #001a33 100%);
-  border-color: rgba(0, 191, 255, 0.2);
+  background: #0288d1;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcpk-card {
-  background: linear-gradient(145deg, #333300 0%, #666600 50%, #333300 100%);
-  border-color: rgba(255, 255, 0, 0.2);
+  background: #fbc02d;
+  border-color: rgba(0, 0, 0, 0.1);
 }
 
 .tcppk-card {
-  background: linear-gradient(145deg, #1a0033 0%, #330066 50%, #1a0033 100%);
-  border-color: rgba(138, 43, 226, 0.2);
+  background: #7b1fa2;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .indycar-card {
-  background: linear-gradient(145deg, #000000 0%, #111111 50%, #000000 100%);
+  background: #000000;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -168,18 +168,18 @@
 }
 
 .nascaro-card {
-  background: linear-gradient(145deg, #002200 0%, #004400 50%, #002200 100%);
-  border-color: rgba(0, 255, 0, 0.2);
+  background: #388e3c;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tc2000-card {
-  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
-  border-color: rgba(255, 0, 0, 0.2);
+  background: #d32f2f;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .imsa-card {
-  background: linear-gradient(145deg, #3a0000 0%, #660000 50%, #3a0000 100%);
-  border-color: rgba(255, 0, 0, 0.2);
+  background: #d32f2f;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wec-card {

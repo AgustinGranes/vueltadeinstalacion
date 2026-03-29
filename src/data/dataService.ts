@@ -2153,34 +2153,46 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy('https://www.jayski.com/oreilly-auto-parts-series/');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const xml = await this.fetchWithProxy('https://www.jayski.com/category/xfinity-series/feed/');
+      const doc = new DOMParser().parseFromString(xml, 'text/xml');
       
-      const elements = doc.querySelectorAll('.recent-news-item');
-      elements.forEach(container => {
-        const titleEl = container.querySelector('h3');
-        const linkEl = container.querySelector('a');
+      const items = doc.querySelectorAll('item');
+      items.forEach(item => {
+        const title = item.querySelector('title')?.textContent?.trim();
+        const link = item.querySelector('link')?.textContent?.trim();
         
-        let title = titleEl?.textContent?.trim();
-        const href = linkEl?.getAttribute('href');
-        const imgEl = container.querySelector('img');
-        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        let img: string | undefined = undefined;
+        // 1. Try media:content
+        const mediaContents = item.getElementsByTagName('media:content');
+        if (mediaContents.length > 0) {
+          img = mediaContents[0].getAttribute('url') || undefined;
+        }
+        // 2. Try parsing <description> or <content:encoded> for an img tag
+        if (!img) {
+          const content = item.getElementsByTagName('content:encoded');
+          const desc = item.querySelector('description');
+          const htmlBlock = (content.length > 0 ? content[0].textContent : desc?.textContent) || '';
+          const imgMatch = htmlBlock.match(/src=["'](.*?)["']/);
+          if (imgMatch && imgMatch[1]) {
+            img = imgMatch[1];
+          }
+        }
         
-        if (title && href) {
+        if (title && link) {
           allNews.push({
             title,
             summary: '',
-            link: href.startsWith('http') ? href : `https://www.jayski.com${href}`,
+            link,
             source: 'Jayski',
             category: 'NASCAR O REILLY',
-            imageUrl: img || undefined
+            imageUrl: img
           });
         }
       });
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
-    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i).slice(0, 15);
+    return allNews.slice(0, 15);
   },
 
   // === NASCAR O'REILLY STANDINGS ===
