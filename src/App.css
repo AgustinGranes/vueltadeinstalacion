@@ -188,8 +188,6 @@
 }
 
 .wec-logo {
-  height: 60px !important; /* Much larger */
-  width: auto !important;
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
 
@@ -220,30 +218,15 @@
 }
 
 .cat-logo {
-  height: 40px;
-  width: auto;
-  max-width: 80%;
+  width: 100%;
+  height: 72px;
+  max-width: 140px;
+  padding: 0 12px;
   object-fit: contain;
-}
-
-.wrc-logo {
-  height: 160px; /* Much bigger specifically for WRC */
-  max-width: 100%;
-}
-
-.indycar-logo {
-  height: 80px !important;
-  max-width: 100%;
-}
-
-.tcpk-logo {
-  height: 80px !important;
-  max-width: 100%;
+  display: block;
 }
 
 .tc2000-logo {
-  height: 65px;
-  max-width: 95%;
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
