@@ -226,7 +226,7 @@
   display: block;
 }
 
-.tc2000-logo {
+.tc2000-logo, .wec-logo, .f1-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 

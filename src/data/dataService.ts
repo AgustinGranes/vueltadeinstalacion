@@ -2153,39 +2153,19 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const xml = await this.fetchWithProxy('https://www.jayski.com/category/xfinity-series/feed/');
-      const doc = new DOMParser().parseFromString(xml, 'text/xml');
-      
-      const items = doc.querySelectorAll('item');
-      items.forEach(item => {
-        const title = item.querySelector('title')?.textContent?.trim();
-        const link = item.querySelector('link')?.textContent?.trim();
-        
-        let img: string | undefined = undefined;
-        // 1. Try media:content
-        const mediaContents = item.getElementsByTagName('media:content');
-        if (mediaContents.length > 0) {
-          img = mediaContents[0].getAttribute('url') || undefined;
-        }
-        // 2. Try parsing <description> or <content:encoded> for an img tag
-        if (!img) {
-          const content = item.getElementsByTagName('content:encoded');
-          const desc = item.querySelector('description');
-          const htmlBlock = (content.length > 0 ? content[0].textContent : desc?.textContent) || '';
-          const imgMatch = htmlBlock.match(/src=["'](.*?)["']/);
-          if (imgMatch && imgMatch[1]) {
-            img = imgMatch[1];
-          }
-        }
-        
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/nascar-cup/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a.ms-item').forEach(art => {
+        const title = art.querySelector('.ms-item__title')?.textContent?.trim();
+        const link = art.getAttribute('href');
+        const img = art.querySelector('img')?.getAttribute('data-src') || art.querySelector('img')?.getAttribute('src');
         if (title && link) {
           allNews.push({
-            title,
-            summary: '',
-            link,
-            source: 'Jayski',
+            title, summary: '',
+            link: link.startsWith('/') ? `https://lat.motorsport.com${link}` : link,
+            source: 'Nascar (Motorsport)',
             category: 'NASCAR O REILLY',
-            imageUrl: img
+            imageUrl: img || undefined
           });
         }
       });
