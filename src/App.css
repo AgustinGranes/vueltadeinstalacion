@@ -123,7 +123,7 @@
 }
 
 .wrc-card {
-  background: #0066cc;
+  background: #f57c00;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -158,7 +158,7 @@
 }
 
 .indycar-card {
-  background: #000000;
+  background: #e42526;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -183,7 +183,7 @@
 }
 
 .wec-card {
-  background: #004c97 !important;
+  background: #0288d1 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -1433,7 +1433,7 @@
 
 /* =============== INDYCAR SPECIFIC =============== */
 .indycar-card {
-  background: #000000 !important;
+  background: #e42526 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
