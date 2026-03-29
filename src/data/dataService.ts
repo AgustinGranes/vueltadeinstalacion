@@ -2153,32 +2153,33 @@ export const dataService = {
   async getNASCARONews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      // Jayski violently blocks Vercel IPs via Cloudflare. 
-      // We bypass by consuming the /r/NASCAR public JSON stream, filtering exclusively for jayski.com links.
-      const jsonStr = await this.fetchWithProxy('https://www.reddit.com/r/NASCAR/search.json?q=site:jayski.com+xfinity&sort=new&restrict_sr=on&limit=15');
-      const data = JSON.parse(jsonStr);
+      const html = await this.fetchWithProxy('https://tobychristie.com/nascar/oreilly-series/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const children = data?.data?.children || [];
-      children.forEach((child: any) => {
-        const item = child.data;
-        if (item.title && item.url) {
-          // Clean up common Reddit user tags like [Jayski] from the headline
-          const cleanTitle = item.title.replace(/^\[?\(?Jayski\]?\)?\s*-?\s*/i, '').trim();
-          
+      const elements = doc.querySelectorAll('.elementor-post');
+      elements.forEach(container => {
+        const linkEl = container.querySelector('.elementor-post__title a');
+        const imgEl = container.querySelector('.elementor-post__thumbnail img, .elementor-post__thumbnail__link img');
+        
+        const title = linkEl?.textContent?.trim();
+        const href = linkEl?.getAttribute('href');
+        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        
+        if (title && href) {
           allNews.push({
-            title: cleanTitle,
+            title,
             summary: '',
-            link: item.url,
-            source: 'Jayski',
+            link: href,
+            source: 'TobyChristie.com',
             category: 'NASCAR O REILLY',
-            imageUrl: item.thumbnail && item.thumbnail.startsWith('http') ? item.thumbnail : undefined
+            imageUrl: img || undefined
           });
         }
       });
     } catch (e) {
       console.warn('[DataService] NASCARO news error:', e);
     }
-    return allNews;
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i).slice(0, 15);
   },
 
   // === NASCAR O'REILLY STANDINGS ===
@@ -2560,7 +2561,7 @@ export const dataService = {
         .replace('https://actc.org.ar', '/api/actc')
         .replace('https://vueltarapida.com', '/api/vueltarapida-html')
         .replace('https://wec.com', '/api/wec-api')
-        .replace('https://www.jayski.com', '/api/jayski')
+        .replace('https://tobychristie.com', '/api/tobychristie')
         .replace('https://www.reddit.com', '/api/reddit')
         .replace('https://soymotor.com', '/api/soymotor')
         .replace('https://lat.motorsport.com', '/api/motorsport')

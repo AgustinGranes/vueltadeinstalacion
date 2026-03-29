@@ -77,8 +77,8 @@
       "destination": "/api/proxy?url=https://www.reddit.com/$1"
     },
     {
-      "source": "/api/jayski/(.*)",
-      "destination": "/api/proxy?url=https://www.jayski.com/$1"
+      "source": "/api/tobychristie/(.*)",
+      "destination": "/api/proxy?url=https://tobychristie.com/$1"
     },
     {
       "source": "/api/nascar/(.*)",
