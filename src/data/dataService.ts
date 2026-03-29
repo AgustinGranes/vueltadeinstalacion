@@ -1099,6 +1099,7 @@ export const dataService = {
 
     const seen = new Set<string>();
     const filtered = allNews.filter(n => {
+      if (n.title.includes('SoloTC | Turismo Carretera')) return false;
       const key = n.title.toLowerCase().slice(0, 40);
       if (seen.has(key)) return false;
       seen.add(key);
