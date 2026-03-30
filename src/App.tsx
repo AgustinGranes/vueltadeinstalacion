@@ -96,6 +96,11 @@ const App = () => {
 
   const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
 
+  // Filter states
+  const [selectedNewsCategories, setSelectedNewsCategories] = useState<string[]>([]);
+  const [tempNewsCategories, setTempNewsCategories] = useState<string[]>([]);
+  const [isNewsFilterOpen, setIsNewsFilterOpen] = useState(false);
+
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-calendar`;
@@ -721,12 +726,63 @@ const App = () => {
   };
 
   const renderNoticias = () => {
-    const allNewsList = [
+    let allNewsList = [
       ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
       ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews, ...nascarONews
     ].sort(() => Math.random() - 0.5);
+
+    if (selectedNewsCategories.length > 0) {
+      allNewsList = allNewsList.filter(item => selectedNewsCategories.includes(item.category));
+    }
+
+    const toggleTempCat = (c: string) => {
+      if (tempNewsCategories.includes(c)) setTempNewsCategories(tempNewsCategories.filter(x => x !== c));
+      else setTempNewsCategories([...tempNewsCategories, c]);
+    };
+
     return (
       <motion.div key="noticias" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="noticias-view">
+        <div className="news-filter-container">
+          <button className="news-filter-toggle" onClick={() => {
+            if (!isNewsFilterOpen) setTempNewsCategories([...selectedNewsCategories]);
+            setIsNewsFilterOpen(!isNewsFilterOpen);
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              Filtros {selectedNewsCategories.length > 0 ? <span className="filter-badge-count">{selectedNewsCategories.length}</span> : ''}
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isNewsFilterOpen ? 'open' : ''}`} />
+          </button>
+          
+          <AnimatePresence>
+            {isNewsFilterOpen && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="news-filter-dropdown" style={{ overflow: 'hidden' }}>
+                <div className="filter-chips-grid">
+                  {['F1', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR O REILLY', 'WEC', 'IMSA'].map(c => (
+                    <button 
+                      key={c}
+                      className={`filter-chip ${tempNewsCategories.includes(c) ? 'active' : ''}`}
+                      onClick={() => toggleTempCat(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="filter-actions">
+                  <button className="filter-btn filter-reset-btn" onClick={() => {
+                    setSelectedNewsCategories([]);
+                    setTempNewsCategories([]);
+                    setIsNewsFilterOpen(false);
+                  }}>Restablecer</button>
+                  <button className="filter-btn filter-apply-btn" onClick={() => {
+                    setSelectedNewsCategories(tempNewsCategories);
+                    setIsNewsFilterOpen(false);
+                  }}>Aplicar</button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {isGlobalNewsLoading ? (
           <div className="tab-loading-wrap">
             {renderLoadingCircle()}

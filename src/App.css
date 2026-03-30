@@ -1611,3 +1611,108 @@
   width: auto !important;
   filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3)) !important;
 }
+
+/* =============== NEWS FILTER =============== */
+.news-filter-container {
+  background: var(--bg-card);
+  border: 1px solid var(--separator);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.news-filter-toggle {
+  width: 100%;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.filter-badge-count {
+  background: var(--accent-blue);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.filter-chevron {
+  color: var(--text-tertiary);
+  transition: transform 0.3s ease;
+}
+
+.filter-chevron.open {
+  transform: rotate(90deg);
+}
+
+.news-filter-dropdown {
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--separator);
+}
+
+.filter-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px;
+}
+
+.filter-chip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--separator);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip.active {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--separator);
+  background: var(--bg-card);
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.filter-btn:active {
+  opacity: 0.8;
+}
+
+.filter-reset-btn {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.filter-apply-btn {
+  background: var(--accent-blue);
+  color: white;
+}
