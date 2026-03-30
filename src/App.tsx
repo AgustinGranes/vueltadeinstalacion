@@ -19,6 +19,8 @@ const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
 
+const NEWS_CATEGORIES = ['F1', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR O REILLY', 'WEC', 'IMSA'];
+
 
 
 const App = () => {
@@ -97,8 +99,8 @@ const App = () => {
   const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
 
   // Filter states
-  const [selectedNewsCategories, setSelectedNewsCategories] = useState<string[]>([]);
-  const [tempNewsCategories, setTempNewsCategories] = useState<string[]>([]);
+  const [selectedNewsCategories, setSelectedNewsCategories] = useState<string[]>(NEWS_CATEGORIES);
+  const [tempNewsCategories, setTempNewsCategories] = useState<string[]>(NEWS_CATEGORIES);
   const [isNewsFilterOpen, setIsNewsFilterOpen] = useState(false);
 
 
@@ -731,7 +733,7 @@ const App = () => {
       ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews, ...nascarONews
     ].sort(() => Math.random() - 0.5);
 
-    if (selectedNewsCategories.length > 0) {
+    if (selectedNewsCategories.length < NEWS_CATEGORIES.length) {
       allNewsList = allNewsList.filter(item => item.category ? selectedNewsCategories.includes(item.category) : false);
     }
 
@@ -757,7 +759,7 @@ const App = () => {
             {isNewsFilterOpen && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="news-filter-dropdown" style={{ overflow: 'hidden' }}>
                 <div className="filter-chips-grid">
-                  {['F1', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR O REILLY', 'WEC', 'IMSA'].map(c => (
+                  {NEWS_CATEGORIES.map(c => (
                     <button 
                       key={c}
                       className={`filter-chip ${tempNewsCategories.includes(c) ? 'active' : ''}`}
@@ -769,8 +771,8 @@ const App = () => {
                 </div>
                 <div className="filter-actions">
                   <button className="filter-btn filter-reset-btn" onClick={() => {
-                    setSelectedNewsCategories([]);
-                    setTempNewsCategories([]);
+                    setSelectedNewsCategories(NEWS_CATEGORIES);
+                    setTempNewsCategories(NEWS_CATEGORIES);
                     setIsNewsFilterOpen(false);
                   }}>Restablecer</button>
                   <button className="filter-btn filter-apply-btn" onClick={() => {

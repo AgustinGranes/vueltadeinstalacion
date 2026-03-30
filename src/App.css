@@ -473,7 +473,7 @@
 .cat-event-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
 /* =============== NOTICIAS VIEW =============== */
-.noticias-view { display: flex; flex-direction: column; gap: 16px; }
+.noticias-view { display: flex; flex-direction: column; gap: 8px; }
 
 .section-heading {
   font-size: 24px;
@@ -1623,7 +1623,7 @@
   border: 1px solid var(--separator);
   border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .news-filter-toggle {
