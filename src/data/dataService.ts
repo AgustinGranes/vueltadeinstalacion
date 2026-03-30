@@ -3627,11 +3627,15 @@ export const dataService = {
       const trs = doc.querySelectorAll('tr.ms-table_row');
       trs.forEach(tr => {
         const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
-        const name = tr.querySelector('.ms-table_field--driver a')?.textContent?.trim() || 
-                     tr.querySelector('.ms-table_field--driver')?.textContent?.trim() || '';
+        const driverNode = tr.querySelector('.ms-table_field--driver .info .name, .ms-table_field--driver a');
+        const teamNode = tr.querySelector('.ms-table_field--driver .info .team');
+        
+        const driverName = driverNode?.textContent?.trim() || '';
+        const teamName = teamNode?.textContent?.trim() || '';
         const pts = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim() || '0';
-        if (pos && name) {
-          standings.push({ pos, driver: name, points: pts });
+        
+        if (pos && driverName) {
+          standings.push({ pos, driver: driverName, team: teamName, points: pts });
         }
       });
     } catch (e) { console.error('[DataService] F1A standings error:', e); }
@@ -3645,24 +3649,23 @@ export const dataService = {
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const races: CalendarRace[] = [];
-      const items = doc.querySelectorAll('tr.ms-schedule-table__item, tbody.ms-schedule-table__item');
+      const items = doc.querySelectorAll('tbody.ms-schedule-table__item');
       items.forEach((item, idx) => {
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
         const round = item.querySelector('.ms-schedule-table-item-main__round')?.textContent?.trim() || (idx + 1).toString();
         const raceName = item.querySelector('.ms-schedule-table-item-main__event a span')?.textContent?.trim() || 
                          item.querySelector('.ms-schedule-table-item-main__event a')?.textContent?.trim() || 
                          item.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim() || '';
         
+        // Extract date only (omit time)
         const dateElem = item.querySelector('msnt-formatted-date');
         const dates = dateElem ? dateElem.textContent?.trim() : item.querySelector('.ms-schedule-table__cell--date')?.textContent?.trim() || '';
-        
-        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming') || 
-                           item.closest('tbody')?.classList.contains('ms-schedule-table__item--upcoming');
         
         let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
         if (raceName) {
           races.push({
             round: parseInt(round) || (idx + 1),
-            race: raceName,
+            race: raceName.split('\n')[0].trim(), // Clean multi-line race names
             dates,
             status,
             winner: status === 'Finished' ? '✅ Finalizado' : ''

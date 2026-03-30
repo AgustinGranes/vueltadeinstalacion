@@ -1657,11 +1657,17 @@ const App = () => {
                 </>
               ) : isF1A ? (
                 <div className="standings-list f1-standings">
+                  <div className="stand-row f1-stand-row header">
+                    <span className="stand-pos">Pos</span>
+                    <span className="stand-name">Piloto</span>
+                    <span className="stand-pts">Puntos</span>
+                  </div>
                   {f1aDrivers.map((d, idx) => (
                     <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                       <span className="stand-pos">{d.pos}</span>
                       <div className="stand-info">
                         <span className="stand-name">{d.driver}</span>
+                        {d.team && <span className="stand-sub">{d.team}</span>}
                       </div>
                       <span className="stand-pts">{d.points} pts</span>
                     </div>
