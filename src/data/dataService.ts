@@ -2438,10 +2438,11 @@ export const dataService = {
 
       if (smHtml) {
         const doc = new DOMParser().parseFromString(smHtml, 'text/html');
-        const items = doc.querySelectorAll('.node--type-noticia');
+        // SoyMotor selector for news items
+        const items = doc.querySelectorAll('.node--type-noticia, .views-row');
         items.forEach((item, i) => {
           if (i >= 5) return;
-          const title = item.querySelector('.node-title')?.textContent?.trim();
+          const title = item.querySelector('.node-title, h2, .title')?.textContent?.trim();
           const link = item.querySelector('a')?.getAttribute('href');
           if (title && link) {
             news.push({
@@ -2465,8 +2466,8 @@ export const dataService = {
     const res: { drivers: any[], teams: any[] } = { drivers: [], teams: [] };
     try {
       const [drvHtml, teamHtml] = await Promise.all([
-        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/'),
-        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/?type=Team')
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/'),
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/?type=Team&class=')
       ]);
 
       if (drvHtml) {
