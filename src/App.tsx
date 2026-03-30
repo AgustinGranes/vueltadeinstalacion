@@ -1222,7 +1222,8 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
                   )) : (
