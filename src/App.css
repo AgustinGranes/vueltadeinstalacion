@@ -208,6 +208,18 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+.motogp-card {
+  background: #BE0026 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.motogp-logo {
+  height: 40px !important;
+  max-width: 85%;
+  filter: drop-shadow(0 0 8px rgba(0,0,0,0.3));
+}
+
+
 .wec-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }

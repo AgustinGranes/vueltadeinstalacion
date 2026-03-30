@@ -2,10 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
-import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
+import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'MotoGP';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -13,6 +13,7 @@ type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 const WRC_LOGO = '/WRC.png';
 const F1_LOGO = '/F1.svg';
 const F2_LOGO = '/F2.png';
+const MotoGP_LOGO = '/MOTOGP.png';
 const F3_LOGO = '/F3.png';
 const TC_LOGO = '/TC.png';
 const TCP_LOGO = '/TCP.png';
@@ -27,7 +28,7 @@ const NASCAR_LOGO = '/NASCAR.png';
 const NASCARO_LOGO = '/NASCARO.png';
 const NASCART_LOGO = '/NASCART.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -115,6 +116,10 @@ const App = () => {
   const [tnc3Drivers, setTnc3Drivers] = useState<TCStandingRow[]>([]);
   const [tnc2Drivers, setTnc2Drivers] = useState<TCStandingRow[]>([]);
   const [tnc3News, setTnc3News] = useState<NewsItem[]>([]);
+  const [motoGPCalendar, setMotoGPCalendar] = useState<CalendarRace[]>([]);
+  const [motoGPStandings, setMotoGPStandings] = useState<MotoGPStandings>({ drivers: [], teams: [], constructors: [] });
+  const [motoGPNews, setMotoGPNews] = useState<NewsItem[]>([]);
+  const [motoGPStandingsTab, setMotoGPStandingsTab] = useState<'drivers' | 'teams' | 'constructors'>('drivers');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -161,6 +166,7 @@ const App = () => {
       else if (cat === 'F2') setF2Calendar(await dataService.getF2Calendar());
       else if (cat === 'F3') setF3Calendar(await dataService.getF3Calendar());
       else if (cat === 'FE') setFECalendar(await dataService.getFECalendar());
+      else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -208,6 +214,9 @@ const App = () => {
         const res = await dataService.getFEStandings();
         setFEDrivers(res.drivers);
         setFETeams(res.teams);
+      } else if (cat === 'MotoGP') {
+        const res = await dataService.getMotoGPStandings();
+        setMotoGPStandings(res);
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -238,6 +247,7 @@ const App = () => {
       else if (cat === 'F2') setF2News(await dataService.getF2News());
       else if (cat === 'F3') setF3News(await dataService.getF3News());
       else if (cat === 'FE') setFENews(await dataService.getFENews());
+      else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -261,6 +271,7 @@ const App = () => {
         dataService.getF2News(),
         dataService.getF3News(),
         dataService.getFENews(),
+        dataService.getMotoGPNews(),
       ]);
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
@@ -276,6 +287,7 @@ const App = () => {
       if (results[10].status === 'fulfilled') setF2News(results[10].value);
       if (results[11].status === 'fulfilled') setF3News(results[11].value);
       if (results[12].status === 'fulfilled') setFENews(results[12].value);
+      if (results[13].status === 'fulfilled') setMotoGPNews(results[13].value);
 
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
@@ -440,6 +452,19 @@ const App = () => {
           <span className="cat-label">Formula E</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={MotoGP_LOGO} 
+            alt="MotoGP" 
+            className="cat-logo motogp-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">MotoGP</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+
         <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
           <div className="cat-card-glow" />
           <img 
@@ -636,6 +661,7 @@ const App = () => {
     if (c.includes('F2') || c.includes('FORMULA 2')) return F2_LOGO;
     if (c.includes('F3') || c.includes('FORMULA 3')) return F3_LOGO;
     if (c.includes('FE') || c.includes('FORMULA E')) return FE_LOGO;
+    if (c.includes('MOTOGP')) return MotoGP_LOGO;
     if (c.includes('WRC')) return WRC_LOGO;
     if (c.includes('INDYCAR')) return INDYCAR_LOGO;
     if (c.includes('NASCAR TRUCK')) return NASCART_LOGO;
@@ -1021,6 +1047,7 @@ const App = () => {
     const isF2 = selectedCategory === 'F2';
     const isF3 = selectedCategory === 'F3';
     const isFE = selectedCategory === 'FE';
+    const isMotoGP = selectedCategory === 'MotoGP';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1042,6 +1069,7 @@ const App = () => {
     if (isF2) logo = F2_LOGO;
     if (isF3) logo = F3_LOGO;
     if (isFE) logo = FE_LOGO;
+    if (isMotoGP) logo = MotoGP_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -1063,6 +1091,7 @@ const App = () => {
     if (isF2) catTitle = 'Formula 2';
     if (isF3) catTitle = 'Formula 3';
     if (isFE) catTitle = 'Formula E';
+    if (isMotoGP) catTitle = 'MotoGP';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1084,6 +1113,7 @@ const App = () => {
     if (isF2) news = f2News;
     if (isF3) news = f3News;
     if (isFE) news = feNews;
+    if (isMotoGP) news = motoGPNews;
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
@@ -1104,6 +1134,7 @@ const App = () => {
     if (isNascar || isNASCARO || isNASCART) resultsUrl = 'https://www.nascar.com/results';
     if (isWEC) resultsUrl = 'https://www.fiawec.com/en/results';
     if (isIMSA) resultsUrl = 'https://www.imsa.com/results/';
+    if (isMotoGP) resultsUrl = 'https://www.motogp.com/es/results-statistics';
 
 
     return (
@@ -1152,9 +1183,9 @@ const App = () => {
                         <span className="race-date-label">{race.dates}</span>
                       </div>
                       <div className={`race-status-badge ${race.status.toLowerCase()}`}>
-                        {race.status === 'Live' ? '🔴 En curso' :
+                        {race.status === 'Live' ? 'EN CURSO' :
                           race.status === 'Finished' ? 'FINALIZADO' :
-                            (race.status === 'Next' || race.status === 'Upcoming') ? '➡️ Próximo' : '—'}
+                            (race.status === 'Next' || race.status === 'Upcoming') ? 'PRÓXIMO' : '—'}
                       </div>
                     </div>
                   ))}
@@ -1170,9 +1201,9 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Live' ? '🔴 En curso' :
+                        {ev.status === 'Live' ? 'EN CURSO' :
                           ev.status === 'Finished' ? 'FINALIZADO' :
-                            (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
+                            (ev.status === 'Next' || ev.status === 'Upcoming') ? 'PRÓXIMO' : '—'}
                       </div>
                     </div>
                   )) : (
@@ -1190,7 +1221,7 @@ const App = () => {
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                 {ev.status === 'Finished' ? 'FINALIZADO' : 
-                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                 ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
               </div>
             </div>
           )) : (
@@ -1208,7 +1239,7 @@ const App = () => {
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                 {ev.status === 'Finished' ? 'FINALIZADO' : 
-                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                 ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
               </div>
             </div>
           )) : (
@@ -1226,7 +1257,7 @@ const App = () => {
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                 {ev.status === 'Finished' ? 'FINALIZADO' : 
-                 ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                 ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
               </div>
             </div>
           )) : (
@@ -1244,7 +1275,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1262,7 +1293,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1280,11 +1311,29 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
                     <p className="empty-msg">{isLoading ? 'Cargando calendario IndyCar...' : 'No se encontró calendario IndyCar.'}</p>
+                  )}
+                </div>
+              ) : isMotoGP ? (
+                <div className="motogp-calendar-list">
+                  {motoGPCalendar.length > 0 ? motoGPCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario MotoGP...' : 'No se encontró calendario MotoGP.'}</p>
                   )}
                 </div>
               ) : (isNascar || isNASCART) ? (
@@ -1298,7 +1347,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1316,7 +1365,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1334,7 +1383,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status === 'Live' ? 'live' : ev.status === 'Next' ? 'next' : ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1352,7 +1401,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1370,7 +1419,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1388,7 +1437,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1406,7 +1455,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Finished' ? 'FINALIZADO' : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
                       </div>
                     </div>
                   )) : (
@@ -1549,6 +1598,51 @@ const App = () => {
                       ))
                     )}
                     {((feStandingsTab === 'drivers' && feDrivers.length === 0) || (feStandingsTab === 'teams' && feTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isMotoGP ? (
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${motoGPStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setMotoGPStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${motoGPStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setMotoGPStandingsTab('teams')}>Equipos</button>
+                    <button className={`nascar-tab-btn ${motoGPStandingsTab === 'constructors' ? 'active' : ''}`} onClick={() => setMotoGPStandingsTab('constructors')}>Constructor</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {motoGPStandingsTab === 'drivers' ? (
+                      motoGPStandings.drivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))
+                    ) : motoGPStandingsTab === 'teams' ? (
+                      motoGPStandings.teams.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.driver}</span>
+                          </div>
+                          <span className="stand-pts">{c.points} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      motoGPStandings.constructors.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.driver}</span>
+                          </div>
+                          <span className="stand-pts">{c.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((motoGPStandingsTab === 'drivers' && motoGPStandings.drivers.length === 0) || 
+                      (motoGPStandingsTab === 'teams' && motoGPStandings.teams.length === 0) ||
+                      (motoGPStandingsTab === 'constructors' && motoGPStandings.constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isWRC ? (

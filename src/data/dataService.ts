@@ -158,7 +158,13 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'F3': 'https://lat.motorsport.com/fiaf3/results/2026/albert-park-664972/',
   'FE': 'https://lat.motorsport.com/formula-e/results/2026/eprix-de-madrid-en-el-jarama/',
   'TNC3': 'https://apat.org.ar/carreras/calendario',
+  'MotoGP': 'https://lat.motorsport.com/motogp/schedule/2026/',
 };
+
+export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
+export const MotoGP_DRIVERS_URL = 'https://lat.motorsport.com/motogp/standings/2026/';
+export const MotoGP_TEAMS_URL = 'https://lat.motorsport.com/motogp/standings/2026/?type=Team&class=';
+export const MotoGP_CONS_URL = 'https://lat.motorsport.com/motogp/standings/2026/?type=Constructor&class=';
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
 export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
@@ -183,6 +189,12 @@ export type WRCRallyResult = {
   rallyName: string;
   fullResultsUrl: string;
   results: { pos: string; driver: string; codriver: string; team: string; time: string; diff: string }[];
+};
+
+export type MotoGPStandings = {
+  drivers: TCStandingRow[];
+  teams: TCStandingRow[];
+  constructors: TCStandingRow[];
 };
 
 
@@ -3414,9 +3426,120 @@ export const dataService = {
         if (res.ok) return await res.text();
       }
     } catch (e) {}
-
     throw new Error('All proxy methods failed to bypass 403/CORS');
   },
-  
+
+  // === MotoGP CALENDAR (Motorsport.com) ===
+  async getMotoGPCalendar(): Promise<CalendarRace[]> {
+    try {
+      const html = await this.fetchWithProxy(MotoGP_CALENDAR_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const races: CalendarRace[] = [];
+      
+      const eventItems = doc.querySelectorAll('.ms-schedule-list-item');
+      eventItems.forEach((item, idx) => {
+        const raceName = item.querySelector('.ms-schedule-list-item__title')?.textContent?.trim() || '';
+        const dates = item.querySelector('.ms-schedule-list-item__date')?.textContent?.trim() || '';
+        const statusText = item.querySelector('.ms-schedule-list-item__status')?.textContent?.trim() || '';
+        
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (statusText.toLowerCase().includes('finalizado')) status = 'Finished';
+        else if (statusText.toLowerCase().includes('en vivo')) status = 'Live';
+
+        races.push({
+          round: idx + 1,
+          race: raceName,
+          dates,
+          status,
+          winner: ''
+        });
+      });
+
+      let foundNext = false;
+      for (const r of races) {
+        if (r.status === 'Upcoming' && !foundNext) {
+          r.status = 'Next';
+          foundNext = true;
+        }
+      }
+      return races;
+    } catch (e) {
+      console.error('[DataService] MotoGP calendar error:', e);
+      return [];
+    }
+  },
+
+  // === MotoGP STANDINGS (Motorsport.com) ===
+  async getMotoGPStandings(): Promise<MotoGPStandings> {
+    const standings: MotoGPStandings = { drivers: [], teams: [], constructors: [] };
+    
+    const parseTable = (html: string, mode: 'drivers' | 'teams' | 'constructors') => {
+      const rows: TCStandingRow[] = [];
+      if (!html) return rows;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const trs = doc.querySelectorAll('tr.ms-table_row');
+      
+      trs.forEach(tr => {
+        const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
+        const pts = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim() || '0';
+        
+        let name = '';
+        let team = '';
+        
+        if (mode === 'drivers') {
+          name = tr.querySelector('.ms-table_field--driver .name-short')?.textContent?.trim() || '';
+          team = tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() || '';
+        } else if (mode === 'teams') {
+          name = tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() || '';
+        } else {
+          name = tr.querySelector('.ms-table_field--result_constructor, .ms-table_field--constructor .name')?.textContent?.trim() || '';
+        }
+        
+        if (pos && name && !isNaN(parseInt(pos))) {
+          rows.push({ pos, driver: name, points: pts, team: team || undefined });
+        }
+      });
+      return rows;
+    };
+
+    try {
+      const [driversHtml, teamsHtml, consHtml] = await Promise.all([
+        this.fetchWithProxy(MotoGP_DRIVERS_URL),
+        this.fetchWithProxy(MotoGP_TEAMS_URL),
+        this.fetchWithProxy(MotoGP_CONS_URL)
+      ]);
+      standings.drivers = parseTable(driversHtml, 'drivers');
+      standings.teams = parseTable(teamsHtml, 'teams');
+      standings.constructors = parseTable(consHtml, 'constructors');
+    } catch (e) { console.error('[DataService] MotoGP standings error:', e); }
+    return standings;
+  },
+
+  // === MotoGP NEWS (AS.com) ===
+  async getMotoGPNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('/api/as/motor/motociclismo/motogp/');
+      if (!html) throw new Error("Empty response from AS.com");
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('article').forEach(art => {
+        const t = art.querySelector('h2, h3')?.textContent?.trim();
+        const l = art.querySelector('a')?.getAttribute('href');
+        const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
+        if (t && l) {
+          allNews.push({
+            title: t, summary: '',
+            link: l.startsWith('/') ? `https://as.com${l}` : l,
+            source: 'AS.com',
+            category: 'MotoGP',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] AS.com MotoGP news error:', e); }
+    return allNews;
+  },
+
   CATEGORY_RESULTS_URLS,
 };
