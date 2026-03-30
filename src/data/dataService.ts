@@ -2112,33 +2112,36 @@ export const dataService = {
     const drivers: TCStandingRow[] = [];
     const teams: TCStandingRow[] = [];
     
-    try {
-      const html = await this.fetchWithProxy('https://lat.motorsport.com/fia-f2/standings/2026/');
-      if (!html) return { drivers, teams };
+    const scrapeTable = (html: string, target: TCStandingRow[]) => {
+      if (!html) return;
       const doc = new DOMParser().parseFromString(html, 'text/html');
+      const table = doc.querySelector('table, .ms-table');
+      if (!table) return;
       
-      const tables = doc.querySelectorAll('table, .ms-table');
-      
-      tables.forEach((table, idx) => {
-        const rows = table.querySelectorAll('tr.ms-table_row');
-        rows.forEach(tr => {
-          const posEl = tr.querySelector('.ms-table_field--pos');
-          const pointsEl = tr.querySelector('.ms-table_field--total_points');
-          const nameEl = tr.querySelector('.ms-table_field--driver .name-short, .ms-table_field--team .name, .name-short, .name');
-          
-          const pos = posEl?.textContent?.trim() || '';
-          const name = nameEl?.textContent?.trim() || '';
-          const pts = pointsEl?.textContent?.trim() || '0';
-          
-          if (pos && name && !isNaN(parseInt(pos))) {
-            if (idx === 0) { // Assuming first table is Drivers
-              drivers.push({ pos, driver: name, points: pts });
-            } else if (idx === 1) { // Assuming second table is Teams
-              teams.push({ pos, driver: name, points: pts });
-            }
-          }
-        });
+      const rows = table.querySelectorAll('tr.ms-table_row');
+      rows.forEach(tr => {
+        const posEl = tr.querySelector('.ms-table_field--pos');
+        const pointsEl = tr.querySelector('.ms-table_field--total_points');
+        const nameEl = tr.querySelector('.ms-table_field--driver .name-short, .ms-table_field--team .name, .name-short, .name');
+        
+        const pos = posEl?.textContent?.trim() || '';
+        const name = nameEl?.textContent?.trim() || '';
+        const pts = pointsEl?.textContent?.trim() || '0';
+        
+        if (pos && name && !isNaN(parseInt(pos))) {
+          target.push({ pos, driver: name, points: pts });
+        }
       });
+    };
+
+    try {
+      const [driversHtml, teamsHtml] = await Promise.all([
+        this.fetchWithProxy('https://lat.motorsport.com/fia-f2/standings/2026/'),
+        this.fetchWithProxy('https://lat.motorsport.com/fia-f2/standings/2026/?type=Team&class=')
+      ]);
+      
+      scrapeTable(driversHtml, drivers);
+      scrapeTable(teamsHtml, teams);
     } catch (e) {
       console.error('[DataService] F2 standings error:', e);
     }
