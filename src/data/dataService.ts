@@ -240,7 +240,7 @@ export const dataService = {
             const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
             const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
             const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const timeStr = (s.time === '-' || s.time === '' || isNaN(d.getTime())) ? '' : rawTime;
+            const timeStr = (s.time === '-' || s.time === '' || s.time === '--:--' || isNaN(d.getTime())) ? (s.time === '--:--' ? '--:--' : '') : rawTime;
             
             return {
               id: s._id || s.id || Math.random().toString(),
@@ -292,7 +292,7 @@ export const dataService = {
             circuitImage,
             platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
             schedules: schedulesList,
-            time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
+            time: schedulesList.length > 0 ? (schedulesList[0].time === '--:--' ? '--:--' : schedulesList[0].time) : '--:--',
             ticketLink: r.ticketLink || '',
             watchLinks,
           };
