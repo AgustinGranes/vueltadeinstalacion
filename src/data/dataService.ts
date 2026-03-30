@@ -49,6 +49,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'NASCARO': '#FFD659',
   'NASCART': '#ff0000',
   'TNC3': '#e02020',
+  'TNC2': '#0288d1',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -161,6 +162,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
 export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
+export const TNC2_STANDINGS_URL = 'https://apat.org.ar/campeonato/c2';
 
 export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
 
@@ -2490,6 +2492,30 @@ export const dataService = {
     }
   },
 
+  async getTNC2Standings(): Promise<any[]> {
+    try {
+      const html = await this.fetchWithProxy(TNC2_STANDINGS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table tbody tr');
+      const drivers: any[] = [];
+
+      rows.forEach(row => {
+        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim() || '';
+        const driver = row.querySelector('td:nth-child(3) strong')?.textContent?.trim() || '';
+        const team = row.querySelector('td:nth-child(4)')?.textContent?.trim() || '';
+        const points = row.querySelector('td:nth-child(6) strong')?.textContent?.trim() || '';
+        if (pos && driver) {
+          drivers.push({ pos, driver, team, points });
+        }
+      });
+      return drivers;
+    } catch (e) {
+      console.error('[DataService] TNC2 standings error:', e);
+      return [];
+    }
+  },
+
   async getTNC3Standings(): Promise<any[]> {
     try {
       const html = await this.fetchWithProxy(TNC3_STANDINGS_URL);
@@ -2534,7 +2560,7 @@ export const dataService = {
             summary: item.querySelector('.elementor-post__excerpt')?.textContent?.trim() || '',
             link,
             source: 'Campeones',
-            category: 'TNC3',
+            category: 'TN C2/C3',
             imageUrl
           });
         }

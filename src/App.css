@@ -143,6 +143,11 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.tnc2-card {
+  background: #0288d1 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .tcp-card {
   background: #388e3c;
   border-color: rgba(255, 255, 255, 0.2);
