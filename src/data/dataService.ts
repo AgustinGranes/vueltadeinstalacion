@@ -2540,7 +2540,7 @@ export const dataService = {
   async getNascarTruckStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      const html = await this.fetchWithProxy('https://tobychristie.com/2026-nascar-oreilly-auto-parts-series-driver-standings/');
+      const html = await this.fetchWithProxy('https://tobychristie.com/2026-nascar-craftsman-truck-series-driver-standings/');
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
