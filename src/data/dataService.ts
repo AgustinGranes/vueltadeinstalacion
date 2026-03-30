@@ -51,6 +51,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'NASCART': '#ff0000',
   'TNC3': '#e02020',
   'TNC2': '#0288d1',
+  'F1A': '#9c27b0',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -160,6 +161,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'FE': 'https://lat.motorsport.com/formula-e/results/2026/eprix-de-madrid-en-el-jarama/',
   'TNC3': 'https://apat.org.ar/carreras/calendario',
   'MotoGP': 'https://as.com/resultados/motor/motogp/clasificacion/races/',
+  'F1A': 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/',
 };
 
 export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
@@ -167,6 +169,10 @@ export const MotoGP_NEWS_URL = 'https://as.com/noticias/moto-gp/';
 export const MotoGP_DRIVERS_URL = 'https://lat.motorsport.com/motogp/standings/2026/';
 export const MotoGP_TEAMS_URL = 'https://lat.motorsport.com/motogp/standings/2026/?type=Team&class=';
 export const MotoGP_CONS_URL = 'https://lat.motorsport.com/motogp/standings/2026/?type=Constructor&class=';
+
+export const F1A_STANDINGS_URL = 'https://lat.motorsport.com/f1-academy/standings/2026/';
+export const F1A_NEWS_URL = 'https://lat.motorsport.com/f1-academy/news/';
+export const F1A_CALENDAR_URL = 'https://lat.motorsport.com/f1-academy/schedule/2026/';
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
 export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
@@ -3583,6 +3589,99 @@ export const dataService = {
       }
     } catch (e) { console.warn('[DataService] AS.com MotoGP news error:', e); }
     return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i);
+  },
+
+  // === F1 ACADEMY NEWS ===
+  async getF1AcademyNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(F1A_NEWS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('a.ms-item').forEach(art => {
+          const t = art.querySelector('.ms-item__title, .title, div:not([class])')?.textContent?.trim() || art.getAttribute('title');
+          const l = art.getAttribute('href');
+          const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
+          if (t && l) {
+            allNews.push({
+              title: t, summary: '',
+              link: l.startsWith('/') ? `https://lat.motorsport.com${l}` : l,
+              source: 'Motorsport',
+              category: 'F1A',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn('[DataService] F1A news error:', e); }
+    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 15);
+  },
+
+  // === F1 ACADEMY STANDINGS ===
+  async getF1AcademyStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(F1A_STANDINGS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const trs = doc.querySelectorAll('tr.ms-table_row');
+      trs.forEach(tr => {
+        const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
+        const name = tr.querySelector('.ms-table_field--driver a')?.textContent?.trim() || 
+                     tr.querySelector('.ms-table_field--driver')?.textContent?.trim() || '';
+        const pts = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim() || '0';
+        if (pos && name) {
+          standings.push({ pos, driver: name, points: pts });
+        }
+      });
+    } catch (e) { console.error('[DataService] F1A standings error:', e); }
+    return standings;
+  },
+
+  // === F1 ACADEMY CALENDAR ===
+  async getF1AcademyCalendar(): Promise<CalendarRace[]> {
+    try {
+      const html = await this.fetchWithProxy(F1A_CALENDAR_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const races: CalendarRace[] = [];
+      const items = doc.querySelectorAll('tr.ms-schedule-table__item, tbody.ms-schedule-table__item');
+      items.forEach((item, idx) => {
+        const round = item.querySelector('.ms-schedule-table-item-main__round')?.textContent?.trim() || (idx + 1).toString();
+        const raceName = item.querySelector('.ms-schedule-table-item-main__event a span')?.textContent?.trim() || 
+                         item.querySelector('.ms-schedule-table-item-main__event a')?.textContent?.trim() || 
+                         item.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim() || '';
+        
+        const dateElem = item.querySelector('msnt-formatted-date');
+        const dates = dateElem ? dateElem.textContent?.trim() : item.querySelector('.ms-schedule-table__cell--date')?.textContent?.trim() || '';
+        
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming') || 
+                           item.closest('tbody')?.classList.contains('ms-schedule-table__item--upcoming');
+        
+        let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
+        if (raceName) {
+          races.push({
+            round: parseInt(round) || (idx + 1),
+            race: raceName,
+            dates,
+            status,
+            winner: status === 'Finished' ? '✅ Finalizado' : ''
+          });
+        }
+      });
+
+      let foundNext = false;
+      for (const r of races) {
+        if (r.status === 'Upcoming' && !foundNext) {
+          r.status = 'Next';
+          foundNext = true;
+        }
+      }
+      return races;
+    } catch (e) {
+      console.error('[DataService] F1A calendar error:', e);
+      return [];
+    }
   },
 
   CATEGORY_RESULTS_URLS,
