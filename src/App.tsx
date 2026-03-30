@@ -728,10 +728,19 @@ const App = () => {
   };
 
   const renderNoticias = () => {
-    let allNewsList = [
-      ...f1News, ...wrcNews, ...tcNews, ...tcpNews, ...tcmNews, 
-      ...tcpmNews, ...tcpkNews, ...tcppkNews, ...tc2000News, ...indyNews, ...nascarNews, ...wecNews, ...imsaNews, ...nascarONews
-    ].sort(() => Math.random() - 0.5);
+    // Interleave news based on Home Grid Order: F1, WRC, WEC, IMSA, NASCAR, NASCAR O REILLY, IndyCar, TC, TCP, TCM, TCPM, TCPK, TCPPK, TC2000
+    const sourceArrays = [
+      f1News, wrcNews, wecNews, imsaNews, nascarNews, nascarONews, indyNews,
+      tcNews, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News
+    ];
+
+    let allNewsList: NewsItem[] = [];
+    const maxLen = Math.max(...sourceArrays.map(arr => arr.length));
+    for (let i = 0; i < maxLen; i++) {
+      for (const arr of sourceArrays) {
+        if (arr[i]) allNewsList.push(arr[i]);
+      }
+    }
 
     if (selectedNewsCategories.length < NEWS_CATEGORIES.length) {
       allNewsList = allNewsList.filter(item => item.category ? selectedNewsCategories.includes(item.category) : false);
