@@ -1278,7 +1278,29 @@ const App = () => {
                     <button className={`nascar-tab-btn ${f1StandingsTab === 'constructors' ? 'active' : ''}`} onClick={() => setF1StandingsTab('constructors')}>Constructores</button>
                   </div>
                   <div className="standings-list f1-standings">
-                    {(f1StandingsTab === 'drivers' || f2StandingsTab === 'drivers') && (isF1 ? f1Drivers : f2Drivers).length === 0 && <p className="empty-msg">Cargando posiciones...</p>}
+                    {f1StandingsTab === 'drivers' ? (
+                      f1Drivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
+                          </div>
+                          <span className="stand-pts">{d.totalPts} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      f1Constructors.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.team}</span>
+                          </div>
+                          <span className="stand-pts">{c.totalPts} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((f1StandingsTab === 'drivers' && f1Drivers.length === 0) || (f1StandingsTab === 'constructors' && f1Constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isF2 ? (
