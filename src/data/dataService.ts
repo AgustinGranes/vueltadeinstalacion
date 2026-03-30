@@ -46,6 +46,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'TCPM': '#990000',
   'TCPPK': '#006633',
   'NASCARO': '#FFD659',
+  'NASCART': '#007AC3',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -148,7 +149,8 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TCPPK': 'https://tiempos.actc.org.ar/resultados',
   'TC2000': 'https://tc2000.com.ar/carreras.php?accion=tiempos&id=411#',
   'IMSA': 'https://lat.motorsport.com/imsa/results/2026',
-  'NASCARO': 'https://www.nascar.com/results/nascar-oreilly-auto-parts-series/'
+  'NASCARO': 'https://www.nascar.com/results/nascar-oreilly-auto-parts-series/',
+  'NASCART': 'https://www.nascar.com/live-results/nascar-craftsman-truck-series/2026-fresh-from-florida-250/'
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
@@ -2497,6 +2499,130 @@ export const dataService = {
 
     } catch (e) { console.error('[DataService] TC2000 news error:', e); }
     return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 30);
+  },
+
+  // === NASCAR TRUCK NEWS ===
+  async getNascarTruckNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://tobychristie.com/nascar/truck-series/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const elements = doc.querySelectorAll('.elementor-post');
+      elements.forEach(container => {
+        const linkEl = container.querySelector('.elementor-post__title a');
+        const imgEl = container.querySelector('.elementor-post__thumbnail img, .elementor-post__thumbnail__link img');
+        
+        const title = linkEl?.textContent?.trim();
+        const href = linkEl?.getAttribute('href');
+        const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+        
+        if (title && href) {
+          allNews.push({
+            title,
+            summary: '',
+            link: href,
+            source: 'TobyChristie.com',
+            category: 'NASCAR TRUCK',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('[DataService] NASCAR Truck news error:', e);
+    }
+    return allNews.filter((v, i, a) => a.findIndex(t => t.title === v.title) === i).slice(0, 15);
+  },
+
+  // === NASCAR TRUCK STANDINGS ===
+  async getNascarTruckStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://www.nascar.com/standings/nascar-craftsman-truck-series');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const rows = doc.querySelectorAll('tr.driver-row');
+      rows.forEach(row => {
+        const pos = row.querySelector('td.col-position')?.textContent?.trim();
+        const name = row.querySelector('td.col-driver_name a.driver-page-link')?.textContent?.trim() || 
+                     row.querySelector('td.col-driver_name')?.textContent?.trim();
+        const pts = row.querySelector('td.col-points')?.textContent?.trim();
+        
+        if (pos && name && pts) {
+          standings.push({
+            pos,
+            driver: name,
+            points: pts
+          });
+        }
+      });
+    } catch (e) {
+      console.error('[DataService] NASCAR Truck standings error:', e);
+    }
+    return standings;
+  },
+
+  // === NASCAR TRUCK CALENDAR ===
+  async getNascarTruckCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://tobychristie.com/2026-nascar-craftsman-truck-series-schedule/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const now = new Date();
+      now.setHours(0,0,0,0);
+      const currentYear = now.getFullYear();
+
+      const monthsMap: Record<string, number> = {
+        'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
+        'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
+      };
+
+      const rows = doc.querySelectorAll('table tr');
+      let round = 1;
+      
+      rows.forEach((row, idx) => {
+        if (idx === 0) return; // Skip header
+        const tds = row.querySelectorAll('td');
+        if (tds.length >= 2) {
+          const dateStr = tds[0]?.textContent?.trim() || '';
+          const raceName = tds[1]?.textContent?.trim() || '';
+          
+          if (!raceName || raceName.toLowerCase().includes('tba')) return;
+
+          let status: CalendarRace['status'] = 'Upcoming';
+          
+          // TobyChristie format usually like: "Friday, Feb 14"
+          const dateMatch = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d{1,2})/);
+          if (dateMatch) {
+            const month = monthsMap[dateMatch[1]];
+            const day = parseInt(dateMatch[2]);
+            if (month !== undefined) {
+              const raceDate = new Date(currentYear, month, day);
+              raceDate.setHours(0,0,0,0);
+              if (raceDate < now) status = 'Finished';
+              else if (raceDate.getTime() === now.getTime()) status = 'Live';
+            }
+          }
+
+          calendar.push({
+            round: round++,
+            race: raceName.replace(/\d+$/, '').trim(), // Clean potential trailing numbers
+            dates: dateStr,
+            status,
+            winner: status === 'Finished' ? '✅ Finalizado' : ''
+          });
+        }
+      });
+      
+      const nextIdx = calendar.findIndex(r => r.status === 'Upcoming');
+      if (nextIdx !== -1) calendar[nextIdx].status = 'Next';
+      
+    } catch (e) { console.error('[DataService] NASCAR Truck calendar error:', e); }
+    return calendar;
   },
 
   async fetchWithProxy(targetUrl: string, options: RequestInit = {}): Promise<string> {

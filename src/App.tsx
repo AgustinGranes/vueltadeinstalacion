@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -19,7 +19,7 @@ const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
 
-const NEWS_CATEGORIES = ['F1', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR O REILLY', 'WEC', 'IMSA'];
+const NEWS_CATEGORIES = ['F1', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
 
 
 
@@ -85,6 +85,9 @@ const App = () => {
   const [nascarOCalendar, setNascarOCalendar] = useState<CalendarRace[]>([]);
   const [nascarONews, setNascarONews] = useState<NewsItem[]>([]);
   const [nascarOStandings, setNascarOStandings] = useState<TCStandingRow[]>([]);
+  const [nascarTCalendar, setNascarTCalendar] = useState<CalendarRace[]>([]);
+  const [nascarTNews, setNascarTNews] = useState<NewsItem[]>([]);
+  const [nascarTStandings, setNascarTStandings] = useState<TCStandingRow[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -124,6 +127,7 @@ const App = () => {
       else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
       else if (cat === 'IMSA') setImsaCalendar(await dataService.getIMSACalendar());
       else if (cat === 'NASCARO') setNascarOCalendar(await dataService.getNASCAROCalendar());
+      else if (cat === 'NASCART') setNascarTCalendar(await dataService.getNascarTruckCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -157,6 +161,8 @@ const App = () => {
         setWecStandings(await dataService.getWECStandings());
       } else if (cat === 'NASCARO') {
         setNascarOStandings(await dataService.getNASCAROStandings());
+      } else if (cat === 'NASCART') {
+        setNascarTStandings(await dataService.getNascarTruckStandings());
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -182,6 +188,7 @@ const App = () => {
       else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
       else if (cat === 'IMSA') setImsaNews(await dataService.getIMSANews());
       else if (cat === 'NASCARO') setNascarONews(await dataService.getNASCARONews());
+      else if (cat === 'NASCART') setNascarTNews(await dataService.getNascarTruckNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -200,6 +207,7 @@ const App = () => {
         dataService.getTC2000News(),
         dataService.getWECNews(),
         dataService.getIMSANews(),
+        dataService.getNascarTruckNews(),
       ]);
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
@@ -209,6 +217,7 @@ const App = () => {
       if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
       if (results[6]?.status === 'fulfilled') setWecNews(results[6].value);
       if (results[7]?.status === 'fulfilled') setImsaNews(results[7].value);
+      if (results[8]?.status === 'fulfilled') setNascarTNews(results[8].value);
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
       console.error('Global news fetch error:', e);
@@ -486,6 +495,18 @@ const App = () => {
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card nascart-card" onClick={() => handleCategoryClick('NASCART')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/NASCART.png" 
+            alt="NASCAR Truck" 
+            className="cat-logo nascar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">NASCAR Truck</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -495,6 +516,7 @@ const App = () => {
     if (c.includes('F1') || c.includes('FORMULA 1')) return F1_LOGO;
     if (c.includes('WRC')) return WRC_LOGO;
     if (c.includes('INDYCAR')) return INDYCAR_LOGO;
+    if (c.includes('NASCAR TRUCK')) return '/NASCART.png';
     if (c.includes('WEC')) return WEC_LOGO;
     if (c.includes('NASCAR')) return '/NASCAR.png';
     if (c.includes('IMSA')) return IMSA_LOGO;

@@ -183,6 +183,11 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.nascart-card {
+  background: #007ac3;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .imsa-card {
   background: #ff0000;
   border-color: rgba(255, 255, 255, 0.2);
