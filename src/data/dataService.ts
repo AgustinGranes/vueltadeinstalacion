@@ -40,7 +40,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Top Race': '#ff8c00',
   'ACTC': '#00438a',
   'F2': '#0288d1',
-  'F3': '#0D80FF',
+  'F3': '#e8002d',
   'FE': '#00AEEF',
   'IMSA': '#E42526',
   'TCPM': '#990000',
@@ -152,7 +152,8 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'IMSA': 'https://lat.motorsport.com/imsa/results/2026',
   'NASCARO': 'https://www.nascar.com/results/nascar-oreilly-auto-parts-series/',
   'NASCART': 'https://www.nascar.com/live-results/nascar-craftsman-truck-series/2026-fresh-from-florida-250/',
-  'F2': 'https://lat.motorsport.com/fia-f2/results/2026'
+  'F2': 'https://lat.motorsport.com/fia-f2/results/2026',
+  'F3': 'https://lat.motorsport.com/fiaf3/results/2026/albert-park-664972/'
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
@@ -2148,7 +2149,183 @@ export const dataService = {
     return { drivers, teams };
   },
 
-  // === F2 CALENDAR ===
+  // === F3 NEWS ===
+  async getF3News(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    
+    // Source 1: Motorsport.com (Latam)
+    try {
+      const html = await this.fetchWithProxy('https://lat.motorsport.com/fiaf3/news/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a.ms-item').forEach(art => {
+        const title = art.querySelector('.ms-item__title, .ms-item--title')?.textContent?.trim();
+        const link = art.getAttribute('href');
+        const img = art.querySelector('img')?.getAttribute('data-src') || art.querySelector('img')?.getAttribute('src');
+        if (title && link) {
+          allNews.push({
+            title, summary: '',
+            link: link.startsWith('/') ? `https://lat.motorsport.com${link}` : link,
+            source: 'Motorsport.com',
+            category: 'F3',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] Motorsport F3 news error:', e); }
+
+    // Source 2: SoyMotor
+    try {
+      const html = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/f3');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('.views-row').forEach(row => {
+        const titleElem = row.querySelector('h2');
+        const linkElem = row.querySelector('a.node-container');
+        const imgElem = row.querySelector('img');
+        
+        const title = titleElem?.textContent?.trim();
+        const link = linkElem?.getAttribute('href');
+        const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
+        
+        if (title && link) {
+          allNews.push({
+            title, summary: '',
+            link: link.startsWith('/') ? `https://soymotor.com${link}` : link,
+            source: 'SoyMotor',
+            category: 'F3',
+            imageUrl: img ? (img.startsWith('http') ? img : `https://soymotor.com${img}`) : undefined
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] SoyMotor F3 news error:', e); }
+
+    const seen = new Set<string>();
+    return allNews.filter(n => {
+      const key = n.title.toLowerCase().slice(0, 40);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  },
+
+  // === F3 STANDINGS ===
+  async getF3Standings(): Promise<{ drivers: TCStandingRow[]; teams: TCStandingRow[] }> {
+    const drivers: TCStandingRow[] = [];
+    const teams: TCStandingRow[] = [];
+    
+    const scrapeTable = (html: string, target: TCStandingRow[]) => {
+      if (!html) return;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const table = doc.querySelector('table, .ms-table');
+      if (!table) return;
+      
+      const rows = table.querySelectorAll('tr.ms-table_row');
+      rows.forEach(tr => {
+        const posEl = tr.querySelector('.ms-table_field--pos');
+        const pointsEl = tr.querySelector('.ms-table_field--total_points');
+        const nameEl = tr.querySelector('.ms-table_field--driver .name-short, .ms-table_field--team .name, .name-short, .name');
+        
+        const pos = posEl?.textContent?.trim() || '';
+        const name = nameEl?.textContent?.trim() || '';
+        const pts = pointsEl?.textContent?.trim() || '0';
+        
+        if (pos && name && !isNaN(parseInt(pos))) {
+          target.push({ pos, driver: name, points: pts });
+        }
+      });
+    };
+
+    try {
+      const [driversHtml, teamsHtml] = await Promise.all([
+        this.fetchWithProxy('https://lat.motorsport.com/fiaf3/standings/2026/'),
+        this.fetchWithProxy('https://lat.motorsport.com/fiaf3/standings/2026/?type=Team&class=')
+      ]);
+      
+      scrapeTable(driversHtml, drivers);
+      scrapeTable(teamsHtml, teams);
+    } catch (e) {
+      console.error('[DataService] F3 standings error:', e);
+    }
+    return { drivers, teams };
+  },
+
+  // === F3 CALENDAR ===
+  async getF3Calendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    const year = 2026;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    try {
+      const html = await this.fetchWithProxy(`https://es.motorsport.com/fiaf3/schedule/${year}/?all_event_types=0`);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      let foundJsonEvents: any[] = [];
+      
+      scripts.forEach(script => {
+        try {
+          const content = script.textContent || '';
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) {
+            const list = parsed.filter(item => item['@type'] === 'SportsEvent');
+            if (list.length > 0) foundJsonEvents = list;
+          } else if (parsed['@graph'] && Array.isArray(parsed['@graph'])) {
+            const list = parsed['@graph'].filter((item: any) => item['@type'] === 'SportsEvent');
+            if (list.length > 0) foundJsonEvents = list;
+          }
+        } catch (e) {}
+      });
+
+      if (foundJsonEvents.length > 0) {
+        foundJsonEvents.forEach((ev, idx) => {
+          const eventName = ev.name?.replace(`, FIA F3 - ${year}`, '').trim();
+          const startDate = new Date(ev.startDate);
+          const endDate = new Date(ev.endDate);
+          
+          let status: CalendarRace['status'] = 'Upcoming';
+          if (now >= startDate && now <= endDate) {
+            status = 'Live';
+          } else if (now > endDate) {
+            status = 'Finished';
+          }
+          
+          const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+          let dates = `${startDate.getDate()} ${shortMonths[startDate.getMonth()]}`;
+          if (startDate.getTime() !== endDate.getTime()) {
+            dates += ` - ${endDate.getDate()} ${shortMonths[endDate.getMonth()]}`;
+          }
+
+          calendar.push({
+            round: idx + 1,
+            race: eventName || 'F3 Event',
+            dates,
+            status,
+            winner: ''
+          });
+        });
+        
+        const upcomingIdx = calendar.findIndex(r => r.status === 'Upcoming');
+        if (upcomingIdx !== -1) calendar[upcomingIdx].status = 'Next';
+        
+        return calendar;
+      }
+      
+      const rows = doc.querySelectorAll('.ms-schedule-table__item, tr.ms-table_row');
+      rows.forEach((row, idx) => {
+        const eventEl = row.querySelector('.ms-schedule-table-item-main__event .ms-link, .event-name');
+        const dateEl = row.querySelector('.ms-schedule-table-subevent-day__main, .date');
+        
+        if (eventEl && dateEl) {
+          const race = eventEl.textContent?.trim() || '';
+          const dates = dateEl.textContent?.trim() || '';
+          calendar.push({ round: idx + 1, race, dates, status: 'Upcoming', winner: '' });
+        }
+      });
+    } catch (e) {
+      console.error('[DataService] F3 calendar error:', e);
+    }
+    return calendar;
+  },
   async getF2Calendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     const year = 2026;
