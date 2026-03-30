@@ -2419,11 +2419,12 @@ export const dataService = {
 
       if (msHtml) {
         const doc = new DOMParser().parseFromString(msHtml, 'text/html');
-        const articles = doc.querySelectorAll('.ms-item--news, .ms-article-list-item, .ms-grid-item');
+        // Articles on FE news page are often a.ms-item
+        const articles = doc.querySelectorAll('a.ms-item, .ms-item--news, .ms-article-list-item, .ms-grid-item');
         articles.forEach((art, i) => {
-          if (i >= 6) return;
+          if (i >= 8) return;
           const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title')?.textContent?.trim();
-          const link = art.querySelector('a')?.getAttribute('href');
+          const link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href');
           if (title && link) {
             news.push({
               title,
@@ -2472,12 +2473,15 @@ export const dataService = {
 
       if (drvHtml) {
         const doc = new DOMParser().parseFromString(drvHtml, 'text/html');
-        const rows = doc.querySelectorAll('table tbody tr');
+        const rows = doc.querySelectorAll('table.ms-table tbody tr');
         rows.forEach(row => {
+          // Pos: 1st td
           const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          const driver = row.querySelector('.ms-table-link--driver, .ms-item__title')?.textContent?.trim();
-          const team = row.querySelector('.ms-table-link--team, .ms-item__subtitle')?.textContent?.trim();
-          const points = row.querySelector('.ms-table__main-points, td:nth-child(4), td:last-child')?.textContent?.trim();
+          // Driver/Team info often in .info-wrapper
+          const driver = row.querySelector('.info-wrapper span:first-child, .ms-table-link--driver')?.textContent?.trim();
+          const team = row.querySelector('.info-wrapper span:last-child, .ms-table-link--team')?.textContent?.trim();
+          // Points: 3rd td on this specific page
+          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
           if (pos && driver) {
             res.drivers.push({ pos, driver, team, points });
           }
@@ -2485,11 +2489,11 @@ export const dataService = {
       }
       if (teamHtml) {
         const doc = new DOMParser().parseFromString(teamHtml, 'text/html');
-        const rows = doc.querySelectorAll('table tbody tr');
+        const rows = doc.querySelectorAll('table.ms-table tbody tr');
         rows.forEach(row => {
           const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          const team = row.querySelector('.ms-table-link--team, .ms-item__title')?.textContent?.trim();
-          const points = row.querySelector('.ms-table__main-points, td:nth-child(3), td:last-child')?.textContent?.trim();
+          const team = row.querySelector('.info-wrapper, .ms-table-link--team')?.textContent?.trim();
+          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
           if (pos && team) {
             res.teams.push({ pos, team, points });
           }
