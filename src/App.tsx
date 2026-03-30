@@ -590,18 +590,6 @@ const App = () => {
           <span className="cat-label">TC Pista Pick Up</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
-          <div className="cat-card-glow" />
-          <img 
-            src="/TC2000.png" 
-            alt="TC2000" 
-            className="cat-logo tc2000-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">TC2000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
         <button className="cat-card tnc3-card" onClick={() => handleCategoryClick('TNC3')}>
           <div className="cat-card-glow" />
           <img 
@@ -624,6 +612,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">TN Clase 2</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card tc2000-card" onClick={() => handleCategoryClick('TC2000')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/TC2000.png" 
+            alt="TC2000" 
+            className="cat-logo tc2000-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -1153,7 +1153,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${race.status.toLowerCase()}`}>
                         {race.status === 'Live' ? '🔴 En curso' :
-                          race.status === 'Finished' ? (race.winner || '✅ Finalizado') :
+                          race.status === 'Finished' ? 'FINALIZADO' :
                             (race.status === 'Next' || race.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
@@ -1171,7 +1171,7 @@ const App = () => {
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
                         {ev.status === 'Live' ? '🔴 En curso' :
-                          ev.status === 'Finished' ? '✅ Finalizado' :
+                          ev.status === 'Finished' ? 'FINALIZADO' :
                             (ev.status === 'Next' || ev.status === 'Upcoming') ? '➡️ Próximo' : '—'}
                       </div>
                     </div>
@@ -1189,7 +1189,7 @@ const App = () => {
                 <span className="race-date-label">{ev.dates}</span>
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                {ev.status === 'Finished' ? 'FINALIZADO' : 
                  ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
               </div>
             </div>
@@ -1207,7 +1207,7 @@ const App = () => {
                 <span className="race-date-label">{ev.dates}</span>
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                {ev.status === 'Finished' ? 'FINALIZADO' : 
                  ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
               </div>
             </div>
@@ -1225,7 +1225,7 @@ const App = () => {
                 <span className="race-date-label">{ev.dates}</span>
               </div>
               <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                {ev.status === 'Finished' ? 'FINALIZADO' : 
                  ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
               </div>
             </div>
@@ -1243,7 +1243,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1261,7 +1261,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1279,7 +1279,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1297,7 +1297,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1315,7 +1315,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1333,7 +1333,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status === 'Live' ? 'live' : ev.status === 'Next' ? 'next' : ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1351,7 +1351,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? '✅ Finalizado' : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1369,7 +1369,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? '✅ Finalizado' : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1387,7 +1387,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
@@ -1405,7 +1405,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
                          ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
