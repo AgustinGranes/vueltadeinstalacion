@@ -3626,6 +3626,9 @@ export const dataService = {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const trs = doc.querySelectorAll('tr.ms-table_row');
       trs.forEach(tr => {
+        // Skip header rows
+        if (tr.querySelector('th')) return;
+        
         const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
         const driverNode = tr.querySelector('.ms-table_field--driver .info .name, .ms-table_field--driver a');
         const teamNode = tr.querySelector('.ms-table_field--driver .info .team');
@@ -3639,6 +3642,29 @@ export const dataService = {
         }
       });
     } catch (e) { console.error('[DataService] F1A standings error:', e); }
+    return standings;
+  },
+
+  // === F1 ACADEMY TEAMS STANDINGS ===
+  async getF1AcademyTeams(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const url = 'https://lat.motorsport.com/f1-academy/standings/2026/?type=Team&class=';
+      const html = await this.fetchWithProxy(url);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const trs = doc.querySelectorAll('tr.ms-table_row');
+      trs.forEach(tr => {
+        if (tr.querySelector('th')) return;
+        const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
+        const name = tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() || 
+                     tr.querySelector('.ms-table_field--team')?.textContent?.trim() || '';
+        const pts = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim() || '0';
+        if (pos && name) {
+          standings.push({ pos, driver: name, points: pts }); // reusing driver field for team name
+        }
+      });
+    } catch (e) { console.error('[DataService] F1A teams error:', e); }
     return standings;
   },
 

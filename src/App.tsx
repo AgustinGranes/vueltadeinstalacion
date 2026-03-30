@@ -82,6 +82,8 @@ const App = () => {
   const [feDrivers, setFEDrivers] = useState<TCStandingRow[]>([]);
   const [feTeams, setFETeams] = useState<TCStandingRow[]>([]);
   const [f1aDrivers, setF1aDrivers] = useState<TCStandingRow[]>([]);
+  const [f1aTeams, setF1aTeams] = useState<TCStandingRow[]>([]);
+  const [f1aStandingsTab, setF1aStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f2StandingsTab, setF2StandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f3StandingsTab, setF3StandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [feStandingsTab, setFEStandingsTab] = useState<'drivers' | 'teams'>('drivers');
@@ -227,7 +229,9 @@ const App = () => {
         setFEDrivers(res.drivers);
         setFETeams(res.teams);
       } else if (cat === 'F1A') {
-        setF1aDrivers(await dataService.getF1AcademyStandings());
+        const [drivers, teams] = await Promise.all([dataService.getF1AcademyStandings(), dataService.getF1AcademyTeams()]);
+        setF1aDrivers(drivers);
+        setF1aTeams(teams);
       } else if (cat === 'MotoGP') {
         const res = await dataService.getMotoGPStandings();
         setMotoGPStandings(res);
@@ -1656,24 +1660,37 @@ const App = () => {
                   </div>
                 </>
               ) : isF1A ? (
-                <div className="standings-list f1-standings">
-                  <div className="stand-row f1-stand-row header">
-                    <span className="stand-pos">Pos</span>
-                    <span className="stand-name">Piloto</span>
-                    <span className="stand-pts">Puntos</span>
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${f1aStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setF1aStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${f1aStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setF1aStandingsTab('teams')}>Equipos</button>
                   </div>
-                  {f1aDrivers.map((d, idx) => (
-                    <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                      <span className="stand-pos">{d.pos}</span>
-                      <div className="stand-info">
-                        <span className="stand-name">{d.driver}</span>
-                        {d.team && <span className="stand-sub">{d.team}</span>}
-                      </div>
-                      <span className="stand-pts">{d.points} pts</span>
-                    </div>
-                  ))}
-                  {f1aDrivers.length === 0 && <p className="empty-msg">Cargando posiciones...</p>}
-                </div>
+                  <div className="standings-list f1-standings">
+                    {f1aStandingsTab === 'drivers' ? (
+                      f1aDrivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      f1aTeams.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.driver}</span>
+                          </div>
+                          <span className="stand-pts">{c.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((f1aStandingsTab === 'drivers' && f1aDrivers.length === 0) || (f1aStandingsTab === 'teams' && f1aTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
               ) : isMotoGP ? (
                 <>
                   <div className="f1-tabs nascar-tabs">
