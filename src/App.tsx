@@ -732,7 +732,7 @@ const App = () => {
     ].sort(() => Math.random() - 0.5);
 
     if (selectedNewsCategories.length > 0) {
-      allNewsList = allNewsList.filter(item => selectedNewsCategories.includes(item.category));
+      allNewsList = allNewsList.filter(item => item.category ? selectedNewsCategories.includes(item.category) : false);
     }
 
     const toggleTempCat = (c: string) => {
