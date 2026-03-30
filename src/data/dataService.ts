@@ -2577,7 +2577,9 @@ export const dataService = {
       const currentYear = now.getFullYear();
 
       const monthsMap: Record<string, number> = {
-        'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
+        'JANUARY': 0, 'FEBRUARY': 1, 'MARCH': 2, 'APRIL': 3, 'MAY': 4, 'JUNE': 5,
+        'JULY': 6, 'AUGUST': 7, 'SEPTEMBER': 8, 'OCTOBER': 9, 'NOVEMBER': 10, 'DECEMBER': 11,
+        'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'JUN': 5,
         'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
       };
 
@@ -2598,9 +2600,9 @@ export const dataService = {
           let status: CalendarRace['status'] = 'Upcoming';
           let formattedDate = dateStr;
           
-          // TobyChristie format usually like: "Friday, Feb 14 7:30 PM ET"
+          // TobyChristie format usually like: "Friday, Feb 14 7:30 PM ET" or "Friday, February 13 7:30 PM ET"
           // We need to extract the date and optionally the time
-          const dateMatch = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d{1,2})/);
+          const dateMatch = dateStr.toUpperCase().match(/(?:MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY|SUNDAY)?(?:,\s+)?([A-Z]+)\s+(\d{1,2})/);
           const timeMatch = dateStr.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*(ET|EST|EDT)/i);
 
           if (dateMatch) {
@@ -2635,7 +2637,7 @@ export const dataService = {
 
                 h = (h + offset) % 24;
                 const formattedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                formattedDate += ` ${formattedTime} (ARGENTINA)`;
+                formattedDate += `, ${formattedTime}hs (ARGENTINA)`;
               }
             }
           }
