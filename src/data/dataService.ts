@@ -41,7 +41,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'ACTC': '#00438a',
   'F2': '#0288d1',
   'F3': '#ff0000',
-  'FE': '#00AEEF',
+  'FE': '#0288d1',
   'IMSA': '#E42526',
   'TCPM': '#990000',
   'TCPPK': '#006633',
@@ -153,7 +153,8 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'NASCARO': 'https://www.nascar.com/results/nascar-oreilly-auto-parts-series/',
   'NASCART': 'https://www.nascar.com/live-results/nascar-craftsman-truck-series/2026-fresh-from-florida-250/',
   'F2': 'https://lat.motorsport.com/fia-f2/results/2026',
-  'F3': 'https://lat.motorsport.com/fiaf3/results/2026/albert-park-664972/'
+  'F3': 'https://lat.motorsport.com/fiaf3/results/2026/albert-park-664972/',
+  'FE': 'https://lat.motorsport.com/formula-e/results/2026/eprix-de-madrid-en-el-jarama/',
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
@@ -2403,6 +2404,192 @@ export const dataService = {
       });
     } catch (e) {
       console.error('[DataService] F2 calendar error:', e);
+    }
+    return calendar;
+  },
+
+  // === FORMULA E NEWS ===
+  async getFENews(): Promise<NewsItem[]> {
+    const news: NewsItem[] = [];
+    try {
+      const [msHtml, smHtml] = await Promise.all([
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/news/'),
+        this.fetchWithProxy('https://soymotor.com/competicion/noticias/formula-e')
+      ]);
+
+      if (msHtml) {
+        const doc = new DOMParser().parseFromString(msHtml, 'text/html');
+        const articles = doc.querySelectorAll('.ms-item--news, .ms-article-list-item');
+        articles.forEach((art, i) => {
+          if (i >= 6) return;
+          const title = art.querySelector('.ms-item__title, .ms-article-list-item__title')?.textContent?.trim();
+          const link = art.querySelector('a')?.getAttribute('href');
+          if (title && link) {
+            news.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://lat.motorsport.com${link}`,
+              source: 'Motorsport.com',
+              category: 'Formula E'
+            });
+          }
+        });
+      }
+
+      if (smHtml) {
+        const doc = new DOMParser().parseFromString(smHtml, 'text/html');
+        const items = doc.querySelectorAll('.node--type-noticia');
+        items.forEach((item, i) => {
+          if (i >= 5) return;
+          const title = item.querySelector('.node-title')?.textContent?.trim();
+          const link = item.querySelector('a')?.getAttribute('href');
+          if (title && link) {
+            news.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://soymotor.com${link}`,
+              source: 'SoyMotor',
+              category: 'Formula E'
+            });
+          }
+        });
+      }
+    } catch (e) {
+      console.error('[DataService] FE news error:', e);
+    }
+    return news;
+  },
+
+  // === FORMULA E STANDINGS ===
+  async getFEStandings(): Promise<{ drivers: any[], teams: any[] }> {
+    const res: { drivers: any[], teams: any[] } = { drivers: [], teams: [] };
+    try {
+      const [drvHtml, teamHtml] = await Promise.all([
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/'),
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/?type=Team&class=')
+      ]);
+
+      if (drvHtml) {
+        const doc = new DOMParser().parseFromString(drvHtml, 'text/html');
+        const rows = doc.querySelectorAll('table tbody tr');
+        rows.forEach(row => {
+          const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
+          const driver = row.querySelector('.ms-table-link--driver')?.textContent?.trim();
+          const team = row.querySelector('.ms-table-link--team')?.textContent?.trim();
+          const points = row.querySelector('td:nth-child(4)')?.textContent?.trim() || 
+                         row.querySelector('.ms-table__main-points')?.textContent?.trim();
+          if (pos && driver) {
+            res.drivers.push({ pos, driver, team, points });
+          }
+        });
+      }
+      if (teamHtml) {
+        const doc = new DOMParser().parseFromString(teamHtml, 'text/html');
+        const rows = doc.querySelectorAll('table tbody tr');
+        rows.forEach(row => {
+          const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
+          const team = row.querySelector('.ms-table-link--team')?.textContent?.trim();
+          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim() || 
+                         row.querySelector('.ms-table__main-points')?.textContent?.trim();
+          if (pos && team) {
+            res.teams.push({ pos, team, points });
+          }
+        });
+      }
+    } catch (e) {
+      console.error('[DataService] FE standings error:', e);
+    }
+    return res;
+  },
+
+  // === FORMULA E CALENDAR ===
+  async getFECalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    const year = 2026;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    try {
+      const html = await this.fetchWithProxy(`https://lat.motorsport.com/formula-e/schedule/${year}/`);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      let foundJsonEvents: any[] = [];
+      
+      scripts.forEach(script => {
+        try {
+          const content = script.textContent || '';
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) {
+            const list = parsed.filter(item => item['@type'] === 'SportsEvent');
+            if (list.length > 0) foundJsonEvents = list;
+          } else if (parsed['@graph'] && Array.isArray(parsed['@graph'])) {
+            const list = parsed['@graph'].filter((item: any) => item['@type'] === 'SportsEvent');
+            if (list.length > 0) foundJsonEvents = list;
+          }
+        } catch (e) {}
+      });
+
+      if (foundJsonEvents.length > 0) {
+        foundJsonEvents.forEach((ev, idx) => {
+          const eventName = ev.name?.replace(`, FIA Formula E - ${year}`, '').trim();
+          const startDate = new Date(ev.startDate);
+          const endDate = new Date(ev.endDate);
+          
+          let status: CalendarRace['status'] = 'Upcoming';
+          if (now >= startDate && now <= endDate) {
+            status = 'Live';
+          } else if (now > endDate) {
+            status = 'Finished';
+          }
+          
+          const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+          let dates = `${startDate.getDate()} ${shortMonths[startDate.getMonth()]}`;
+          if (startDate.getTime() !== endDate.getTime()) {
+            dates += ` - ${endDate.getDate()} ${shortMonths[endDate.getMonth()]}`;
+          }
+
+          calendar.push({
+            round: idx + 1,
+            race: eventName || 'FE Event',
+            dates,
+            status,
+            winner: ''
+          });
+        });
+        
+        const upcomingIdx = calendar.findIndex(r => r.status === 'Upcoming');
+        if (upcomingIdx !== -1) calendar[upcomingIdx].status = 'Next';
+        
+        return calendar;
+      }
+
+      const rows = doc.querySelectorAll('tr.ms-schedule-list-item');
+      rows.forEach(row => {
+        const roundText = row.querySelector('.ms-schedule-list-item__round')?.textContent?.trim();
+        const round = roundText ? parseInt(roundText) : 0;
+        const race = row.querySelector('.ms-schedule-list-item__event-name a')?.textContent?.trim() || '';
+        const dateDay = row.querySelector('.ms-schedule-list-item__day')?.textContent?.trim() || '';
+        const dateMonth = row.querySelector('.ms-schedule-list-item__month')?.textContent?.trim() || '';
+        const dates = (dateDay && dateMonth) ? `${dateDay} ${dateMonth}` : '';
+        const statusBadge = row.querySelector('.ms-schedule-list-item__status-badge');
+        let status: 'Finished' | 'Upcoming' | 'Next' | 'Live' = 'Upcoming';
+        if (statusBadge) {
+          const stText = statusBadge.textContent?.trim().toLowerCase();
+          if (stText === 'finalizado' || stText === 'terminado') status = 'Finished';
+          else if (stText === 'en vivo' || stText === 'live') status = 'Live';
+        }
+
+        calendar.push({
+          round,
+          race: race.replace('FIA Formula E ', ''),
+          dates,
+          status,
+          winner: ''
+        });
+      });
+    } catch (e) {
+      console.error('[DataService] FE calendar error:', e);
     }
     return calendar;
   },

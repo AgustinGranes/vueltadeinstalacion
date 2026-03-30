@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -18,10 +18,9 @@ const TCPK_LOGO = '/TCPK.png';
 const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
-const F2_LOGO = '/F2.png';
-const F3_LOGO = '/F3.png';
+const FE_LOGO = '/FE.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
 
 
 
@@ -47,6 +46,7 @@ const App = () => {
   const [tcCalendar, setTcCalendar] = useState<CalendarRace[]>([]);
   const [f2Calendar, setF2Calendar] = useState<CalendarRace[]>([]);
   const [f3Calendar, setF3Calendar] = useState<CalendarRace[]>([]);
+  const [feCalendar, setFECalendar] = useState<CalendarRace[]>([]);
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
@@ -66,8 +66,11 @@ const App = () => {
   const [f2Teams, setF2Teams] = useState<TCStandingRow[]>([]);
   const [f3Drivers, setF3Drivers] = useState<TCStandingRow[]>([]);
   const [f3Teams, setF3Teams] = useState<TCStandingRow[]>([]);
+  const [feDrivers, setFEDrivers] = useState<TCStandingRow[]>([]);
+  const [feTeams, setFETeams] = useState<TCStandingRow[]>([]);
   const [f2StandingsTab, setF2StandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f3StandingsTab, setF3StandingsTab] = useState<'drivers' | 'teams'>('drivers');
+  const [feStandingsTab, setFEStandingsTab] = useState<'drivers' | 'teams'>('drivers');
 
   const [f1StandingsTab, setF1StandingsTab] = useState<'drivers' | 'constructors'>('drivers');
   const [f1News, setF1News] = useState<NewsItem[]>([]);
@@ -81,6 +84,7 @@ const App = () => {
   const [tc2000News, setTc2000News] = useState<NewsItem[]>([]);
   const [f2News, setF2News] = useState<NewsItem[]>([]);
   const [f3News, setF3News] = useState<NewsItem[]>([]);
+  const [feNews, setFENews] = useState<NewsItem[]>([]);
   const [tc2000StandingsTab, setTc2000StandingsTab] = useState<'drivers' | 'teams' | 'brands'>('drivers');
   const [nascarCalendar, setNascarCalendar] = useState<CalendarRace[]>([]);
   const [nascarStandings, setNascarStandings] = useState<NascarStandings>({ drivers: [], owners: [], manufacturers: [] });
@@ -142,6 +146,7 @@ const App = () => {
       else if (cat === 'NASCART') setNascarTCalendar(await dataService.getNascarTruckCalendar());
       else if (cat === 'F2') setF2Calendar(await dataService.getF2Calendar());
       else if (cat === 'F3') setF3Calendar(await dataService.getF3Calendar());
+      else if (cat === 'FE') setFECalendar(await dataService.getFECalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -185,6 +190,10 @@ const App = () => {
         const res = await dataService.getF3Standings();
         setF3Drivers(res.drivers);
         setF3Teams(res.teams);
+      } else if (cat === 'FE') {
+        const res = await dataService.getFEStandings();
+        setFEDrivers(res.drivers);
+        setFETeams(res.teams);
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -213,6 +222,7 @@ const App = () => {
       else if (cat === 'NASCART') setNascarTNews(await dataService.getNascarTruckNews());
       else if (cat === 'F2') setF2News(await dataService.getF2News());
       else if (cat === 'F3') setF3News(await dataService.getF3News());
+      else if (cat === 'FE') setFENews(await dataService.getFENews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -234,6 +244,7 @@ const App = () => {
         dataService.getNascarTruckNews(),
         dataService.getF2News(),
         dataService.getF3News(),
+        dataService.getFENews(),
       ]);
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
@@ -246,6 +257,7 @@ const App = () => {
       if (results[8]?.status === 'fulfilled') setNascarTNews(results[8].value);
       if (results[9]?.status === 'fulfilled') setF2News(results[9].value);
       if (results[10]?.status === 'fulfilled') setF3News(results[10].value);
+      if (results[11]?.status === 'fulfilled') setFENews(results[11].value);
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
       console.error('Global news fetch error:', e);
@@ -395,6 +407,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">Formula 3</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card fe-card" onClick={() => handleCategoryClick('FE')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={FE_LOGO} 
+            alt="FE" 
+            className="cat-logo fe-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">Formula E</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
@@ -568,6 +592,7 @@ const App = () => {
     if (c.includes('F1') || c.includes('FORMULA 1')) return F1_LOGO;
     if (c.includes('F2') || c.includes('FORMULA 2')) return F2_LOGO;
     if (c.includes('F3') || c.includes('FORMULA 3')) return F3_LOGO;
+    if (c.includes('FE') || c.includes('FORMULA E')) return FE_LOGO;
     if (c.includes('WRC')) return WRC_LOGO;
     if (c.includes('INDYCAR')) return INDYCAR_LOGO;
     if (c.includes('NASCAR TRUCK')) return '/NASCART.png';
@@ -947,6 +972,7 @@ const App = () => {
     const isNASCART = selectedCategory === 'NASCART';
     const isF2 = selectedCategory === 'F2';
     const isF3 = selectedCategory === 'F3';
+    const isFE = selectedCategory === 'FE';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -965,6 +991,7 @@ const App = () => {
     if (isNASCART) logo = '/NASCART.png';
     if (isF2) logo = F2_LOGO;
     if (isF3) logo = F3_LOGO;
+    if (isFE) logo = FE_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -983,6 +1010,7 @@ const App = () => {
     if (isNASCART) catTitle = 'NASCAR Truck Series';
     if (isF2) catTitle = 'Formula 2';
     if (isF3) catTitle = 'Formula 3';
+    if (isFE) catTitle = 'Formula E';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1001,6 +1029,7 @@ const App = () => {
     if (isNASCART) news = nascarTNews;
     if (isF2) news = f2News;
     if (isF3) news = f3News;
+    if (isFE) news = feNews;
 
 
     return (
@@ -1012,7 +1041,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''}`} 
+            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1039,9 +1068,9 @@ const App = () => {
             <motion.div key="cat-cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
               {isCatCalLoading ? renderLoadingCircle() : (
                 <>
-                {(isF1 || isF2 || isF3) ? (
+                {(isF1 || isF2 || isF3 || isFE) ? (
                 <div className="f1-calendar-list">
-                  {(isF1 ? f1Calendar : isF2 ? f2Calendar : f3Calendar).map((race, idx) => (
+                  {(isF1 ? f1Calendar : isF2 ? f2Calendar : isF3 ? f3Calendar : feCalendar).map((race, idx) => (
                     <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${race.status.toLowerCase()}`}>{race.round}</div>
                       <div className="race-info-block">
@@ -1396,6 +1425,38 @@ const App = () => {
                       ))
                     )}
                     {((f3StandingsTab === 'drivers' && f3Drivers.length === 0) || (f3StandingsTab === 'teams' && f3Teams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isFE ? (
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${feStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setFEStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${feStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setFEStandingsTab('teams')}>Equipos</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {feStandingsTab === 'drivers' ? (
+                      feDrivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
+                          </div>
+                          <span className="stand-pts">{d.totalPts || d.points} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      feTeams.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.team || c.driver}</span>
+                          </div>
+                          <span className="stand-pts">{c.totalPts || c.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((feStandingsTab === 'drivers' && feDrivers.length === 0) || (feStandingsTab === 'teams' && feTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isWRC ? (
