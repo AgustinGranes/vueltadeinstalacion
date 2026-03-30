@@ -2412,46 +2412,50 @@ export const dataService = {
   async getFENews(): Promise<NewsItem[]> {
     const news: NewsItem[] = [];
     try {
-      const [msHtml, smHtml] = await Promise.all([
-        this.fetchWithProxy('https://lat.motorsport.com/formula-e/news/'),
-        this.fetchWithProxy('https://soymotor.com/competicion/noticias/formula-e')
-      ]);
-
-      if (msHtml) {
-        const doc = new DOMParser().parseFromString(msHtml, 'text/html');
-        // Articles on FE news page are often a.ms-item
-        const articles = doc.querySelectorAll('a.ms-item, .ms-item--news, .ms-article-list-item, .ms-grid-item');
-        articles.forEach((art, i) => {
-          if (i >= 8) return;
-          const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title')?.textContent?.trim();
-          const link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href');
-          if (title && link) {
-            news.push({
-              title,
-              summary: '',
-              link: link.startsWith('http') ? link : `https://lat.motorsport.com${link}`,
-              source: 'Motorsport.com',
-              category: 'FE'
-            });
-          }
-        });
-      }
-
+      // 1. Fetch SoyMotor first (requested priority)
+      const smHtml = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/formula-e');
       if (smHtml) {
         const doc = new DOMParser().parseFromString(smHtml, 'text/html');
-        // SoyMotor selector for news items
-        const items = doc.querySelectorAll('.node--type-noticia, .views-row');
+        // SoyMotor selector based on browser research: a.node-container
+        const items = doc.querySelectorAll('a.node-container, .node--type-noticia, .views-row');
         items.forEach((item, i) => {
-          if (i >= 5) return;
-          const title = item.querySelector('.node-title, h2, .title')?.textContent?.trim();
-          const link = item.querySelector('a')?.getAttribute('href');
+          if (i >= 6) return;
+          const title = item.getAttribute('title') || item.querySelector('.node-title, h2, .title')?.textContent?.trim();
+          let link = item.getAttribute('href');
+          if (!link) link = item.querySelector('a')?.getAttribute('href');
+          
           if (title && link) {
             news.push({
               title,
               summary: '',
               link: link.startsWith('http') ? link : `https://soymotor.com${link}`,
               source: 'SoyMotor',
-              category: 'FE'
+              category: 'FE',
+              imageUrl: item.querySelector('img')?.getAttribute('src') || ''
+            });
+          }
+        });
+      }
+
+      // 2. Fetch Motorsport.com
+      const msHtml = await this.fetchWithProxy('https://lat.motorsport.com/formula-e/news/');
+      if (msHtml) {
+        const doc = new DOMParser().parseFromString(msHtml, 'text/html');
+        // Motorsport selectors: a.ms-article-list-item or a.ms-item
+        const articles = doc.querySelectorAll('a.ms-item, a.ms-article-list-item, .ms-item--news, .ms-grid-item');
+        articles.forEach((art, i) => {
+          if (i >= 6) return;
+          const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title, .title')?.textContent?.trim();
+          const link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href');
+          
+          if (title && link) {
+            news.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://lat.motorsport.com${link}`,
+              source: 'Motorsport.com',
+              category: 'FE',
+              imageUrl: art.querySelector('img')?.getAttribute('src') || ''
             });
           }
         });
