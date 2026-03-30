@@ -40,7 +40,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Top Race': '#ff8c00',
   'ACTC': '#00438a',
   'F2': '#0288d1',
-  'F3': '#e8002d',
+  'F3': '#ff0000',
   'FE': '#00AEEF',
   'IMSA': '#E42526',
   'TCPM': '#990000',

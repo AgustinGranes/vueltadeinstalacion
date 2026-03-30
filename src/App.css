@@ -202,12 +202,17 @@
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
 
+.f2-card {
+  background: #0288d1 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .f2-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
 .f3-card {
-  background: #e8002d !important;
+  background: #ff0000 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -688,7 +693,7 @@
 .tc2000-stand-row { border-left-color: #e02020; }
 .wec-stand-row { border-left-color: #004C97; }
 .f2-stand-row { border-left-color: #004C97; }
-.f3-stand-row { border-left-color: #e8002d; }
+.f3-stand-row { border-left-color: #ff0000; }
 
 /* Podium Highlights */
 .stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
