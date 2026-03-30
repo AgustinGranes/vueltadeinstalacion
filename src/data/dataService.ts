@@ -48,6 +48,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'TCPK': '#FFD659',
   'NASCARO': '#FFD659',
   'NASCART': '#ff0000',
+  'TNC3': '#e02020',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -155,9 +156,12 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'F2': 'https://lat.motorsport.com/fia-f2/results/2026',
   'F3': 'https://lat.motorsport.com/fiaf3/results/2026/albert-park-664972/',
   'FE': 'https://lat.motorsport.com/formula-e/results/2026/eprix-de-madrid-en-el-jarama/',
+  'TNC3': 'https://apat.org.ar/carreras/calendario',
 };
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
+export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
+
 export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
 
 export type TC2000Standings = {
@@ -2440,6 +2444,106 @@ export const dataService = {
     }
     
     return news;
+  },
+
+  // === TN CLASE 3 ===
+  async getTNC3Calendar(): Promise<CalendarRace[]> {
+    try {
+      const html = await this.fetchWithProxy('https://apat.org.ar/carreras/calendario');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table tbody tr');
+      const races: CalendarRace[] = [];
+      const now = new Date();
+
+      rows.forEach((row, i) => {
+        const round = parseInt(row.querySelector('td:nth-child(1) span')?.textContent || (i + 1).toString());
+        const dateStr = row.querySelector('td:nth-child(2) .fw-bold')?.textContent?.trim() || '';
+        const track = row.querySelector('td:nth-child(3) a')?.textContent?.trim() || row.querySelector('td:nth-child(3)')?.textContent?.trim() || '';
+        
+        let status: CalendarRace['status'] = 'Upcoming';
+        let winner = '';
+
+        // Check for winner info
+        const winnerEl = row.querySelector('td:nth-child(5) .winner-info span.fw-bold');
+        if (winnerEl) {
+          winner = winnerEl.textContent?.trim() || '';
+          status = 'Finished';
+        }
+
+        // Simple date parsing for status if winner not present
+        if (dateStr && status === 'Upcoming') {
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            const raceDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            if (now > raceDate) status = 'Finished';
+            else if (now.toDateString() === raceDate.toDateString()) status = 'Live';
+          }
+        }
+
+        races.push({ round, race: track, dates: dateStr, status, winner });
+      });
+      return races;
+    } catch (e) {
+      console.error('[DataService] TNC3 calendar error:', e);
+      return [];
+    }
+  },
+
+  async getTNC3Standings(): Promise<{ drivers: any[] }> {
+    try {
+      const html = await this.fetchWithProxy(TNC3_STANDINGS_URL);
+      if (!html) return { drivers: [] };
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table tbody tr');
+      const drivers: any[] = [];
+
+      rows.forEach(row => {
+        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim() || '';
+        const driver = row.querySelector('td:nth-child(3) strong')?.textContent?.trim() || '';
+        const team = row.querySelector('td:nth-child(4)')?.textContent?.trim() || '';
+        const points = row.querySelector('td:nth-child(6) strong')?.textContent?.trim() || '';
+        if (pos && driver) {
+          drivers.push({ pos, driver, team, points });
+        }
+      });
+      return { drivers };
+    } catch (e) {
+      console.error('[DataService] TNC3 standings error:', e);
+      return { drivers: [] };
+    }
+  },
+
+  async getTNC3News(): Promise<NewsItem[]> {
+    try {
+      const html = await this.fetchWithProxy('https://campeones.com.ar/category/nacionales/tn/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = doc.querySelectorAll('.elementor-post');
+      const news: NewsItem[] = [];
+      items.forEach((item, i) => {
+        if (i >= 12) return;
+        const titleEl = item.querySelector('.elementor-post__title a');
+        const title = titleEl?.textContent?.trim();
+        const link = titleEl?.getAttribute('href');
+        const imageUrl = item.querySelector('.elementor-post__thumbnail img')?.getAttribute('src') || '';
+        
+        if (title && link) {
+          news.push({
+            title,
+            summary: item.querySelector('.elementor-post__excerpt')?.textContent?.trim() || '',
+            link,
+            source: 'Campeones',
+            category: 'TNC3',
+            imageUrl
+          });
+        }
+      });
+      return news;
+    } catch (e) {
+      console.error('[DataService] TNC3 news error:', e);
+      return [];
+    }
   },
 
   // === FORMULA E STANDINGS ===

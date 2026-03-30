@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE';
+type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -21,11 +21,12 @@ const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
 const FE_LOGO = '/FE.png';
+const TNC3_LOGO = '/TNC3.jpg';
 const NASCAR_LOGO = '/NASCAR.png';
 const NASCARO_LOGO = '/NASCARO.png';
 const NASCART_LOGO = '/NASCART.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TNC3', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
 
 
 
@@ -109,6 +110,9 @@ const App = () => {
   const [nascarTCalendar, setNascarTCalendar] = useState<CalendarRace[]>([]);
   const [nascarTNews, setNascarTNews] = useState<NewsItem[]>([]);
   const [nascarTStandings, setNascarTStandings] = useState<TCStandingRow[]>([]);
+  const [tnc3Calendar, setTnc3Calendar] = useState<CalendarRace[]>([]);
+  const [tnc3Drivers, setTnc3Drivers] = useState<TCStandingRow[]>([]);
+  const [tnc3News, setTnc3News] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -144,6 +148,8 @@ const App = () => {
       else if (cat === 'IndyCar') setIndyCalendar(await dataService.getIndyCarCalendar());
       else if (cat === 'NASCAR') setNascarCalendar(await dataService.getNascarCalendar());
       else if (cat === 'TC2000') setTc2000Calendar(await dataService.getTC2000Calendar());
+      else if (cat === 'TNC3') setTnc3Calendar(await dataService.getTNC3Calendar());
+      else if (cat === 'NASCART') setNascarTCalendar(await dataService.getNascarTruckCalendar());
       else if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
       else if (cat === 'WEC') setWecCalendar(await dataService.getWECCalendar());
       else if (cat === 'IMSA') setImsaCalendar(await dataService.getIMSACalendar());
@@ -152,6 +158,7 @@ const App = () => {
       else if (cat === 'F2') setF2Calendar(await dataService.getF2Calendar());
       else if (cat === 'F3') setF3Calendar(await dataService.getF3Calendar());
       else if (cat === 'FE') setFECalendar(await dataService.getFECalendar());
+      else if (cat === 'TNC3') setTnc3Calendar(await dataService.getTNC3Calendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -181,7 +188,9 @@ const App = () => {
         setTc2000Drivers(res.drivers);
         setTc2000Teams(res.teams);
         setTc2000Brands(res.brands);
-      } else if (cat === 'WEC') {
+      }
+      else if (cat === 'TNC3') setTnc3Drivers(await dataService.getTNC3Standings());
+      else if (cat === 'NASCART') setNascarTStandings(await dataService.getNascarTruckStandings()); else if (cat === 'WEC') {
         setWecStandings(await dataService.getWECStandings());
       } else if (cat === 'NASCARO') {
         setNascarOStandings(await dataService.getNASCAROStandings());
@@ -199,6 +208,9 @@ const App = () => {
         const res = await dataService.getFEStandings();
         setFEDrivers(res.drivers);
         setFETeams(res.teams);
+      } else if (cat === 'TNC3') {
+        const res = await dataService.getTNC3Standings();
+        setTnc3Drivers(res.drivers);
       }
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -221,6 +233,8 @@ const App = () => {
       else if (cat === 'IndyCar') setIndyNews(await dataService.getIndyCarNews());
       else if (cat === 'NASCAR') setNascarNews(await dataService.getNascarNews());
       else if (cat === 'TC2000') setTc2000News(await dataService.getTC2000News());
+      else if (cat === 'TNC3') setTnc3News(await dataService.getTNC3News());
+      else if (cat === 'NASCART') setNascarTNews(await dataService.getNascarTruckNews());
       else if (cat === 'WEC') setWecNews(await dataService.getWECNews());
       else if (cat === 'IMSA') setImsaNews(await dataService.getIMSANews());
       else if (cat === 'NASCARO') setNascarONews(await dataService.getNASCARONews());
@@ -228,6 +242,7 @@ const App = () => {
       else if (cat === 'F2') setF2News(await dataService.getF2News());
       else if (cat === 'F3') setF3News(await dataService.getF3News());
       else if (cat === 'FE') setFENews(await dataService.getFENews());
+      else if (cat === 'TNC3') setTnc3News(await dataService.getTNC3News());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -244,12 +259,15 @@ const App = () => {
         dataService.getIndyCarNews(),
         dataService.getNascarNews(),
         dataService.getTC2000News(),
+        dataService.getTNC3News(),
+        dataService.getNascarTruckNews(),
         dataService.getWECNews(),
         dataService.getIMSANews(),
         dataService.getNascarTruckNews(),
         dataService.getF2News(),
         dataService.getF3News(),
         dataService.getFENews(),
+        dataService.getTNC3News(),
       ]);
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
@@ -257,12 +275,15 @@ const App = () => {
       if (results[3].status === 'fulfilled') setIndyNews(results[3].value);
       if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
       if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
+      if (results[6].status === 'fulfilled') setTnc3News(results[6].value);
+      if (results[7].status === 'fulfilled') setNascarTNews(results[7].value);
       if (results[6]?.status === 'fulfilled') setWecNews(results[6].value);
       if (results[7]?.status === 'fulfilled') setImsaNews(results[7].value);
       if (results[8]?.status === 'fulfilled') setNascarTNews(results[8].value);
       if (results[9]?.status === 'fulfilled') setF2News(results[9].value);
       if (results[10]?.status === 'fulfilled') setF3News(results[10].value);
       if (results[11]?.status === 'fulfilled') setFENews(results[11].value);
+      if (results[12]?.status === 'fulfilled') setTnc3News(results[12].value);
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
       console.error('Global news fetch error:', e);
@@ -588,6 +609,18 @@ const App = () => {
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card tnc3-card" onClick={() => handleCategoryClick('TNC3')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={TNC3_LOGO} 
+            alt="TN Clase 3" 
+            className="cat-logo tnc3-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">TN Clase 3</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -606,6 +639,7 @@ const App = () => {
     if (c.includes('NASCAR')) return NASCAR_LOGO;
     if (c.includes('IMSA')) return IMSA_LOGO;
     if (c.includes('TC2000')) return '/TC2000.png';
+    if (c.includes('TNC3')) return TNC3_LOGO;
     if (c.includes('TCPK') || c.includes('TC PICK UP')) return TCPK_LOGO;
     if (c.includes('TCPM') || c.includes('PISTA MOURAS')) return '/TCPM.png';
     if (c.includes('TCM') || c.includes('MOURAS')) return '/TCM.png';
@@ -867,7 +901,7 @@ const App = () => {
     // Interleave news based on Home Grid Order: F1, WRC, WEC, IMSA, NASCAR, NASCAR O REILLY, IndyCar, TC, TCP, TCM, TCPM, TCPK, TCPPK, TC2000
     const sourceArrays = [
       f1News, f2News, wrcNews, wecNews, imsaNews, nascarNews, nascarONews, indyNews,
-      tcNews, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News
+      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News
     ];
 
     let allNewsList: NewsItem[] = [];
@@ -972,6 +1006,7 @@ const App = () => {
     const isIndy = selectedCategory === 'IndyCar';
     const isNascar = selectedCategory === 'NASCAR';
     const isTC2000 = selectedCategory === 'TC2000';
+    const isTNC3 = selectedCategory === 'TNC3';
     const isWEC = selectedCategory === 'WEC';
     const isIMSA = selectedCategory === 'IMSA';
     const isNASCARO = selectedCategory === 'NASCARO';
@@ -989,6 +1024,7 @@ const App = () => {
     if (isTCPK) logo = TCPK_LOGO;
     if (isTCPPK) logo = '/TCPPK.png';
     if (isTC2000) logo = '/TC2000.png';
+    if (isTNC3) logo = TNC3_LOGO;
     if (isIndy) logo = INDYCAR_LOGO;
     if (isNascar) logo = NASCAR_LOGO;
     if (isWEC) logo = '/WEC.png';
@@ -1010,6 +1046,7 @@ const App = () => {
     if (isIndy) catTitle = 'IndyCar';
     if (isNascar) catTitle = 'NASCAR Cup Series';
     if (isTC2000) catTitle = 'TC2000';
+    if (isTNC3) catTitle = 'TN Clase 3';
     if (isWEC) catTitle = 'WEC';
     if (isIMSA) catTitle = 'IMSA';
     if (isNASCARO) catTitle = 'NASCAR O\'Reilly';
@@ -1029,6 +1066,7 @@ const App = () => {
     if (isIndy) news = indyNews;
     if (isNascar) news = nascarNews;
     if (isTC2000) news = tc2000News;
+    if (isTNC3) news = tnc3News;
     if (isWEC) news = wecNews;
     if (isIMSA) news = imsaNews;
     if (isNASCARO) news = nascarONews;
@@ -1047,7 +1085,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''}`} 
+            className={`cat-header-logo ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1219,9 +1257,9 @@ const App = () => {
                     <p className="empty-msg">{isLoading ? 'Cargando calendario IndyCar...' : 'No se encontró calendario IndyCar.'}</p>
                   )}
                 </div>
-              ) : isNascar ? (
+              ) : (isNascar || isNASCART) ? (
                 <div className="nascar-calendar-list">
-                  {nascarCalendar.length > 0 ? nascarCalendar.map((ev, idx) => (
+                  {(isNASCART ? nascarTCalendar : nascarCalendar).length > 0 ? (isNASCART ? nascarTCalendar : nascarCalendar).map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
@@ -1253,6 +1291,31 @@ const App = () => {
                     </div>
                   )) : (
                     <p className="empty-msg">No se encontró calendario TC2000.</p>
+                  )}
+                </div>
+              ) : isTNC3 ? (
+                <div className="tnc3-calendar-list">
+                  {tnc3Calendar.length > 0 ? tnc3Calendar.map((ev, idx) => (
+                    <div key={idx} className={`calendar-row ${ev.status === 'Next' ? 'next-race' : ''}`}>
+                      <div className="cal-main">
+                        <div className="cal-round">FECHA {ev.round}</div>
+                        <div className="cal-date">{ev.dates}</div>
+                      </div>
+                      <div className="cal-track">
+                        <div className="cal-track-name">{ev.race}</div>
+                        <div className="cal-winner-box">
+                          {ev.status === 'Finished' ? (
+                            <span className="winner-tag">Ganador: {ev.winner || 'Finalizado'}</span>
+                          ) : (
+                             <span className={`status-badge ${ev.status.toLowerCase()}`}>
+                               {ev.status === 'Next' ? 'PRÓXIMA' : 'PRÓXIMAMENTE'}
+                             </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No se encontró calendario TN Clase 3.</p>
                   )}
                 </div>
               ) : isWEC ? (
@@ -1560,79 +1623,50 @@ const App = () => {
                    <div className="standings-list tcpk-standings">
                      {tcpkDrivers.map((d, idx) => (
                        <div key={idx} className={`stand-row tcpk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                         <span className="stand-pos">{d.pos}</span>
-                         <div className="stand-info">
-                           <span className="stand-name">{d.driver}</span>
-                         </div>
-                         <span className="stand-pts">{d.points} pts</span>
-                       </div>
-                     ))}
-                     {tcpkDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCPK...</p>}
-                   </div>
-                 </>
-                ) : isTCPPK ? (
-                  <>
-                    <div className="standings-list tcppk-standings">
-                      {tcppkDrivers.map((d, idx) => (
-                        <div key={idx} className={`stand-row tcppk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                          <span className="stand-pos">{d.pos}</span>
-                          <div className="stand-info">
-                            <span className="stand-name">{d.driver}</span>
-                          </div>
-                          <span className="stand-pts">{d.points} pts</span>
-                        </div>
-                      ))}
-                      {tcppkDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TCPPK...</p>}
-                    </div>
-                  </>
+                        <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {tcStandings.length === 0 && <p className="empty-msg">No hay posiciones disponibles.</p>}
+                  </div>
                 ) : isTC2000 ? (
                   <>
-                    <div className="nascar-tabs tc2000-tabs">
+                    <div className="f1-tabs nascar-tabs">
                       <button className={`nascar-tab-btn ${tc2000StandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('drivers')}>Pilotos</button>
                       <button className={`nascar-tab-btn ${tc2000StandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('teams')}>Equipos</button>
                       <button className={`nascar-tab-btn ${tc2000StandingsTab === 'brands' ? 'active' : ''}`} onClick={() => setTc2000StandingsTab('brands')}>Marcas</button>
                     </div>
                     <div className="standings-list tc2000-standings">
-                      {tc2000StandingsTab === 'drivers' ? (
-                        tc2000Drivers.map((d, idx) => (
-                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                            <span className="stand-pos">{d.pos}</span>
-                            <div className="stand-info">
-                              <span className="stand-name">{d.driver}</span>
-                              {d.team && <span className="stand-sub">{d.team}</span>}
-                            </div>
-                            <span className="stand-pts">{d.points} pts</span>
+                      {tc2000Standings.length > 0 ? tc2000Standings.map((d, idx) => (
+                        <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
                           </div>
-                        ))
-                      ) : tc2000StandingsTab === 'teams' ? (
-                        tc2000Teams.map((t, idx) => (
-                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                            <span className="stand-pos">{t.pos}</span>
-                            <div className="stand-info">
-                              <span className="stand-name">{t.driver}</span>
-                            </div>
-                            <span className="stand-pts">{t.points} pts</span>
-                          </div>
-                        ))
-                      ) : (
-                        tc2000Brands.map((b, idx) => (
-                          <div key={idx} className={`stand-row tc2000-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                            <span className="stand-pos">{b.pos}</span>
-                            <div className="stand-info">
-                              <span className="stand-name">{b.driver}</span>
-                            </div>
-                            <span className="stand-pts">{b.points} pts</span>
-                          </div>
-                        ))
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      )) : (
+                        <p className="empty-msg">No hay posiciones disponibles.</p>
                       )}
-                      {((tc2000StandingsTab === 'drivers' && tc2000Drivers.length === 0) ||
-                        (tc2000StandingsTab === 'teams' && tc2000Teams.length === 0) ||
-                        (tc2000StandingsTab === 'brands' && tc2000Brands.length === 0)) && !isLoading && 
-                        <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
-              ) : isIndy ? (
-                <>
+                ) : isTNC3 ? (
+                  <div className="standings-list tnc3-standings">
+                    {tnc3Drivers.length > 0 ? tnc3Drivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row tnc3-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                          {d.team && <span className="stand-sub">{d.team}</span>}
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    )) : (
+                      <p className="empty-msg">No hay posiciones disponibles.</p>
+                    )}
+                  </div>
+                ) : isIndy ? (
                   <div className="standings-list indy-standings">
                     {indyDrivers.map((d, idx) => (
                       <div key={idx} className={`stand-row indy-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
@@ -1643,9 +1677,8 @@ const App = () => {
                         <span className="stand-pts">{d.points} pts</span>
                       </div>
                     ))}
-                    {indyDrivers.length === 0 && <p className="empty-msg">{isLoading ? 'Cargando posiciones...' : 'No se encontraron posiciones IndyCar.'}</p>}
+                    {indyDrivers.length === 0 && <p className="empty-msg">No hay posiciones disponibles.</p>}
                   </div>
-                </>
                 ) : isNascar ? (
                   <>
                     <div className="nascar-tabs">
@@ -1653,7 +1686,7 @@ const App = () => {
                       <button className={`nascar-tab-btn ${nascarStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setNascarStandingsTab('manufacturers')}>Constructores</button>
                     </div>
                     <div className="standings-list nascar-standings">
-                      {nascarStandings[nascarStandingsTab].map((d, idx) => (
+                      {nascarStandings[nascarStandingsTab as keyof NascarStandings].map((d, idx) => (
                         <div key={idx} className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{d.pos}</span>
                           <div className="stand-info">
@@ -1662,21 +1695,41 @@ const App = () => {
                           <span className="stand-pts">{d.points} pts</span>
                         </div>
                       ))}
-                      {nascarStandings[nascarStandingsTab].length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
+                      {nascarStandings[nascarStandingsTab as keyof NascarStandings].length === 0 && <p className="empty-msg">No hay posiciones disponibles.</p>}
                     </div>
                   </>
+                ) : isNASCART ? (
+                  <div className="standings-list nascar-standings">
+                    {nascarTStandings.length > 0 ? nascarTStandings.map((d, idx) => (
+                      <div key={idx} className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    )) : (
+                      <p className="empty-msg">No hay posiciones disponibles.</p>
+                    )}
+                  </div>
+                ) : isNASCARO ? (
+                  <div className="standings-list nascar-standings">
+                    {nascarOStandings.map((d, idx) => (
+                      <div key={idx} className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {nascarOStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones NASCAR O'Reilly.</p>}
+                  </div>
                 ) : (isIMSA && categorySubTab === 'standings') ? (
                   <div className="results-container">
                     <div className="tc-calendar-message results-box">
                       <p className="tc-msg-text">Consulta las posiciones oficiales del campeonato IMSA.</p>
-                      <a 
-                        href="https://www.imsa.com/standings/" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="tc-msg-btn"
-                      >
-                        Ver posiciones
-                      </a>
+                      <a href="https://www.imsa.com/standings/" target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver posiciones</a>
                     </div>
                   </div>
                 ) : isWEC ? (
@@ -1703,69 +1756,12 @@ const App = () => {
                       {((wecStandingsTab === 'h-mfr' && wecStandings.hypercarMfr.length === 0) ||
                         (wecStandingsTab === 'h-teams' && wecStandings.hypercarTeams.length === 0) ||
                         (wecStandingsTab === 'h-drivers' && wecStandings.hypercarDrivers.length === 0) ||
-                        (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && 
-                        <p className="empty-msg">No hay posiciones disponibles.</p>}
+                        (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && !isLoading && 
+                        <p className="empty-msg">No se encontraron posiciones WEC.</p>}
                     </div>
                   </>
-                ) : isNASCARO ? (
-                  <div className="standings-list nascar-standings">
-                    {nascarOStandings.map((d, idx) => (
-                      <motion.div 
-                        key={idx} 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}
-                      >
-                        <span className="stand-pos">{d.pos}</span>
-                        <div className="stand-info">
-                          <span className="stand-name">{d.driver}</span>
-                        </div>
-                        <span className="stand-pts">{d.points} pts</span>
-                      </motion.div>
-                    ))}
-                    {nascarOStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
-                  </div>
-                ) : isNASCART ? (
-                  <div className="standings-list nascar-standings">
-                    {nascarTStandings.map((d, idx) => (
-                      <motion.div 
-                        key={idx} 
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.03 }}
-                        className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}
-                      >
-                        <span className="stand-pos">{d.pos}</span>
-                        <div className="stand-info">
-                          <span className="stand-name">{d.driver}</span>
-                        </div>
-                        <span className="stand-pts">{d.points} pts</span>
-                      </motion.div>
-                    ))}
-                    {nascarTStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
-                  </div>
-                ) : null}
-                </>
+                ) : null
               )}
-            </motion.div>
-          )}
-
-          {categorySubTab === 'results' && (
-            <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
-              <div className="results-container">
-                <div className="tc-calendar-message results-box">
-                  <p className="tc-msg-text">Consulta los tiempos y resultados oficiales de la última sesión.</p>
-                  <a 
-                    href={dataService.CATEGORY_RESULTS_URLS[selectedCategory] || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="tc-msg-btn"
-                  >
-                    Ver resultados
-                  </a>
-                </div>
-              </div>
             </motion.div>
           )}
 
@@ -1792,7 +1788,6 @@ const App = () => {
     );
   };
 
-  // ==================== RENDER: LOADING ====================
   const renderLoadingScreen = () => (
     <motion.div 
       key="loading"

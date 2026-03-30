@@ -134,7 +134,12 @@
 }
 
 .tc-card {
-  background: #ff0000;
+  background: #e02020;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tnc3-card {
+  background: #e02020;
   border-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -225,7 +230,7 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .tnc3-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
