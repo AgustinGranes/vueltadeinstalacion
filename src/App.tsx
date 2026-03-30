@@ -95,6 +95,7 @@ const App = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>('upcoming');
+  const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
   const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
 
@@ -262,6 +263,14 @@ const App = () => {
     // Mandatory initial splash screen delay
     const timer = setTimeout(() => {
       setIsLoading(false);
+      
+      // PWA Detection
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      
+      if (isMobile && !isStandalone) {
+        setShowPwaPrompt(true);
+      }
     }, 2500);
     return () => clearTimeout(timer);
   }, []);
@@ -1657,6 +1666,32 @@ const App = () => {
                 </button>
               </nav>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showPwaPrompt && (
+          <motion.div 
+            className="pwa-prompt-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className="pwa-prompt-card"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="pwa-prompt-icon">
+                <Home size={32} />
+              </div>
+              <h3>Instala la App</h3>
+              <p>Recomendamos agregar el sitio a la pantalla de inicio para una mejor compatibilidad y uso del sistema de notificaciones.</p>
+              <button className="pwa-omitir-btn" onClick={() => setShowPwaPrompt(false)}>
+                Omitir
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
