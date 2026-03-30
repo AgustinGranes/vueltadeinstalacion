@@ -140,7 +140,7 @@ export type TCStandingRow = {
 };
 
 export const CATEGORY_RESULTS_URLS: Record<string, string> = {
-  'F1': 'https://lat.motorsport.com/f1/results/2026',
+  'F1': 'https://www.formula1.com/en/results/2026/races/1281/japan/race-result',
   'WRC': 'https://es.motorsport.com/wrc/results/2026',
   'NASCAR': 'https://es.motorsport.com/nascar-cup/results/2026',
   'WEC': 'https://es.motorsport.com/wec/results/2026/',
