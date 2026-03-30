@@ -399,6 +399,18 @@ const App = () => {
           <span className="cat-label">NASCAR O'Reilly</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card nascart-card" onClick={() => handleCategoryClick('NASCART')}>
+          <div className="cat-card-glow" />
+          <img 
+            src="/NASCART.png" 
+            alt="NASCAR Truck" 
+            className="cat-logo nascar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">NASCAR Truck</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
           <div className="cat-card-glow" />
           <img 
@@ -493,18 +505,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">TC2000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card nascart-card" onClick={() => handleCategoryClick('NASCART')}>
-          <div className="cat-card-glow" />
-          <img 
-            src="/NASCART.png" 
-            alt="NASCAR Truck" 
-            className="cat-logo nascar-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">NASCAR Truck</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -1222,8 +1222,7 @@ const App = () => {
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
-                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
-                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                        {ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
                   )) : (
@@ -1663,6 +1662,11 @@ const App = () => {
                   alt="Vuelta de Instalación" 
                   className="app-header-logo-centered white-logo" 
                   referrerPolicy="no-referrer"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => {
+                    setView('main');
+                    setMainTab('home');
+                  }}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
               </div>

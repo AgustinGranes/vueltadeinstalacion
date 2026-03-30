@@ -45,8 +45,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   'IMSA': '#E42526',
   'TCPM': '#990000',
   'TCPPK': '#006633',
+  'TCPK': '#FFD659',
   'NASCARO': '#FFD659',
-  'NASCART': '#007AC3',
+  'NASCART': '#ff0000',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -2539,16 +2540,15 @@ export const dataService = {
   async getNascarTruckStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      const html = await this.fetchWithProxy('https://www.nascar.com/standings/nascar-craftsman-truck-series');
+      const html = await this.fetchWithProxy('https://tobychristie.com/2026-nascar-oreilly-auto-parts-series-driver-standings/');
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const rows = doc.querySelectorAll('tr.driver-row');
+      const rows = doc.querySelectorAll('table.tablepress tbody tr');
       rows.forEach(row => {
-        const pos = row.querySelector('td.col-position')?.textContent?.trim();
-        const name = row.querySelector('td.col-driver_name a.driver-page-link')?.textContent?.trim() || 
-                     row.querySelector('td.col-driver_name')?.textContent?.trim();
-        const pts = row.querySelector('td.col-points')?.textContent?.trim();
+        const pos = row.querySelector('td.column-1')?.textContent?.trim();
+        const name = row.querySelector('td.column-3')?.textContent?.trim();
+        const pts = row.querySelector('td.column-4')?.textContent?.trim();
         
         if (pos && name && pts) {
           standings.push({
@@ -2581,6 +2581,8 @@ export const dataService = {
         'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
       };
 
+      const monthsFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
       const rows = doc.querySelectorAll('table tr');
       let round = 1;
       
@@ -2594,24 +2596,54 @@ export const dataService = {
           if (!raceName || raceName.toLowerCase().includes('tba')) return;
 
           let status: CalendarRace['status'] = 'Upcoming';
+          let formattedDate = dateStr;
           
-          // TobyChristie format usually like: "Friday, Feb 14"
+          // TobyChristie format usually like: "Friday, Feb 14 7:30 PM ET"
+          // We need to extract the date and optionally the time
           const dateMatch = dateStr.toUpperCase().match(/([A-Z]{3})\s+(\d{1,2})/);
+          const timeMatch = dateStr.match(/(\d{1,2}:\d{2}\s*(?:AM|PM))\s*(ET|EST|EDT)/i);
+
           if (dateMatch) {
-            const month = monthsMap[dateMatch[1]];
+            const monthIdx = monthsMap[dateMatch[1]];
             const day = parseInt(dateMatch[2]);
-            if (month !== undefined) {
-              const raceDate = new Date(currentYear, month, day);
+            if (monthIdx !== undefined) {
+              const raceDate = new Date(currentYear, monthIdx, day);
               raceDate.setHours(0,0,0,0);
+              
               if (raceDate < now) status = 'Finished';
               else if (raceDate.getTime() === now.getTime()) status = 'Live';
+              
+              formattedDate = `${day} de ${monthsFull[monthIdx]}`;
+
+              // Handle time conversion to Argentina (ART)
+              if (timeMatch) {
+                const timeStr = timeMatch[1];
+                // Timezone (ET/EST/EDT) is used to determine the offset logic below
+                
+                // Parse time
+                const [h_m, ampm] = timeStr.split(/\s+/);
+                let [h, m] = h_m.split(':').map(Number);
+                if (ampm === 'PM' && h < 12) h += 12;
+                if (ampm === 'AM' && h === 12) h = 0;
+
+                // Offset logic:
+                // EDT (UTC-4) -> ART (UTC-3) is +1 hour
+                // EST (UTC-5) -> ART (UTC-3) is +2 hours
+                // US DST 2026: March 8 to Nov 1
+                const isDST = raceDate >= new Date(2026, 2, 8) && raceDate < new Date(2026, 10, 1);
+                const offset = isDST ? 1 : 2;
+
+                h = (h + offset) % 24;
+                const formattedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                formattedDate += ` ${formattedTime} (ARGENTINA)`;
+              }
             }
           }
 
           calendar.push({
             round: round++,
-            race: raceName.replace(/\d+$/, '').trim(), // Clean potential trailing numbers
-            dates: dateStr,
+            race: raceName.replace(/\d+$/, '').trim(),
+            dates: formattedDate,
             status,
             winner: status === 'Finished' ? '✅ Finalizado' : ''
           });
