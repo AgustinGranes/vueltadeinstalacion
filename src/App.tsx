@@ -1065,6 +1065,25 @@ const App = () => {
     if (isF3) news = f3News;
     if (isFE) news = feNews;
 
+    let resultsUrl = '';
+    if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
+    if (isF2) resultsUrl = 'https://www.fiaformula2.com/Results';
+    if (isF3) resultsUrl = 'https://www.fiaformula3.com/Results';
+    if (isFE) resultsUrl = 'https://www.fiaformulae.com/en/results';
+    if (isWRC) resultsUrl = 'https://www.wrc.com/c/events/2024';
+    if (isTC) resultsUrl = 'https://actc.org.ar/tc/carreras.html';
+    if (isTCP) resultsUrl = 'https://actc.org.ar/tcp/carreras.html';
+    if (isTCM) resultsUrl = 'https://actc.org.ar/tcm/carreras.html';
+    if (isTCPM) resultsUrl = 'https://actc.org.ar/tcpm/carreras.html';
+    if (isTCPK) resultsUrl = 'https://actc.org.ar/tcpk/carreras.html';
+    if (isTCPPK) resultsUrl = 'https://actc.org.ar/tcppk/carreras.html';
+    if (isTC2000) resultsUrl = 'https://tc2000.com.ar/carreras.php';
+    if (isTNC3) resultsUrl = 'https://apat.org.ar/carreras/calendario';
+    if (isIndy) resultsUrl = 'https://www.indycar.com/Results';
+    if (isNascar || isNASCARO || isNASCART) resultsUrl = 'https://www.nascar.com/results';
+    if (isWEC) resultsUrl = 'https://www.fiawec.com/en/results';
+    if (isIMSA) resultsUrl = 'https://www.imsa.com/results/';
+
 
     return (
       <motion.div key="category" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="category-view">
@@ -1286,22 +1305,15 @@ const App = () => {
               ) : isTNC3 ? (
                 <div className="tnc3-calendar-list">
                   {tnc3Calendar.length > 0 ? tnc3Calendar.map((ev, idx) => (
-                    <div key={idx} className={`calendar-row ${ev.status === 'Next' ? 'next-race' : ''}`}>
-                      <div className="cal-main">
-                        <div className="cal-round">FECHA {ev.round}</div>
-                        <div className="cal-date">{ev.dates}</div>
+                    <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ev.status === 'Next' ? 'next' : ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status === 'Live' ? 'live' : ev.status === 'Next' ? 'next' : ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
                       </div>
-                      <div className="cal-track">
-                        <div className="cal-track-name">{ev.race}</div>
-                        <div className="cal-winner-box">
-                          {ev.status === 'Finished' ? (
-                            <span className="winner-tag">Ganador: {ev.winner || 'Finalizado'}</span>
-                          ) : (
-                             <span className={`status-badge ${ev.status.toLowerCase()}`}>
-                               {ev.status === 'Next' ? 'PRÓXIMA' : 'PRÓXIMAMENTE'}
-                             </span>
-                          )}
-                        </div>
+                      <div className={`race-status-badge ${ev.status === 'Live' ? 'live' : ev.status === 'Next' ? 'next' : ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
                       </div>
                     </div>
                   )) : (
@@ -1770,6 +1782,17 @@ const App = () => {
                 ) : null}
               </>
               )}
+            </motion.div>
+          )}
+
+          {categorySubTab === 'results' && (
+            <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
+              <div className="results-container">
+                <div className="tc-calendar-message results-box">
+                  <p className="tc-msg-text">Consulta los resultados oficiales del campeonato {catTitle}.</p>
+                  <a href={resultsUrl || '#'} target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver resultados</a>
+                </div>
+              </div>
             </motion.div>
           )}
 
