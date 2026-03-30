@@ -2412,41 +2412,14 @@ export const dataService = {
   async getFENews(): Promise<NewsItem[]> {
     const news: NewsItem[] = [];
     
-    // 1. Fetch SoyMotor first (requested priority)
-    try {
-      const smHtml = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/formula-e');
-      if (smHtml) {
-        const doc = new DOMParser().parseFromString(smHtml, 'text/html');
-        const items = doc.querySelectorAll('a.node-container, .node--type-noticia, .views-row');
-        items.forEach((item, i) => {
-          if (i >= 8) return;
-          const title = item.getAttribute('title') || item.querySelector('.node-title, h2, .title')?.textContent?.trim();
-          let link = item.getAttribute('href') || item.querySelector('a')?.getAttribute('href') || null;
-          
-          if (title && link) {
-            news.push({
-              title,
-              summary: '',
-              link: link.startsWith('http') ? link : `https://soymotor.com${link}`,
-              source: 'SoyMotor',
-              category: 'FE',
-              imageUrl: item.querySelector('img')?.getAttribute('src') || ''
-            });
-          }
-        });
-      }
-    } catch (e) {
-      console.error('[DataService] SoyMotor FE news error:', e);
-    }
-
-    // 2. Fetch Motorsport.com
+    // Fetch Motorsport.com exclusively as requested
     try {
       const msHtml = await this.fetchWithProxy('https://lat.motorsport.com/formula-e/news/');
       if (msHtml) {
         const doc = new DOMParser().parseFromString(msHtml, 'text/html');
         const articles = doc.querySelectorAll('a.ms-item, a.ms-article-list-item, .ms-item--news, .ms-grid-item');
         articles.forEach((art, i) => {
-          if (i >= 8) return;
+          if (i >= 14) return;
           const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title, .title')?.textContent?.trim();
           let link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href') || null;
           
