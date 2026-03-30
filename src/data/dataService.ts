@@ -2477,27 +2477,28 @@ export const dataService = {
 
       if (drvHtml) {
         const doc = new DOMParser().parseFromString(drvHtml, 'text/html');
-        const rows = doc.querySelectorAll('table.ms-table tbody tr');
+        const rows = doc.querySelectorAll('table.ms-table tbody tr, .ms-table_row');
         rows.forEach(row => {
-          // Pos: 1st td
-          const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          // Driver/Team info often in .info-wrapper
-          const driver = row.querySelector('.info-wrapper span:first-child, .ms-table-link--driver')?.textContent?.trim();
-          const team = row.querySelector('.info-wrapper span:last-child, .ms-table-link--team')?.textContent?.trim();
-          // Points: 3rd td on this specific page
-          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
-          if (pos && driver) {
+          // Pos: 1st td or .pos
+          const pos = (row.querySelector('td:nth-child(1), .pos, .ms-table_cell--pos')?.textContent || '').trim().replace('.', '');
+          // Driver/Team info: .info-wrapper span:first-child or specialized link class
+          const driver = (row.querySelector('.info-wrapper span:first-child, .ms-table-link--driver, .name')?.textContent || '').trim();
+          const team = (row.querySelector('.info-wrapper span:last-child, .ms-table-link--team, .team-name')?.textContent || '').trim();
+          // Points: 3rd td, .points, or .total
+          const points = (row.querySelector('td:nth-child(3), .points, .ms-table_cell--points')?.textContent || '').trim();
+          
+          if (pos && (driver || team)) {
             res.drivers.push({ pos, driver, team, points });
           }
         });
       }
       if (teamHtml) {
         const doc = new DOMParser().parseFromString(teamHtml, 'text/html');
-        const rows = doc.querySelectorAll('table.ms-table tbody tr');
+        const rows = doc.querySelectorAll('table.ms-table tbody tr, .ms-table_row');
         rows.forEach(row => {
-          const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          const team = row.querySelector('.info-wrapper, .ms-table-link--team')?.textContent?.trim();
-          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
+          const pos = (row.querySelector('td:nth-child(1), .pos, .ms-table_cell--pos')?.textContent || '').trim().replace('.', '');
+          const team = (row.querySelector('.info-wrapper, .ms-table-link--team, .name')?.textContent || '').trim();
+          const points = (row.querySelector('td:nth-child(3), .points, .ms-table_cell--points')?.textContent || '').trim();
           if (pos && team) {
             res.teams.push({ pos, team, points });
           }
