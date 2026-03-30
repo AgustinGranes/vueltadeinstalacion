@@ -890,6 +890,7 @@ const App = () => {
     const isWEC = selectedCategory === 'WEC';
     const isIMSA = selectedCategory === 'IMSA';
     const isNASCARO = selectedCategory === 'NASCARO';
+    const isNASCART = selectedCategory === 'NASCART';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -905,6 +906,7 @@ const App = () => {
     if (isWEC) logo = '/WEC.png';
     if (isIMSA) logo = IMSA_LOGO;
     if (isNASCARO) logo = '/NASCARO.png';
+    if (isNASCART) logo = '/NASCART.png';
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -920,6 +922,7 @@ const App = () => {
     if (isWEC) catTitle = 'WEC';
     if (isIMSA) catTitle = 'IMSA';
     if (isNASCARO) catTitle = 'NASCAR O\'Reilly';
+    if (isNASCART) catTitle = 'NASCAR Truck Series';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -935,6 +938,7 @@ const App = () => {
     if (isWEC) news = wecNews;
     if (isIMSA) news = imsaNews;
     if (isNASCARO) news = nascarONews;
+    if (isNASCART) news = nascarTNews;
 
 
     return (
@@ -946,7 +950,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''}`} 
+            className={`cat-header-logo ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1205,7 +1209,25 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR O\'Reilly...' : 'No se encontró calendario NASCAR O\'Reilly.'}</p>
+                    <p className="empty-msg">{isLoading ? "Cargando calendario NASCAR O'Reilly..." : "No se encontró calendario NASCAR O'Reilly."}</p>
+                  )}
+                </div>
+              ) : isNASCART ? (
+                <div className="nascar-calendar-list">
+                  {nascarTCalendar.length > 0 ? nascarTCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? (ev.winner || '✅ Finalizado') : 
+                         ev.status === 'Live' ? '🔴 En curso' : '➡️ Próximo'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR Truck...' : 'No se encontró calendario NASCAR Truck.'}</p>
                   )}
                 </div>
               ) : null}
@@ -1510,6 +1532,25 @@ const App = () => {
                       </motion.div>
                     ))}
                     {nascarOStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
+                  </div>
+                ) : isNASCART ? (
+                  <div className="standings-list nascar-standings">
+                    {nascarTStandings.map((d, idx) => (
+                      <motion.div 
+                        key={idx} 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className={`stand-row nascar-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}
+                      >
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </motion.div>
+                    ))}
+                    {nascarTStandings.length === 0 && <p className="empty-msg">No se encontraron posiciones.</p>}
                   </div>
                 ) : null}
                 </>
