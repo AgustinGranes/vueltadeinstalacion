@@ -28,6 +28,7 @@ export function getTeamColor(team: string): string {
 const CATEGORY_COLORS: Record<string, string> = {
   'F1': '#e8002d',
   'WRC': '#0066CC',
+  'WRC2': '#f57c00',
   'IndyCar': '#0057B8',
   'NASCAR': '#FFD659',
   'MotoGP': '#BE0026',
@@ -831,72 +832,80 @@ export const dataService = {
     return standings;
   },
 
-  // === WRC2 NEWS (Lapeando — LIVE SCRAPING) ===
+  // === WRC2 NEWS (Lapeando & Carburando — LIVE SCRAPING) ===
   async getWRC2News(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
+    
+    // 1. Carburando
     try {
-      const html = await this.fetchWithProxy('/api/lapeando/noticias?categoria=22');
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      // Select news articles
-      const articles = doc.querySelectorAll('.post-block, article, .news-item, .post');
-      articles.forEach(art => {
-        const linkElem = art.querySelector('a');
-        const titleElem = art.querySelector('h1, h2, h3, .title');
-        const imgElem = art.querySelector('img');
-        
-        const title = titleElem?.textContent?.trim() || linkElem?.textContent?.trim() || '';
-        const link = linkElem?.getAttribute('href') || '';
-        const img = imgElem?.getAttribute('src') || '';
-        
-        if (title && link) {
-          allNews.push({
-            title,
-            summary: '',
-            link: link.startsWith('http') ? link : `https://lapeando.com${link.startsWith('/') ? '' : '/'}${link}`,
-            source: 'Lapeando',
-            category: 'WRC2',
-            imageUrl: img ? (img.startsWith('http') ? img : `https://lapeando.com${img.startsWith('/') ? '' : '/'}${img}`) : undefined
-          });
-        }
-      });
-
-      // Fallback: search all links if specific blocks fail
-      if (allNews.length === 0) {
-        doc.querySelectorAll('a').forEach(l => {
-          const t = l.textContent?.trim();
-          const h = l.getAttribute('href');
-          if (t && t.length > 25 && h && h.includes('/noticias/')) {
+      const html = await this.fetchWithProxy('/api/carburando/tema/wrc2');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('div.col').forEach(art => {
+          const title = art.querySelector('h2')?.textContent?.trim();
+          const link = art.querySelector('a.card-link')?.getAttribute('href');
+          const img = art.querySelector('img')?.getAttribute('src');
+          if (title && link) {
             allNews.push({
-              title: t,
-              summary: '',
-              link: h.startsWith('http') ? h : `https://lapeando.com${h.startsWith('/') ? '' : '/'}${h}`,
-              source: 'Lapeando',
-              category: 'WRC2'
+              title, summary: '',
+              link: link.startsWith('http') ? link : `https://www.carburando.com${link}`,
+              source: 'Carburando',
+              category: 'WRC2',
+              imageUrl: img || undefined
             });
           }
         });
       }
-    } catch (e) { console.warn(`[DataService] WRC2 news error:`, e); }
-    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i);
+    } catch(e) { console.warn('[DataService] Carburando WRC2 news error:', e); }
+
+    // 2. Lapeando
+    try {
+      const html = await this.fetchWithProxy('/api/lapeando/noticias?categoria=22');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('a:has(article), a[href*="/articulo?id="]').forEach(l => {
+          const t = l.querySelector('h1, h3, .title')?.textContent?.trim() || l.getAttribute('title') || '';
+          const h = l.getAttribute('href') || '';
+          const img = l.querySelector('img')?.getAttribute('src');
+          if (t && h) {
+            allNews.push({
+              title: t, summary: '',
+              link: h.startsWith('http') ? h : `https://lapeando.com${h.startsWith('/') ? '' : '/'}${h}`,
+              source: 'Lapeando',
+              category: 'WRC2',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn(`[DataService] Lapeando WRC2 news error:`, e); }
+
+    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 20);
   },
 
-  // === WRC2 STANDINGS (wrc.com — Official) ===
+  // === WRC2 STANDINGS (Lapeando — LIVE SCRAPING) ===
   async getWRC2Standings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
     try {
-      const html = await this.fetchWithProxy('/api/wrc-api/championship-overall-results.json?championshipId=337&seasonId=47');
-      const data = JSON.parse(html);
-      if (data && data.results) {
-        data.results.forEach((r: any) => {
+      const html = await this.fetchWithProxy('/api/lapeando/standings?categoria=22');
+      if (!html) return standings;
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const rows = doc.querySelectorAll('table.standings-table tbody tr');
+      rows.forEach(row => {
+        const pos = row.querySelector('td.standings-pos')?.textContent?.trim() || '';
+        const name = row.querySelector('td.standings-name')?.textContent?.trim() || '';
+        const pts = row.querySelector('td.standings-points')?.textContent?.trim() || '0';
+        
+        if (pos && name) {
           standings.drivers.push({
-            pos: r.position?.toString() || '',
-            driver: r.driverDisplayName || r.driverName || '',
-            codriverOrTeam: r.teamName || '',
-            points: r.totalPoints?.toString() || '0'
+            pos,
+            driver: name,
+            codriverOrTeam: '',
+            points: pts
           });
-        });
-      }
+        }
+      });
     } catch (e) { console.error('[DataService] WRC2 standings error:', e); }
     return standings;
   },

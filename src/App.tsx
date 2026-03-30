@@ -5,12 +5,13 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'MotoGP';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'MotoGP';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
 const WRC_LOGO = '/WRC.png';
+const WRC2_LOGO = '/WRC2.png';
 const F1_LOGO = '/F1.svg';
 const F2_LOGO = '/F2.png';
 const MotoGP_LOGO = '/MOTOGP.png';
@@ -28,7 +29,7 @@ const NASCAR_LOGO = '/NASCAR.png';
 const NASCARO_LOGO = '/NASCARO.png';
 const NASCART_LOGO = '/NASCART.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -44,6 +45,7 @@ const App = () => {
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
   const [f1Calendar, setF1Calendar] = useState<CalendarRace[]>([]);
   const [wrcCalendar, setWrcCalendar] = useState<WRCCalendarEvent[]>([]);
+  const [wrc2Calendar, setWrc2Calendar] = useState<WRCCalendarEvent[]>([]);
   const [tcpCalendar, setTcpCalendar] = useState<CalendarRace[]>([]);
   const [tcmCalendar, setTcmCalendar] = useState<CalendarRace[]>([]);
   const [tcpmCalendar, setTcpmCalendar] = useState<CalendarRace[]>([]);
@@ -60,6 +62,7 @@ const App = () => {
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
   const [wrcStandingsTab, setWrcStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
   const [wrcStandings, setWrcStandings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
+  const [wrc2Standings, setWrc2Standings] = useState<WRCStandings>({ drivers: [], codrivers: [], manufacturers: [], teams: [] });
   const [tcDrivers, setTcDrivers] = useState<TCStandingRow[]>([]);
   const [tcpDrivers, setTcpDrivers] = useState<TCStandingRow[]>([]);
   const [tcmDrivers, setTcmDrivers] = useState<TCStandingRow[]>([]);
@@ -83,6 +86,7 @@ const App = () => {
   const [f1StandingsTab, setF1StandingsTab] = useState<'drivers' | 'constructors'>('drivers');
   const [f1News, setF1News] = useState<NewsItem[]>([]);
   const [wrcNews, setWrcNews] = useState<NewsItem[]>([]);
+  const [wrc2News, setWrc2News] = useState<NewsItem[]>([]);
   const [tcNews, setTcNews] = useState<NewsItem[]>([]);
   const [tcpNews, setTcpNews] = useState<NewsItem[]>([]);
   const [tcmNews, setTcmNews] = useState<NewsItem[]>([]);
@@ -147,6 +151,7 @@ const App = () => {
     try {
       if (cat === 'F1') setF1Calendar(await dataService.getF1Calendar());
       else if (cat === 'WRC') setWrcCalendar(await dataService.getWRCCalendar());
+      else if (cat === 'WRC2') setWrc2Calendar(await dataService.getWRC2Calendar());
       else if (cat === 'TC' || cat === 'TCP') {
          if (cat === 'TC') setTcCalendar(await dataService.getTCCalendar());
          else setTcpCalendar(await dataService.getTCCalendar());
@@ -183,6 +188,8 @@ const App = () => {
         setF1Constructor(res.constructors);
       } else if (cat === 'WRC') {
         setWrcStandings(await dataService.getWRCStandings());
+      } else if (cat === 'WRC2') {
+        setWrc2Standings(await dataService.getWRC2Standings());
       } else if (cat === 'TC') setTcDrivers(await dataService.getTCStandings());
       else if (cat === 'TCP') setTcpDrivers(await dataService.getTCPStandings());
       else if (cat === 'TCM') setTcmDrivers(await dataService.getTCMStandings());
@@ -230,6 +237,7 @@ const App = () => {
     try {
       if (cat === 'F1') setF1News(await dataService.getF1News());
       else if (cat === 'WRC') setWrcNews(await dataService.getWRCNews());
+      else if (cat === 'WRC2') setWrc2News(await dataService.getWRC2News());
       else if (cat === 'TC') setTcNews(await dataService.getTCNews());
       else if (cat === 'TCP') setTcpNews(await dataService.getTCPNews());
       else if (cat === 'TCM') setTcmNews(await dataService.getTCMNews());
@@ -260,6 +268,7 @@ const App = () => {
       const results = await Promise.allSettled([
         dataService.getF1News(),
         dataService.getWRCNews(),
+        dataService.getWRC2News(),
         dataService.getTCNews(),
         dataService.getIndyCarNews(),
         dataService.getNascarNews(),
@@ -276,18 +285,19 @@ const App = () => {
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
       if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
-      if (results[2].status === 'fulfilled') setTcNews(results[2].value);
-      if (results[3].status === 'fulfilled') setIndyNews(results[3].value);
-      if (results[4].status === 'fulfilled') setNascarNews(results[4].value);
-      if (results[5].status === 'fulfilled') setTc2000News(results[5].value);
-      if (results[6].status === 'fulfilled') setTnc3News(results[6].value);
-      if (results[7].status === 'fulfilled') setNascarTNews(results[7].value);
-      if (results[8].status === 'fulfilled') setWecNews(results[8].value);
-      if (results[9].status === 'fulfilled') setImsaNews(results[9].value);
-      if (results[10].status === 'fulfilled') setF2News(results[10].value);
-      if (results[11].status === 'fulfilled') setF3News(results[11].value);
-      if (results[12].status === 'fulfilled') setFENews(results[12].value);
-      if (results[13].status === 'fulfilled') setMotoGPNews(results[13].value);
+      if (results[2].status === 'fulfilled') setWrc2News(results[2].value as NewsItem[]);
+      if (results[3].status === 'fulfilled') setTcNews(results[3].value as NewsItem[]);
+      if (results[4].status === 'fulfilled') setIndyNews(results[4].value);
+      if (results[5].status === 'fulfilled') setNascarNews(results[5].value);
+      if (results[6].status === 'fulfilled') setTc2000News(results[6].value);
+      if (results[7].status === 'fulfilled') setTnc3News(results[7].value);
+      if (results[8].status === 'fulfilled') setNascarTNews(results[8].value);
+      if (results[9].status === 'fulfilled') setWecNews(results[9].value);
+      if (results[10].status === 'fulfilled') setImsaNews(results[10].value);
+      if (results[11].status === 'fulfilled') setF2News(results[11].value);
+      if (results[12].status === 'fulfilled') setF3News(results[12].value);
+      if (results[13].status === 'fulfilled') setFENews(results[13].value);
+      if (results[14].status === 'fulfilled') setMotoGPNews(results[14].value);
 
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
@@ -477,6 +487,18 @@ const App = () => {
           <span className="cat-label">WRC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card wrc2-card" onClick={() => handleCategoryClick('WRC2')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WRC2_LOGO} 
+            alt="WRC2" 
+            className="cat-logo wrc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">WRC2</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card wec-card" onClick={() => handleCategoryClick('WEC')}>
           <div className="cat-card-glow" />
           <img src={WEC_LOGO} alt="WEC" className="cat-logo wec-logo" />
@@ -662,6 +684,7 @@ const App = () => {
     if (c.includes('F3') || c.includes('FORMULA 3')) return F3_LOGO;
     if (c.includes('FE') || c.includes('FORMULA E')) return FE_LOGO;
     if (c.includes('MOTOGP')) return MotoGP_LOGO;
+    if (c.includes('WRC2')) return WRC2_LOGO;
     if (c.includes('WRC')) return WRC_LOGO;
     if (c.includes('INDYCAR')) return INDYCAR_LOGO;
     if (c.includes('NASCAR TRUCK')) return NASCART_LOGO;
@@ -1029,6 +1052,7 @@ const App = () => {
   const renderCategoryView = () => {
     const isF1 = selectedCategory === 'F1';
     const isWRC = selectedCategory === 'WRC';
+    const isWRC2 = selectedCategory === 'WRC2';
     const isTC = selectedCategory === 'TC';
     const isTCP = selectedCategory === 'TCP';
     const isTCM = selectedCategory === 'TCM';
@@ -1051,6 +1075,7 @@ const App = () => {
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
+    if (isWRC2) logo = WRC2_LOGO;
     if (isTC) logo = TC_LOGO;
     if (isTCP) logo = TCP_LOGO;
     if (isTCM) logo = '/TCM.png';
@@ -1073,6 +1098,7 @@ const App = () => {
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
+    if (isWRC2) catTitle = 'WRC2';
     if (isTC) catTitle = 'Turismo Carretera';
     if (isTCP) catTitle = 'TC Pista';
     if (isTCM) catTitle = 'TC Mouras';
@@ -1095,6 +1121,7 @@ const App = () => {
 
     let news = f1News;
     if (isWRC) news = wrcNews;
+    if (isWRC2) news = wrc2News;
     if (isTC) news = tcNews;
     if (isTCP) news = tcpNews;
     if (isTCM) news = tcmNews;
@@ -1146,7 +1173,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''}`} 
+            className={`cat-header-logo ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1191,9 +1218,9 @@ const App = () => {
                   ))}
                   {f1Calendar.length === 0 && !isLoading && <p className="empty-msg">Cargando calendario...</p>}
                 </div>
-              ) : isWRC ? (
+              ) : (isWRC || isWRC2) ? (
                 <div className="wrc-calendar-list">
-                  {wrcCalendar.length > 0 ? wrcCalendar.map((ev, idx) => (
+                  {(isWRC2 ? wrc2Calendar : wrcCalendar).length > 0 ? (isWRC2 ? wrc2Calendar : wrcCalendar).map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
@@ -1207,7 +1234,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario WRC...' : 'No se encontró calendario WRC.'}</p>
+                    <p className="empty-msg">{isLoading ? `Cargando calendario ${isWRC2 ? 'WRC2' : 'WRC'}...` : `No se encontró calendario ${isWRC2 ? 'WRC2' : 'WRC'}.`}</p>
                   )}
                 </div>
       ) : (isTC || isTCP) ? (
@@ -1643,6 +1670,22 @@ const App = () => {
                     {((motoGPStandingsTab === 'drivers' && motoGPStandings.drivers.length === 0) || 
                       (motoGPStandingsTab === 'teams' && motoGPStandings.teams.length === 0) ||
                       (motoGPStandingsTab === 'constructors' && motoGPStandings.constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isWRC2 ? (
+                <>
+                  <div className="standings-list wrc-standings">
+                    {(wrc2Standings.drivers || []).map((d: any, idx: number) => (
+                      <div key={idx} className={`stand-row wrc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                          {d.codriverOrTeam && <span className="stand-sub">{d.codriverOrTeam}</span>}
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {(wrc2Standings.drivers || []).length === 0 && <p className="empty-msg">Cargando posiciones WRC2...</p>}
                   </div>
                 </>
               ) : isWRC ? (

@@ -133,6 +133,11 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.wrc2-card {
+  background: #f57c00;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .tc-card {
   background: #e02020;
   border-color: rgba(255, 255, 255, 0.2);
