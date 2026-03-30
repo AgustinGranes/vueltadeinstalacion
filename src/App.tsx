@@ -280,6 +280,24 @@ const App = () => {
   }, [view, selectedCategory, categorySubTab, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
 
   useEffect(() => {
+    if (weeklyRaces.length > 0) {
+      const now = Date.now();
+      const hasUpcoming = weeklyRaces.some(race => 
+        race.schedules.some(s => s.startAt >= now)
+      );
+      const hasFinished = weeklyRaces.some(race => 
+        race.schedules.some(s => s.startAt < now)
+      );
+
+      if (!hasUpcoming && hasFinished) {
+        setExpandedWeeklySection('finished');
+      } else if (hasUpcoming) {
+        setExpandedWeeklySection('upcoming');
+      }
+    }
+  }, [weeklyRaces]);
+
+  useEffect(() => {
     // Eagerly preload global news regardless of active tab
     fetchGlobalNews();
   }, [fetchGlobalNews]);
