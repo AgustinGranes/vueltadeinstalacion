@@ -12,6 +12,8 @@ type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
 const WRC_LOGO = '/WRC.png';
 const F1_LOGO = '/F1.svg';
+const F2_LOGO = '/F2.png';
+const F3_LOGO = '/F3.png';
 const TC_LOGO = '/TC.png';
 const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
@@ -19,6 +21,9 @@ const INDYCAR_LOGO = '/INDYCAR.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
 const FE_LOGO = '/FE.png';
+const NASCAR_LOGO = '/NASCAR.png';
+const NASCARO_LOGO = '/NASCARO.png';
+const NASCART_LOGO = '/NASCART.png';
 
 const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'WRC', 'TC', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA'];
 
@@ -595,9 +600,10 @@ const App = () => {
     if (c.includes('FE') || c.includes('FORMULA E')) return FE_LOGO;
     if (c.includes('WRC')) return WRC_LOGO;
     if (c.includes('INDYCAR')) return INDYCAR_LOGO;
-    if (c.includes('NASCAR TRUCK')) return '/NASCART.png';
+    if (c.includes('NASCAR TRUCK')) return NASCART_LOGO;
     if (c.includes('WEC')) return WEC_LOGO;
-    if (c.includes('NASCAR')) return '/NASCAR.png';
+    if (c.includes('NASCAR O REILLY')) return NASCARO_LOGO;
+    if (c.includes('NASCAR')) return NASCAR_LOGO;
     if (c.includes('IMSA')) return IMSA_LOGO;
     if (c.includes('TC2000')) return '/TC2000.png';
     if (c.includes('TCPK') || c.includes('TC PICK UP')) return TCPK_LOGO;
@@ -984,11 +990,11 @@ const App = () => {
     if (isTCPPK) logo = '/TCPPK.png';
     if (isTC2000) logo = '/TC2000.png';
     if (isIndy) logo = INDYCAR_LOGO;
-    if (isNascar) logo = '/NASCAR.png';
+    if (isNascar) logo = NASCAR_LOGO;
     if (isWEC) logo = '/WEC.png';
     if (isIMSA) logo = IMSA_LOGO;
-    if (isNASCARO) logo = '/NASCARO.png';
-    if (isNASCART) logo = '/NASCART.png';
+    if (isNASCARO) logo = NASCARO_LOGO;
+    if (isNASCART) logo = NASCART_LOGO;
     if (isF2) logo = F2_LOGO;
     if (isF3) logo = F3_LOGO;
     if (isFE) logo = FE_LOGO;
