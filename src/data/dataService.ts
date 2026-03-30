@@ -2419,10 +2419,10 @@ export const dataService = {
 
       if (msHtml) {
         const doc = new DOMParser().parseFromString(msHtml, 'text/html');
-        const articles = doc.querySelectorAll('.ms-item--news, .ms-article-list-item');
+        const articles = doc.querySelectorAll('.ms-item--news, .ms-article-list-item, .ms-grid-item');
         articles.forEach((art, i) => {
           if (i >= 6) return;
-          const title = art.querySelector('.ms-item__title, .ms-article-list-item__title')?.textContent?.trim();
+          const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title')?.textContent?.trim();
           const link = art.querySelector('a')?.getAttribute('href');
           if (title && link) {
             news.push({
@@ -2430,7 +2430,7 @@ export const dataService = {
               summary: '',
               link: link.startsWith('http') ? link : `https://lat.motorsport.com${link}`,
               source: 'Motorsport.com',
-              category: 'Formula E'
+              category: 'FE'
             });
           }
         });
@@ -2449,7 +2449,7 @@ export const dataService = {
               summary: '',
               link: link.startsWith('http') ? link : `https://soymotor.com${link}`,
               source: 'SoyMotor',
-              category: 'Formula E'
+              category: 'FE'
             });
           }
         });
@@ -2465,8 +2465,8 @@ export const dataService = {
     const res: { drivers: any[], teams: any[] } = { drivers: [], teams: [] };
     try {
       const [drvHtml, teamHtml] = await Promise.all([
-        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/'),
-        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/2026/?type=Team&class=')
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/'),
+        this.fetchWithProxy('https://lat.motorsport.com/formula-e/standings/?type=Team')
       ]);
 
       if (drvHtml) {
@@ -2474,10 +2474,9 @@ export const dataService = {
         const rows = doc.querySelectorAll('table tbody tr');
         rows.forEach(row => {
           const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          const driver = row.querySelector('.ms-table-link--driver')?.textContent?.trim();
-          const team = row.querySelector('.ms-table-link--team')?.textContent?.trim();
-          const points = row.querySelector('td:nth-child(4)')?.textContent?.trim() || 
-                         row.querySelector('.ms-table__main-points')?.textContent?.trim();
+          const driver = row.querySelector('.ms-table-link--driver, .ms-item__title')?.textContent?.trim();
+          const team = row.querySelector('.ms-table-link--team, .ms-item__subtitle')?.textContent?.trim();
+          const points = row.querySelector('.ms-table__main-points, td:nth-child(4), td:last-child')?.textContent?.trim();
           if (pos && driver) {
             res.drivers.push({ pos, driver, team, points });
           }
@@ -2488,9 +2487,8 @@ export const dataService = {
         const rows = doc.querySelectorAll('table tbody tr');
         rows.forEach(row => {
           const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim().replace('.', '');
-          const team = row.querySelector('.ms-table-link--team')?.textContent?.trim();
-          const points = row.querySelector('td:nth-child(3)')?.textContent?.trim() || 
-                         row.querySelector('.ms-table__main-points')?.textContent?.trim();
+          const team = row.querySelector('.ms-table-link--team, .ms-item__title')?.textContent?.trim();
+          const points = row.querySelector('.ms-table__main-points, td:nth-child(3), td:last-child')?.textContent?.trim();
           if (pos && team) {
             res.teams.push({ pos, team, points });
           }
