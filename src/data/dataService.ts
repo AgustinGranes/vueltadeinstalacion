@@ -1342,36 +1342,46 @@ export const dataService = {
   // === NASCAR NEWS ===
   async getNascarNews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
-    const sourceUrl = 'https://campeones.com.ar/category/internacionales/nascar/';
+    const sources = [
+      { url: 'https://campeones.com.ar/category/internacionales/nascar/', source: 'Campeones' },
+      { url: 'https://tobychristie.com/nascar/cup-series/', source: 'TobyChristie.com' }
+    ];
 
-    try {
-      const html = await this.fetchWithProxy(sourceUrl);
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      
-      // Campeones News Selectors
-      const articles = doc.querySelectorAll('article, .post-item, .elementor-post');
-      articles.forEach(art => {
-        const link = art.querySelector('a');
-        const titleEl = art.querySelector('h1, h2, h3, .title, .entry-title, .elementor-post__title');
-        const title = titleEl?.textContent?.trim() || link?.getAttribute('title')?.trim() || link?.textContent?.trim();
-        const href = link?.getAttribute('href');
+    for (const src of sources) {
+      try {
+        const html = await this.fetchWithProxy(src.url);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
         
-        if (title && href && title.length > 10) {
-          allNews.push({ 
-            title, 
-            summary: '', 
-            link: href, 
-            source: 'Campeones', 
-            category: 'NASCAR' 
+        if (src.source === 'Campeones') {
+          const articles = doc.querySelectorAll('article, .post-item, .elementor-post');
+          articles.forEach(art => {
+            const link = art.querySelector('a');
+            const titleEl = art.querySelector('h1, h2, h3, .title, .entry-title, .elementor-post__title');
+            const title = titleEl?.textContent?.trim() || link?.getAttribute('title')?.trim() || link?.textContent?.trim();
+            const href = link?.getAttribute('href');
+            if (title && href && title.length > 10) {
+              allNews.push({ title, summary: '', link: href, source: 'Campeones', category: 'NASCAR' });
+            }
+          });
+        } else if (src.source === 'TobyChristie.com') {
+          const elements = doc.querySelectorAll('.elementor-post');
+          elements.forEach(container => {
+            const linkEl = container.querySelector('.elementor-post__title a');
+            const imgEl = container.querySelector('.elementor-post__thumbnail img, .elementor-post__thumbnail__link img');
+            const title = linkEl?.textContent?.trim();
+            const href = linkEl?.getAttribute('href');
+            const img = imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src');
+            if (title && href) {
+              allNews.push({ title, summary: '', link: href, source: 'TobyChristie.com', category: 'NASCAR', imageUrl: img || undefined });
+            }
           });
         }
-      });
-    } catch (e) { 
-      console.warn(`[DataService] NASCAR news error for ${sourceUrl}:`, e); 
+      } catch (e) { 
+        console.warn(`[DataService] NASCAR news error for ${src.url}:`, e); 
+      }
     }
     
-    // Deduplication and limit
-    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 15);
+    return allNews.filter((v,i,a)=>a.findIndex(t=>(t.title === v.title))===i).slice(0, 20);
   },
 
   // === NASCAR STANDINGS ===
