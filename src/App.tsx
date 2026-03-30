@@ -244,9 +244,11 @@ const App = () => {
         n.delete(`${cat}-news`);
         return n;
       });
-      if (categorySubTab === 'calendar') await fetchCategoryCalendar(cat);
-      else if (categorySubTab === 'standings') await fetchCategoryStandings(cat);
-      else if (categorySubTab === 'news') await fetchCategoryNews(cat);
+      await Promise.allSettled([
+        fetchCategoryCalendar(cat),
+        fetchCategoryStandings(cat),
+        fetchCategoryNews(cat)
+      ]);
     } else if (mainTab === 'home') {
       await fetchHomeData();
     } else if (mainTab === 'noticias') {
@@ -282,11 +284,11 @@ const App = () => {
 
   useEffect(() => {
     if (view === 'category') {
-      if (categorySubTab === 'calendar') fetchCategoryCalendar(selectedCategory);
-      else if (categorySubTab === 'standings') fetchCategoryStandings(selectedCategory);
-      else if (categorySubTab === 'news') fetchCategoryNews(selectedCategory);
+      fetchCategoryCalendar(selectedCategory);
+      fetchCategoryStandings(selectedCategory);
+      fetchCategoryNews(selectedCategory);
     }
-  }, [view, selectedCategory, categorySubTab, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
+  }, [view, selectedCategory, fetchCategoryCalendar, fetchCategoryStandings, fetchCategoryNews]);
 
   useEffect(() => {
     if (weeklyRaces.length > 0) {
