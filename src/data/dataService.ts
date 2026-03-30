@@ -2490,10 +2490,10 @@ export const dataService = {
     }
   },
 
-  async getTNC3Standings(): Promise<{ drivers: any[] }> {
+  async getTNC3Standings(): Promise<any[]> {
     try {
       const html = await this.fetchWithProxy(TNC3_STANDINGS_URL);
-      if (!html) return { drivers: [] };
+      if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const rows = doc.querySelectorAll('table tbody tr');
       const drivers: any[] = [];
@@ -2507,10 +2507,10 @@ export const dataService = {
           drivers.push({ pos, driver, team, points });
         }
       });
-      return { drivers };
+      return drivers;
     } catch (e) {
       console.error('[DataService] TNC3 standings error:', e);
-      return { drivers: [] };
+      return [];
     }
   },
 

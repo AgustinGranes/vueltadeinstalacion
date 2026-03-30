@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
+import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings } from './data/dataService';
@@ -1618,6 +1618,18 @@ const App = () => {
                       </div>
                     ))}
                     {tcpkDrivers.length === 0 && <p className="empty-msg">No hay posiciones disponibles.</p>}
+                  </div>
+                </>
+              ) : isTCPPK ? (
+                <>
+                  <div className="standings-list tcppk-standings">
+                    {tcppkDrivers.map((d, idx) => (
+                      <div key={idx} className={`stand-row tcppk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                         <div className="stand-info"><span className="stand-name">{d.driver}</span></div>
+                         <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {tcppkDrivers.length === 0 && <p className="empty-msg">No hay posiciones disponibles.</p>}
                   </div>
                 </>
               ) : isTC2000 ? (
