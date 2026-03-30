@@ -3607,7 +3607,7 @@ export const dataService = {
               title: t, summary: '',
               link: l.startsWith('/') ? `https://lat.motorsport.com${l}` : l,
               source: 'Motorsport',
-              category: 'F1A',
+              category: 'F1 Academy',
               imageUrl: img || undefined
             });
           }
