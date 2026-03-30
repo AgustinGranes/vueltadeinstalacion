@@ -2411,18 +2411,17 @@ export const dataService = {
   // === FORMULA E NEWS ===
   async getFENews(): Promise<NewsItem[]> {
     const news: NewsItem[] = [];
+    
+    // 1. Fetch SoyMotor first (requested priority)
     try {
-      // 1. Fetch SoyMotor first (requested priority)
       const smHtml = await this.fetchWithProxy('https://soymotor.com/competicion/noticias/formula-e');
       if (smHtml) {
         const doc = new DOMParser().parseFromString(smHtml, 'text/html');
-        // SoyMotor selector based on browser research: a.node-container
         const items = doc.querySelectorAll('a.node-container, .node--type-noticia, .views-row');
         items.forEach((item, i) => {
-          if (i >= 6) return;
+          if (i >= 8) return;
           const title = item.getAttribute('title') || item.querySelector('.node-title, h2, .title')?.textContent?.trim();
-          let link = item.getAttribute('href');
-          if (!link) link = item.querySelector('a')?.getAttribute('href') || null;
+          let link = item.getAttribute('href') || item.querySelector('a')?.getAttribute('href') || null;
           
           if (title && link) {
             news.push({
@@ -2436,15 +2435,18 @@ export const dataService = {
           }
         });
       }
+    } catch (e) {
+      console.error('[DataService] SoyMotor FE news error:', e);
+    }
 
-      // 2. Fetch Motorsport.com
+    // 2. Fetch Motorsport.com
+    try {
       const msHtml = await this.fetchWithProxy('https://lat.motorsport.com/formula-e/news/');
       if (msHtml) {
         const doc = new DOMParser().parseFromString(msHtml, 'text/html');
-        // Motorsport selectors: a.ms-article-list-item or a.ms-item
         const articles = doc.querySelectorAll('a.ms-item, a.ms-article-list-item, .ms-item--news, .ms-grid-item');
         articles.forEach((art, i) => {
-          if (i >= 6) return;
+          if (i >= 8) return;
           const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title, .title')?.textContent?.trim();
           let link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href') || null;
           
@@ -2461,8 +2463,9 @@ export const dataService = {
         });
       }
     } catch (e) {
-      console.error('[DataService] FE news error:', e);
+      console.error('[DataService] Motorsport FE news error:', e);
     }
+    
     return news;
   },
 
