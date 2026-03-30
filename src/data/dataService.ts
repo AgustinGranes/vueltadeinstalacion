@@ -839,7 +839,7 @@ export const dataService = {
     
     // 1. Carburando
     try {
-      const html = await this.fetchWithProxy('/api/carburando/tema/wrc2');
+      const html = await this.fetchWithProxy('https://www.carburando.com/tema/wrc2');
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         doc.querySelectorAll('div.col').forEach(art => {
@@ -861,7 +861,7 @@ export const dataService = {
 
     // 2. Lapeando
     try {
-      const html = await this.fetchWithProxy('/api/lapeando/noticias?categoria=22');
+      const html = await this.fetchWithProxy('https://lapeando.com/noticias?categoria=22');
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         doc.querySelectorAll('a:has(article), a[href*="/articulo?id="]').forEach(l => {
@@ -888,25 +888,28 @@ export const dataService = {
   async getWRC2Standings(): Promise<WRCStandings> {
     const standings: WRCStandings = { drivers: [], codrivers: [], manufacturers: [], teams: [] };
     try {
-      const html = await this.fetchWithProxy('/api/lapeando/standings?categoria=22');
+      const html = await this.fetchWithProxy('https://lapeando.com/standings?categoria=22');
       if (!html) return standings;
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
       const rows = doc.querySelectorAll('table.standings-table tbody tr');
+      console.log(`[DataService] Found ${rows.length} WRC2 rows`);
       rows.forEach(row => {
         const pos = row.querySelector('td.standings-pos')?.textContent?.trim() || '';
-        const name = row.querySelector('span.standings-pilot-name')?.textContent?.trim() || '';
+        const nameNode = row.querySelector('span.standings-pilot-name');
+        const name = nameNode ? nameNode.textContent?.trim() : row.querySelector('td.standings-name')?.textContent?.trim();
         const pts = row.querySelector('td.standings-points')?.textContent?.trim() || '0';
         
         if (pos && name) {
           standings.drivers.push({
             pos,
-            driver: name,
+            driver: name || 'A Confirmar',
             codriverOrTeam: '',
             points: pts
           });
         }
       });
+      console.log(`[DataService] Extracted ${standings.drivers.length} WRC2 drivers`);
     } catch (e) { console.error('[DataService] WRC2 standings error:', e); }
     return standings;
   },
@@ -3450,23 +3453,27 @@ export const dataService = {
       // New structure uses tbody.ms-schedule-table__item for each race
       const items = doc.querySelectorAll('tbody.ms-schedule-table__item');
       items.forEach(item => {
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
         const round = item.querySelector('.ms-schedule-table-item-main__round')?.textContent?.trim() || '';
         const raceName = item.querySelector('a.ms-link span')?.textContent?.trim() || 
                            item.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim() || '';
-        const dates = item.querySelector('.ms-schedule-table__cell--date')?.textContent?.trim() || '';
+        
+        // Extract ONLY the date part (omit time)
+        const dateElem = item.querySelector('msnt-formatted-date');
+        const dates = dateElem ? dateElem.textContent?.trim() : item.querySelector('.ms-schedule-table__cell--date')?.textContent?.trim() || '';
+        
         const statusText = item.querySelector('.ms-schedule-table__cell--event_status, .ms-schedule-table-item-main__status')?.textContent?.trim() || '';
         
-        let status: CalendarRace['status'] = 'Upcoming';
-        if (statusText.toLowerCase().includes('finalizado')) status = 'Finished';
-        else if (statusText.toLowerCase().includes('en vivo')) status = 'Live';
+        let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
+        if (statusText.toLowerCase().includes('en vivo')) status = 'Live';
 
         if (raceName) {
           races.push({
             round: parseInt(round) || (races.length + 1),
             race: raceName,
-            dates,
+            dates, // Clean date without time
             status,
-            winner: ''
+            winner: status === 'Finished' ? '✅ Finalizado' : ''
           });
         }
       });
