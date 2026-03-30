@@ -240,7 +240,7 @@ export const dataService = {
             const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
             const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
             const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const timeStr = (s.time === '-' || s.time === '' || s.time === '--:--' || isNaN(d.getTime())) ? (s.time === '--:--' ? '--:--' : '') : rawTime;
+            const timeStr = (s.confirmed === false || s.time === '-' || s.time === '' || s.time === '--:--' || isNaN(d.getTime())) ? (s.time === '--:--' || s.confirmed === false ? '--:--' : '') : rawTime;
             
             return {
               id: s._id || s.id || Math.random().toString(),
