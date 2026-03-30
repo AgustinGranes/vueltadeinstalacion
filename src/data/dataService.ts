@@ -1343,8 +1343,8 @@ export const dataService = {
   async getNascarNews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     const sources = [
-      { url: 'https://campeones.com.ar/category/internacionales/nascar/', source: 'Campeones' },
-      { url: 'https://tobychristie.com/nascar/cup-series/', source: 'TobyChristie.com' }
+      { url: 'https://tobychristie.com/nascar/cup-series/', source: 'TobyChristie.com' },
+      { url: 'https://campeones.com.ar/category/internacionales/nascar/', source: 'Campeones' }
     ];
 
     for (const src of sources) {
