@@ -2422,7 +2422,7 @@ export const dataService = {
           if (i >= 6) return;
           const title = item.getAttribute('title') || item.querySelector('.node-title, h2, .title')?.textContent?.trim();
           let link = item.getAttribute('href');
-          if (!link) link = item.querySelector('a')?.getAttribute('href');
+          if (!link) link = item.querySelector('a')?.getAttribute('href') || null;
           
           if (title && link) {
             news.push({
@@ -2446,7 +2446,7 @@ export const dataService = {
         articles.forEach((art, i) => {
           if (i >= 6) return;
           const title = art.querySelector('.ms-item__title, .ms-article-list-item__title, .ms-grid-item__title, .title')?.textContent?.trim();
-          const link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href');
+          let link = art.getAttribute('href') || art.querySelector('a')?.getAttribute('href') || null;
           
           if (title && link) {
             news.push({
