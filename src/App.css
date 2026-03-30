@@ -1,12 +1,17 @@
-/* =============== LAYOUT =============== */
 .app-container {
   min-height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  max-width: 600px;
+  max-width: 100%;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 1200px;
+  }
 }
 
 /* =============== HEADER =============== */
@@ -1715,4 +1720,57 @@
 .filter-apply-btn {
   background: var(--accent-blue);
   color: white;
+}
+
+/* =============== RESPONSIVE DESKTOP =============== */
+@media (min-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+  }
+
+  .news-feed {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+    background: transparent;
+    border: none;
+  }
+
+  .news-card-item {
+    border: 1px solid var(--separator) !important;
+    border-radius: 16px;
+    height: 100%;
+  }
+
+  .news-card-item:not(:last-child) {
+    border-bottom: 1px solid var(--separator) !important;
+  }
+
+  .weekly-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+  }
+
+  .category-calendar-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+  }
+
+  .tab-bar {
+    max-width: 600px;
+    left: 50% !important;
+    transform: translateX(-50%);
+    border-radius: 100px;
+    bottom: 20px;
+    margin-bottom: 0;
+    border: 1px solid var(--separator);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .content-area {
+    padding-top: 20px;
+  }
 }
