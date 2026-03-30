@@ -1775,13 +1775,15 @@
 
   .tab-bar {
     max-width: 600px;
-    left: 50% !important;
-    transform: translateX(-50%);
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important;
     border-radius: 100px;
     bottom: 20px;
     margin-bottom: 0;
     border: 1px solid var(--separator);
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    transform: none !important;
   }
 
   .content-area {
