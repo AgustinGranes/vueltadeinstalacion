@@ -2633,7 +2633,7 @@ export const dataService = {
                 // EST (UTC-5) -> ART (UTC-3) is +2 hours
                 // US DST 2026: March 8 to Nov 1
                 const isDST = raceDate >= new Date(2026, 2, 8) && raceDate < new Date(2026, 10, 1);
-                const offset = isDST ? 1 : 2;
+                const offset = isDST ? 0 : 1; // Subtracted 1 hour as requested by user
 
                 h = (h + offset) % 24;
                 const formattedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
