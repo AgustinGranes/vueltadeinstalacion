@@ -202,6 +202,15 @@
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
 
+.f2-card {
+  background: #0288d1 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.f2-logo {
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
 .wec-tabs-scroll {
   overflow-x: auto;
   display: flex;
