@@ -510,6 +510,18 @@ const App = () => {
           <span className="cat-label">F1 Academy</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={INDYCAR_LOGO} 
+            alt="IndyCar" 
+            className="cat-logo indycar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">IndyCar</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card supercars-card" onClick={() => handleCategoryClick('SUPERCARS')}>
           <div className="cat-card-glow" />
           <img 
@@ -520,6 +532,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">Supercars</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card gtwc-card" onClick={() => handleCategoryClick('GTWC')} style={{ background: '#E30613' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={GTWC_LOGO} 
+            alt="GTWC" 
+            className="cat-logo gtwc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">GT World Challenge</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')}>
@@ -611,18 +635,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">NASCAR Truck</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
-          <div className="cat-card-glow" />
-          <img 
-            src={INDYCAR_LOGO} 
-            alt="IndyCar" 
-            className="cat-logo indycar-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">IndyCar</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
@@ -731,18 +743,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">TC2000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card gtwc-card" onClick={() => handleCategoryClick('GTWC')} style={{ background: '#E30613' }}>
-          <div className="cat-card-glow" />
-          <img 
-            src={GTWC_LOGO} 
-            alt="GTWC" 
-            className="cat-logo gtwc-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">GT World Challenge</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>

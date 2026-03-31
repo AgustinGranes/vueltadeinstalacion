@@ -3855,40 +3855,39 @@ export const dataService = {
   // === F1 ACADEMY CALENDAR ===
   async getF1AcademyCalendar(): Promise<CalendarRace[]> {
     try {
-      const html = await this.fetchWithProxy(F1A_CALENDAR_URL);
+      const F1A_OFFICIAL_CALENDAR_URL = 'https://www.f1academy.com/Racing-Series/Calendar';
+      const html = await this.fetchWithProxy(F1A_OFFICIAL_CALENDAR_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const races: CalendarRace[] = [];
-      const items = Array.from(doc.querySelectorAll('tr')).filter(tr => tr.querySelector('.ms-schedule-table__cell--main') || tr.classList.contains('ms-schedule-table-item'));
+      const items = doc.querySelectorAll('a[href*="raceid="]');
       
       items.forEach((item, idx) => {
-        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming') || 
-                           item.classList.contains('ms-schedule-table-item--upcoming') ||
-                           item.innerHTML.includes('upcoming');
-
-        const roundElem = item.querySelector('.ms-schedule-table-item-main__round') || 
-                          item.querySelector('.ms-schedule-table__cell--round');
-        const round = roundElem?.textContent?.trim() || (idx + 1).toString();
+        const card = item.querySelector('.card-event, .card-upcoming, div');
+        const isUpcoming = card?.classList.contains('card-upcoming');
         
-        const nameElem = item.querySelector('.ms-schedule-table-item-main__event a span') || 
-                         item.querySelector('.ms-schedule-table-item-main__event a') ||
-                         item.querySelector('.ms-schedule-table__cell--main a') ||
-                         item.querySelector('.ms-schedule-table-item-main__event');
-        let raceName = nameElem?.textContent?.trim() || '';
+        const h6 = item.querySelector('p.h6');
+        const roundText = h6?.textContent?.trim() || '';
+        const roundMatch = roundText.match(/Round\s+(\d+)/i);
+        const round = roundMatch ? roundMatch[1] : (idx + 1).toString();
         
-        // Extract date
-        const dateElem = item.querySelector('.ms-schedule-table-date--your time') || 
-                         item.querySelector('.ms-schedule-table-date-period') ||
-                         item.querySelector('.ms-schedule-table__cell--date');
-        const dates = dateElem ? dateElem.textContent?.trim() : '';
+        const country = item.querySelector('.race-country')?.textContent?.trim() || '';
+        const city = item.querySelector('.race-city')?.textContent?.trim() || '';
+        const raceName = city ? `${country} (${city})` : country;
+        
+        // Extract dates from spans inside h6
+        const startDay = item.querySelector('.start-date')?.textContent?.trim() || '';
+        const endDay = item.querySelector('.end-date')?.textContent?.trim() || '';
+        const month = item.querySelector('.month')?.textContent?.trim() || '';
+        const dates = `${startDay}-${endDay} ${month}`.trim();
         
         let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
         
         if (raceName) {
           races.push({
             round: parseInt(round) || (idx + 1),
-            race: raceName.split('\n')[0].trim().replace(/\s+/g, ' '), 
-            dates: dates || '',
+            race: raceName,
+            dates: dates,
             status,
             winner: status === 'Finished' ? '✅ Finalizado' : ''
           });
@@ -3902,9 +3901,10 @@ export const dataService = {
           foundNext = true;
         }
       }
+
       return races;
-    } catch (e) {
-      console.error('[DataService] F1A calendar error:', e);
+    } catch (error) {
+      console.error('Error fetching F1 Academy official calendar:', error);
       return [];
     }
   },
@@ -3982,14 +3982,18 @@ export const dataService = {
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const items = doc.querySelectorAll('.calendar__summary');
+      const now = new Date();
       
       items.forEach((item, idx) => {
         const raceName = item.querySelector('.calendar__race-header')?.textContent?.trim();
         
         const startDay = item.querySelector('.calendar__date-start .calendar__date-number')?.textContent?.trim();
         const startMonth = item.querySelector('.calendar__date-start .calendar__date-month')?.textContent?.trim();
+        const startYear = item.querySelector('.calendar__date-start .calendar__date-year')?.textContent?.trim() || now.getFullYear().toString();
+        
         const endDay = item.querySelector('.calendar__date-end .calendar__date-number')?.textContent?.trim();
         const endMonth = item.querySelector('.calendar__date-end .calendar__date-month')?.textContent?.trim();
+        const endYear = item.querySelector('.calendar__date-end .calendar__date-year')?.textContent?.trim() || startYear;
         
         let dateStr = '';
         if (startDay && startMonth) {
@@ -3998,14 +4002,31 @@ export const dataService = {
             dateStr += ` - ${endDay} ${endMonth}`;
           }
         }
+
+        // Status logic based on date
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (endDay && endMonth) {
+          const months: { [key: string]: number } = {
+            'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
+            'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11,
+            'ENE': 0, 'ABR': 3, 'AGO': 7, 'DIC': 11
+          };
+          const m = months[endMonth.toUpperCase().substring(0, 3)];
+          if (m !== undefined) {
+            const raceEndDate = new Date(parseInt(endYear), m, parseInt(endDay), 23, 59, 59);
+            if (raceEndDate < now) {
+              status = 'Finished';
+            }
+          }
+        }
         
         if (raceName) {
           races.push({
             round: idx + 1,
             race: raceName,
             dates: dateStr,
-            status: 'Upcoming',
-            winner: ''
+            status,
+            winner: status === 'Finished' ? '✅ Finalizado' : ''
           });
         }
       });
