@@ -3859,21 +3859,28 @@ export const dataService = {
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const races: CalendarRace[] = [];
-      const items = doc.querySelectorAll('tbody.ms-schedule-table__item, tr.ms-schedule-table-item');
+      const items = Array.from(doc.querySelectorAll('tr')).filter(tr => tr.querySelector('.ms-schedule-table__cell--main') || tr.classList.contains('ms-schedule-table-item'));
+      
       items.forEach((item, idx) => {
         const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming') || 
-                           item.classList.contains('ms-schedule-table-item--upcoming');
-        const round = item.querySelector('.ms-schedule-table-item-main__round')?.textContent?.trim() || (idx + 1).toString();
+                           item.classList.contains('ms-schedule-table-item--upcoming') ||
+                           item.innerHTML.includes('upcoming');
+
+        const roundElem = item.querySelector('.ms-schedule-table-item-main__round') || 
+                          item.querySelector('.ms-schedule-table__cell--round');
+        const round = roundElem?.textContent?.trim() || (idx + 1).toString();
         
-        let raceName = item.querySelector('.ms-schedule-table-item-main__event a span')?.textContent?.trim() || 
-                         item.querySelector('.ms-schedule-table-item-main__event a')?.textContent?.trim() || 
-                         item.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim() || '';
+        const nameElem = item.querySelector('.ms-schedule-table-item-main__event a span') || 
+                         item.querySelector('.ms-schedule-table-item-main__event a') ||
+                         item.querySelector('.ms-schedule-table__cell--main a') ||
+                         item.querySelector('.ms-schedule-table-item-main__event');
+        let raceName = nameElem?.textContent?.trim() || '';
         
         // Extract date
-        const dateElem = item.querySelector('msnt-formatted-date');
-        const dates = dateElem ? dateElem.textContent?.trim() : 
-                        item.querySelector('.ms-schedule-table__cell--date')?.textContent?.trim() || 
-                        item.querySelector('.ms-schedule-table-date-period')?.textContent?.trim() || '';
+        const dateElem = item.querySelector('.ms-schedule-table-date--your time') || 
+                         item.querySelector('.ms-schedule-table-date-period') ||
+                         item.querySelector('.ms-schedule-table__cell--date');
+        const dates = dateElem ? dateElem.textContent?.trim() : '';
         
         let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
         
@@ -3881,30 +3888,12 @@ export const dataService = {
           races.push({
             round: parseInt(round) || (idx + 1),
             race: raceName.split('\n')[0].trim().replace(/\s+/g, ' '), 
-            dates,
+            dates: dates || '',
             status,
             winner: status === 'Finished' ? '✅ Finalizado' : ''
           });
         }
       });
-
-      // Secondary fallback for simpler table structures
-      if (races.length === 0) {
-        const rows = doc.querySelectorAll('tr.ms-schedule-table-item, .ms-schedule-table__tbody tr');
-        rows.forEach((row, idx) => {
-          const raceName = row.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim();
-          const dates = row.querySelector('.ms-schedule-table-date-period')?.textContent?.trim();
-          if (raceName) {
-            races.push({
-              round: idx + 1,
-              race: raceName.trim(),
-              dates: dates || '',
-              status: 'Upcoming',
-              winner: ''
-            });
-          }
-        });
-      }
 
       let foundNext = false;
       for (const r of races) {
@@ -3992,22 +3981,28 @@ export const dataService = {
       const html = await this.fetchWithProxy(GTWC_CALENDAR_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const items = doc.querySelectorAll('a.event-item__link');
+      const items = doc.querySelectorAll('.calendar__summary');
       
       items.forEach((item, idx) => {
-        const venue = item.querySelector('.event-item__title span')?.textContent?.trim();
-        const region = item.querySelector('.event-item__category span')?.textContent?.trim();
-        const day = item.querySelector('.event-item__date .day')?.textContent?.trim();
-        const month = item.querySelector('.event-item__date .month')?.textContent?.trim();
-        const year = item.querySelector('.event-item__date .year')?.textContent?.trim();
+        const raceName = item.querySelector('.calendar__race-header')?.textContent?.trim();
         
-        const raceName = region ? `${region}: ${venue}` : venue;
-        const dateStr = day && month ? `${day} ${month} ${year || ''}`.trim() : '';
+        const startDay = item.querySelector('.calendar__date-start .calendar__date-number')?.textContent?.trim();
+        const startMonth = item.querySelector('.calendar__date-start .calendar__date-month')?.textContent?.trim();
+        const endDay = item.querySelector('.calendar__date-end .calendar__date-number')?.textContent?.trim();
+        const endMonth = item.querySelector('.calendar__date-end .calendar__date-month')?.textContent?.trim();
         
-        if (venue) {
+        let dateStr = '';
+        if (startDay && startMonth) {
+          dateStr = `${startDay} ${startMonth}`;
+          if (endDay && endMonth && (endDay !== startDay || endMonth !== startMonth)) {
+            dateStr += ` - ${endDay} ${endMonth}`;
+          }
+        }
+        
+        if (raceName) {
           races.push({
             round: idx + 1,
-            race: raceName || 'TBA',
+            race: raceName,
             dates: dateStr,
             status: 'Upcoming',
             winner: ''

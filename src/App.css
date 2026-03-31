@@ -262,8 +262,17 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
+}
+
+.gtwc-logo {
+  height: 80px !important;
+  max-width: 180px !important;
+}
+
+.cat-header-logo.gtwc-logo {
+  height: 48px !important;
 }
 
 .wec-tabs-scroll {
