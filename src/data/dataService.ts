@@ -52,6 +52,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'TNC3': '#e02020',
   'TNC2': '#0288d1',
   'F1A': '#9c27b0',
+  'SUPERCARS': '#e10600',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -162,6 +163,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TNC3': 'https://apat.org.ar/carreras/calendario',
   'MotoGP': 'https://as.com/resultados/motor/motogp/clasificacion/races/',
   'F1A': 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/',
+  'SUPERCARS': 'https://www.supercars.com/results/2026/supercars',
 };
 
 export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
@@ -179,6 +181,10 @@ export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
 export const TNC2_STANDINGS_URL = 'https://apat.org.ar/campeonato/c2';
 
 export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
+export const SUPERCARS_NEWS_URL = 'https://www.supercars.com/news';
+export const SUPERCARS_CALENDAR_URL = 'https://www.supercars.com/calendar';
+export const SUPERCARS_DRIVERS_URL = 'https://www.supercars.com/standings/2026/supercars';
+export const SUPERCARS_TEAMS_URL = 'https://www.supercars.com/standings/2026/supercars/teams';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -3666,6 +3672,103 @@ export const dataService = {
       });
     } catch (e) { console.error('[DataService] F1A teams error:', e); }
     return standings;
+  },
+
+  // === SUPERCARS NEWS ===
+  async getSUPERCARSNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(SUPERCARS_NEWS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('a[href^="/news/"]').forEach(art => {
+          const t = art.getAttribute('aria-label') || art.querySelector('h2, .title, div:not([class])')?.textContent?.trim();
+          const l = art.getAttribute('href');
+          const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
+          if (t && l && !allNews.some(n => n.title === t)) {
+            allNews.push({
+              title: t, summary: '',
+              link: l.startsWith('/') ? `https://www.supercars.com${l}` : l,
+              source: 'Supercars',
+              category: 'Supercars',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn('[DataService] Supercars news error:', e); }
+    return allNews.slice(0, 15);
+  },
+
+  // === SUPERCARS STANDINGS (DRIVERS) ===
+  async getSUPERCARSStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(SUPERCARS_DRIVERS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a[href^="/drivers/"]').forEach(row => {
+        const divs = Array.from(row.querySelectorAll('div'));
+        if (divs.length >= 3) {
+          const pos = divs[0].textContent?.trim() || '';
+          const name = divs[2]?.querySelector('div:first-child')?.textContent?.trim() || divs[2]?.textContent?.split('\n')[0].trim() || '';
+          const team = divs[2]?.querySelector('div:last-child')?.textContent?.trim() || '';
+          const ptsText = row.textContent?.match(/(\d+)\s*pts/);
+          const pts = ptsText ? ptsText[1] : '0';
+          if (pos && name) {
+            standings.push({ pos, driver: name, team, points: pts });
+          }
+        }
+      });
+    } catch (e) { console.error('[DataService] Supercars standings error:', e); }
+    return standings;
+  },
+
+  // === SUPERCARS STANDINGS (TEAMS) ===
+  async getSUPERCARSTeams(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(SUPERCARS_TEAMS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a[href^="/teams/"]').forEach(row => {
+        const divs = Array.from(row.querySelectorAll('div'));
+        if (divs.length >= 3) {
+          const pos = divs[0].textContent?.trim() || '';
+          const name = divs[1]?.querySelector('div:first-child')?.textContent?.trim() || divs[1]?.textContent?.trim() || '';
+          const pts = divs[divs.length - 1].textContent?.trim().replace(/pts$/, '') || '0';
+          if (pos && name) {
+            standings.push({ pos, driver: name, points: pts });
+          }
+        }
+      });
+    } catch (e) { console.error('[DataService] Supercars teams error:', e); }
+    return standings;
+  },
+
+  // === SUPERCARS CALENDAR ===
+  async getSUPERCARSCalendar(): Promise<CalendarRace[]> {
+    const races: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(SUPERCARS_CALENDAR_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('a[href^="/2026/"]').forEach((item, idx) => {
+        if (item.getAttribute('href') === '/2026/supercars') return;
+        const name = item.getAttribute('aria-label') || item.querySelector('div:nth-child(2)')?.textContent?.trim() || '';
+        const date = item.querySelector('div:first-child')?.textContent?.trim() || '';
+        if (name && !races.some(r => r.race === name)) {
+          races.push({
+            round: idx + 1,
+            race: name,
+            dates: date,
+            status: 'Upcoming', // Default to upcoming, can refine if sections are found
+            winner: ''
+          });
+        }
+      });
+    } catch (e) { console.error('[DataService] Supercars calendar error:', e); }
+    return races;
   },
 
   // === F1 ACADEMY CALENDAR ===
