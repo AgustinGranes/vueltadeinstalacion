@@ -272,7 +272,7 @@
 }
 
 .cat-header-logo.gtwc-logo {
-  height: 34px !important;
+  height: 42px !important;
   width: auto;
   object-fit: contain;
   margin-top: -2px;
@@ -612,7 +612,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 4px 0 20px;
+  padding: 10px 0;
+  min-height: 58px;
 }
 
 .back-btn {
