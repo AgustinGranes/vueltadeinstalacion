@@ -3706,20 +3706,26 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy(SUPERCARS_DRIVERS_URL);
       if (!html) return [];
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a[href^="/drivers/"]').forEach(row => {
-        const divs = Array.from(row.querySelectorAll('div'));
-        if (divs.length >= 3) {
-          const pos = divs[0].textContent?.trim() || '';
-          const name = divs[2]?.querySelector('div:first-child')?.textContent?.trim() || divs[2]?.textContent?.split('\n')[0].trim() || '';
-          const team = divs[2]?.querySelector('div:last-child')?.textContent?.trim() || '';
-          const ptsText = row.textContent?.match(/(\d+)\s*pts/);
-          const pts = ptsText ? ptsText[1] : '0';
-          if (pos && name) {
-            standings.push({ pos, driver: name, team, points: pts });
-          }
+      
+      // Supercars.com uses Next.js RSC payloads. We extract data via Regex from script tags.
+      const driverRegex = /\{"driverName":"([^"]+)","totalSeasonPoints":(\d+),"teamName":"([^"]+)","driverNumber":"(\d+)"/g;
+      let match;
+      while ((match = driverRegex.exec(html)) !== null) {
+        const [_, name, pts, team, num] = match;
+        if (!standings.some(s => s.driver === name)) {
+          standings.push({
+            pos: (standings.length + 1).toString(),
+            driver: name,
+            team: team,
+            points: pts
+          });
         }
-      });
+      }
+      
+      // If regex fails, try to find pos in the match or sort them
+      standings.sort((a, b) => parseInt(b.points) - parseInt(a.points));
+      standings.forEach((s, idx) => s.pos = (idx + 1).toString());
+
     } catch (e) { console.error('[DataService] Supercars standings error:', e); }
     return standings;
   },
@@ -3730,18 +3736,21 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy(SUPERCARS_TEAMS_URL);
       if (!html) return [];
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a[href^="/teams/"]').forEach(row => {
-        const divs = Array.from(row.querySelectorAll('div'));
-        if (divs.length >= 3) {
-          const pos = divs[0].textContent?.trim() || '';
-          const name = divs[1]?.querySelector('div:first-child')?.textContent?.trim() || divs[1]?.textContent?.trim() || '';
-          const pts = divs[divs.length - 1].textContent?.trim().replace(/pts$/, '') || '0';
-          if (pos && name) {
-            standings.push({ pos, driver: name, points: pts });
-          }
+      
+      const teamRegex = /\{"teamName":"([^"]+)","totalSeasonPoints":(\d+)/g;
+      let match;
+      while ((match = teamRegex.exec(html)) !== null) {
+        const [_, name, pts] = match;
+        if (!standings.some(s => s.driver === name)) {
+          standings.push({
+            pos: (standings.length + 1).toString(),
+            driver: name,
+            points: pts
+          });
         }
-      });
+      }
+      standings.sort((a, b) => parseInt(b.points) - parseInt(a.points));
+      standings.forEach((s, idx) => s.pos = (idx + 1).toString());
     } catch (e) { console.error('[DataService] Supercars teams error:', e); }
     return standings;
   },
@@ -3753,16 +3762,31 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_CALENDAR_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      doc.querySelectorAll('a[href^="/2026/"]').forEach((item, idx) => {
-        if (item.getAttribute('href') === '/2026/supercars') return;
-        const name = item.getAttribute('aria-label') || item.querySelector('div:nth-child(2)')?.textContent?.trim() || '';
-        const date = item.querySelector('div:first-child')?.textContent?.trim() || '';
+      
+      // Events are in cards with h2 for titles
+      const eventTitles = doc.querySelectorAll('h2');
+      eventTitles.forEach((h2, idx) => {
+        const name = h2.textContent?.trim();
+        if (!name || name.toLowerCase().includes('news') || name.toLowerCase().includes('video')) return;
+        
+        // Find date in nearby aria-label "Rokt Calendar"
+        let date = '';
+        let parent = h2.parentElement;
+        for (let i = 0; i < 5 && parent; i++) {
+          const rokt = parent.querySelector('a[aria-label*="Calendar"] div');
+          if (rokt) {
+            date = rokt.textContent?.trim() || '';
+            break;
+          }
+          parent = parent.parentElement;
+        }
+
         if (name && !races.some(r => r.race === name)) {
           races.push({
-            round: idx + 1,
+            round: races.length + 1,
             race: name,
             dates: date,
-            status: 'Upcoming', // Default to upcoming, can refine if sections are found
+            status: 'Upcoming',
             winner: ''
           });
         }
