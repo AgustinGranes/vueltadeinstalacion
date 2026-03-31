@@ -84,7 +84,7 @@ export type CalendarRace = {
   round: number;
   race: string;
   dates: string;
-  status: 'Finished' | 'Upcoming' | 'Next' | 'Live';
+  status: 'Finished' | 'Upcoming' | 'Next' | 'Live' | 'Cancelled';
   winner: string;
 };
 
@@ -3854,59 +3854,26 @@ export const dataService = {
 
   // === F1 ACADEMY CALENDAR ===
   async getF1AcademyCalendar(): Promise<CalendarRace[]> {
-    try {
-      const F1A_OFFICIAL_CALENDAR_URL = 'https://www.f1academy.com/Racing-Series/Calendar';
-      const html = await this.fetchWithProxy(F1A_OFFICIAL_CALENDAR_URL);
-      if (!html) return [];
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const races: CalendarRace[] = [];
-      const items = doc.querySelectorAll('a[href*="raceid="]');
-      
-      items.forEach((item, idx) => {
-        const card = item.querySelector('.card-event, .card-upcoming, div');
-        const isUpcoming = card?.classList.contains('card-upcoming');
-        
-        const h6 = item.querySelector('p.h6');
-        const roundText = h6?.textContent?.trim() || '';
-        const roundMatch = roundText.match(/Round\s+(\d+)/i);
-        const round = roundMatch ? roundMatch[1] : (idx + 1).toString();
-        
-        const country = item.querySelector('.race-country')?.textContent?.trim() || '';
-        const city = item.querySelector('.race-city')?.textContent?.trim() || '';
-        const raceName = city ? `${country} (${city})` : country;
-        
-        // Extract dates from spans inside h6
-        const startDay = item.querySelector('.start-date')?.textContent?.trim() || '';
-        const endDay = item.querySelector('.end-date')?.textContent?.trim() || '';
-        const month = item.querySelector('.month')?.textContent?.trim() || '';
-        const dates = `${startDay}-${endDay} ${month}`.trim();
-        
-        let status: CalendarRace['status'] = isUpcoming ? 'Upcoming' : 'Finished';
-        
-        if (raceName) {
-          races.push({
-            round: parseInt(round) || (idx + 1),
-            race: raceName,
-            dates: dates,
-            status,
-            winner: status === 'Finished' ? '✅ Finalizado' : ''
-          });
-        }
-      });
+    const races: CalendarRace[] = [
+      { round: 1, race: 'SHANGHAI', dates: '14 de Marzo', status: 'Finished', winner: '✅ Finalizado' },
+      { round: 2, race: 'YEDA', dates: 'CANCELADO', status: 'Cancelled', winner: '' },
+      { round: 3, race: 'MONTREAL', dates: '24 de Mayo', status: 'Upcoming', winner: '' },
+      { round: 4, race: 'SILVERSTONE', dates: '05 de Julio', status: 'Upcoming', winner: '' },
+      { round: 5, race: 'ZANDVOORT', dates: '23 de Agosto', status: 'Upcoming', winner: '' },
+      { round: 6, race: 'COTA', dates: '25 de Octubre', status: 'Upcoming', winner: '' },
+      { round: 7, race: 'LAS VEGAS', dates: '21 de Noviembre', status: 'Upcoming', winner: '' },
+    ];
 
-      let foundNext = false;
-      for (const r of races) {
-        if (r.status === 'Upcoming' && !foundNext) {
-          r.status = 'Next';
-          foundNext = true;
-        }
+    // Find "Next" event (first Upcoming)
+    let foundNext = false;
+    for (const r of races) {
+      if (r.status === 'Upcoming' && !foundNext) {
+        r.status = 'Next';
+        foundNext = true;
       }
-
-      return races;
-    } catch (error) {
-      console.error('Error fetching F1 Academy official calendar:', error);
-      return [];
     }
+
+    return races;
   },
 
   CATEGORY_RESULTS_URLS,

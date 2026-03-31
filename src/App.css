@@ -272,7 +272,10 @@
 }
 
 .cat-header-logo.gtwc-logo {
-  height: 48px !important;
+  height: 34px !important;
+  width: auto;
+  object-fit: contain;
+  margin-top: -2px;
 }
 
 .wec-tabs-scroll {
@@ -629,9 +632,13 @@
 .cat-header-logo { height: 28px; width: auto; object-fit: contain; }
 
 .cat-header-title {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 800;
   letter-spacing: -0.3px;
+  margin: 0;
+  line-height: normal;
+  display: flex;
+  align-items: center;
 }
 
 /* Category sub-tabs */
@@ -1939,3 +1946,13 @@
   transform: scale(0.97);
   background: rgba(255, 255, 255, 0.12);
 }
+
+.race-status-badge.cancelled {
+  background: rgba(234, 179, 8, 0.12);
+  color: #eab308;
+}
+
+.race-round-num.cancelled {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+}

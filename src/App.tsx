@@ -1300,7 +1300,8 @@ const App = () => {
                       <div className={`race-status-badge ${race.status.toLowerCase()}`}>
                         {race.status === 'Live' ? 'EN CURSO' :
                           race.status === 'Finished' ? 'FINALIZADO' :
-                            (race.status === 'Next' || race.status === 'Upcoming') ? 'PRÓXIMO' : '—'}
+                            race.status === 'Cancelled' ? 'CANCELADO' :
+                              (race.status === 'Next' || race.status === 'Upcoming') ? 'PRÓXIMO' : '—'}
                       </div>
                     </div>
                   ))}
