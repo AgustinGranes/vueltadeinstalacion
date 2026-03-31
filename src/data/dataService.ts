@@ -181,10 +181,10 @@ export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
 export const TNC2_STANDINGS_URL = 'https://apat.org.ar/campeonato/c2';
 
 export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
-export const SUPERCARS_NEWS_URL = 'https://lat.motorsport.com/v8supercars/news/';
+export const SUPERCARS_NEWS_URL = 'https://www.supercars.com/news';
 export const SUPERCARS_CALENDAR_URL = 'https://www.motorsport.com/v8supercars/schedule/2026/';
 export const SUPERCARS_DRIVERS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Driver&class=';
-export const SUPERCARS_TEAMS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Team&class=y';
+export const SUPERCARS_TEAMS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Team&class=';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -3676,34 +3676,42 @@ export const dataService = {
 
   // === SUPERCARS NEWS ===
   async getSUPERCARSNews(): Promise<NewsItem[]> {
-    const allNews: NewsItem[] = [];
+    const news: NewsItem[] = [];
     try {
       const html = await this.fetchWithProxy(SUPERCARS_NEWS_URL);
-      if (html) {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Motorsport item structure
-        doc.querySelectorAll('a.ms-item').forEach(item => {
-          const titleElem = item.querySelector('.ms-item__title');
-          const imgElem = item.querySelector('img');
-          
-          const t = titleElem?.textContent?.trim();
-          let l = item.getAttribute('href');
-          const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // Supercars.com structure: news items are often in <a> tags
+      const links = Array.from(doc.querySelectorAll('a[href^="/news/"]'));
+      const seen = new Set<string>();
 
-          if (t && l && !allNews.some(n => n.title === t)) {
-            if (!l.startsWith('http')) l = `https://lat.motorsport.com${l}`;
-            allNews.push({
-              title: t, summary: '',
-              link: l,
-              source: 'Motorsport',
-              category: 'Supercars',
-              imageUrl: img || undefined
-            });
-          }
-        });
-      }
-    } catch (e) { console.warn('[DataService] Supercars news error:', e); }
-    return allNews.slice(0, 15);
+      links.forEach(link => {
+        let href = link.getAttribute('href') || '';
+        const url = href.startsWith('http') ? href : 'https://www.supercars.com' + href;
+        if (seen.has(url)) return;
+        seen.add(url);
+
+        const title = link.querySelector('.text-white')?.textContent?.trim() || 
+                      link.querySelector('h3')?.textContent?.trim() ||
+                      link.textContent?.trim();
+        const img = link.querySelector('img')?.getAttribute('src');
+
+        if (title && title.length > 5) {
+          news.push({
+            title,
+            summary: '',
+            link: url,
+            source: 'Supercars',
+            category: 'Supercars',
+            imageUrl: img || 'https://www.supercars.com/favicon.ico'
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('[DataService] Supercars news error:', e);
+    }
+    return news.slice(0, 15);
   },
 
   // === SUPERCARS STANDINGS (DRIVERS) ===
@@ -3713,20 +3721,33 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_DRIVERS_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim();
-        const nameElem = row.querySelector('.info-wrapper span:nth-child(2) span:first-child span') || 
-                         row.querySelector('.info-wrapper .name');
-        const driver = nameElem?.textContent?.trim();
-        const teamElem = row.querySelector('.info-wrapper span:nth-child(2) span:nth-child(2)') || 
-                         row.querySelector('.ms-table-link--team');
-        const team = teamElem?.textContent?.trim();
-        const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
+      const rows = doc.querySelectorAll('tr.ms-table_row, tbody tr');
+      rows.forEach((row, idx) => {
+        const posElem = row.querySelector('.ms-table_field--pos') || row.querySelector('td:nth-child(1)');
+        const pos = posElem?.textContent?.trim();
         
-        if (pos && driver) {
+        // Robust name extraction: targets .name-short if present, 
+        // fallback to info-wrapper or generic info div
+        const nameElem = row.querySelector('.ms-table_field--driver .name-short') || 
+                         row.querySelector('.info-wrapper .name') ||
+                         row.querySelector('.info-wrapper span:nth-child(2) span:first-child span') ||
+                         row.querySelector('.info');
+        const driver = nameElem?.textContent?.trim();
+        
+        const teamElem = row.querySelector('.ms-table_field--driver .team') || 
+                         row.querySelector('.ms-table-link--team') ||
+                         row.querySelector('.info-wrapper span:nth-child(2) span:nth-child(2)') ||
+                         row.querySelector('td:nth-child(3)');
+        const team = teamElem?.textContent?.trim();
+        
+        const ptsElem = row.querySelector('.ms-table_field--total_points') || 
+                        row.querySelector('td.ms-table_field--points') ||
+                        row.querySelector('td:nth-child(4)');
+        const points = ptsElem?.textContent?.trim();
+
+        if (driver) {
           standings.push({ 
-            pos, 
+            pos: pos || (idx + 1).toString(), 
             driver, 
             team: team || '', 
             points: points || '0' 
@@ -3744,17 +3765,24 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_TEAMS_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim();
-        const teamElem = row.querySelector('.info-wrapper span:nth-child(2)') || 
-                         row.querySelector('.info-wrapper .name');
-        const team = teamElem?.textContent?.trim();
-        const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
+      const rows = doc.querySelectorAll('tr.ms-table_row, tbody tr');
+      rows.forEach((row, idx) => {
+        const posElem = row.querySelector('.ms-table_field--pos') || row.querySelector('td:nth-child(1)');
+        const pos = posElem?.textContent?.trim();
         
-        if (pos && team) {
+        const teamElem = row.querySelector('.ms-table_field--team') ||
+                         row.querySelector('.info-wrapper .name') ||
+                         row.querySelector('.info-wrapper span:nth-child(2)') ||
+                         row.querySelector('.info');
+        const team = teamElem?.textContent?.trim();
+        
+        const ptsElem = row.querySelector('.ms-table_field--total_points') || 
+                        row.querySelector('td:nth-child(3)');
+        const points = ptsElem?.textContent?.trim();
+        
+        if (team) {
           standings.push({ 
-            pos, 
+            pos: pos || (idx + 1).toString(), 
             driver: team, // reusing driver field for team name
             points: points || '0' 
           });
