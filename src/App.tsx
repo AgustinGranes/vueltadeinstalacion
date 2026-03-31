@@ -1451,6 +1451,24 @@ const App = () => {
                     <p className="empty-msg">{isLoading ? 'Cargando calendario Supercars...' : 'No se encontró calendario Supercars.'}</p>
                   )}
                 </div>
+              ) : isGTWC ? (
+                <div className="gtwc-calendar-list">
+                  {gtwcCalendar.length > 0 ? gtwcCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race || ev.event}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario GTWC...' : 'No se encontró calendario GTWC.'}</p>
+                  )}
+                </div>
               ) : isMotoGP ? (
                 <div className="motogp-calendar-list">
                   {motoGPCalendar.length > 0 ? motoGPCalendar.map((ev, idx) => (
