@@ -3745,6 +3745,9 @@ export const dataService = {
                         row.querySelector('td:nth-child(4)');
         const points = ptsElem?.textContent?.trim();
 
+        // Skip header row if pos or driver contain header text
+        if (pos === 'Pos' || driver === 'Piloto' || driver === 'Driver' || driver === 'PILOTOS') return;
+
         if (driver) {
           standings.push({ 
             pos: pos || (idx + 1).toString(), 
@@ -3780,6 +3783,9 @@ export const dataService = {
                         row.querySelector('td:nth-child(3)');
         const points = ptsElem?.textContent?.trim();
         
+        // Skip header row if pos or team contain header text
+        if (pos === 'Pos' || team === 'Equipos' || team === 'EQUIPOS') return;
+
         if (team) {
           standings.push({ 
             pos: pos || (idx + 1).toString(), 
