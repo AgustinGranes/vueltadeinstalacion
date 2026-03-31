@@ -1457,7 +1457,7 @@ const App = () => {
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
-                        <span className="race-name-label">{ev.race || ev.event}</span>
+                        <span className="race-name-label">{ev.race}</span>
                         <span className="race-date-label">{ev.dates}</span>
                       </div>
                       <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
