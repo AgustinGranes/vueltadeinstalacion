@@ -1305,7 +1305,14 @@ const App = () => {
                       </div>
                     </div>
                   ))}
-                  {f1Calendar.length === 0 && !isLoading && <p className="empty-msg">Cargando calendario...</p>}
+                  {((isF1 && f1Calendar.length === 0) ||
+                     (isF2 && f2Calendar.length === 0) ||
+                     (isF3 && f3Calendar.length === 0) ||
+                     (isFE && feCalendar.length === 0) ||
+                     (isF1A && f1aCalendar.length === 0) ||
+                     (isSUPERCARS && supercarsCalendar.length === 0)) && !isLoading && !isCatCalLoading && (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
                 </div>
               ) : (isWRC || isWRC2) ? (
                 <div className="wrc-calendar-list">
