@@ -53,6 +53,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'TNC2': '#0288d1',
   'F1A': '#9c27b0',
   'SUPERCARS': '#e10600',
+  'GTWC': '#e10600',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -185,6 +186,10 @@ export const SUPERCARS_NEWS_URL = 'https://www.supercars.com/news';
 export const SUPERCARS_CALENDAR_URL = 'https://www.motorsport.com/v8supercars/schedule/2026/';
 export const SUPERCARS_DRIVERS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Driver&class=';
 export const SUPERCARS_TEAMS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Team&class=';
+
+export const GTWC_NEWS_URL = 'https://www.gt-world-challenge.com/news';
+export const GTWC_STANDINGS_URL = 'https://www.gt-world-challenge.com/standings';
+export const GTWC_CALENDAR_URL = 'https://www.gt-world-challenge.com/calendar';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -3893,4 +3898,100 @@ export const dataService = {
   },
 
   CATEGORY_RESULTS_URLS,
+
+  // === GT WORLD CHALLENGE NEWS ===
+  async getGTWCNews(): Promise<NewsItem[]> {
+    const news: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(GTWC_NEWS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = Array.from(doc.querySelectorAll('a.article-posts__list-link'));
+      const seen = new Set<string>();
+
+      items.forEach(item => {
+        let href = item.getAttribute('href') || '';
+        const url = href.startsWith('http') ? href : 'https://www.gt-world-challenge.com' + href;
+        if (seen.has(url)) return;
+        seen.add(url);
+
+        const title = item.querySelector('h3')?.textContent?.trim() || item.textContent?.trim();
+        const img = item.querySelector('img')?.getAttribute('src');
+
+        if (title && title.length > 5) {
+          news.push({
+            title,
+            summary: '',
+            link: url,
+            source: 'GT World Challenge',
+            category: 'GTWC',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] GTWC news error:', e); }
+    return news.slice(0, 15);
+  },
+
+  // === GT WORLD CHALLENGE STANDINGS (MANUFACTURERS) ===
+  async getGTWCStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(GTWC_STANDINGS_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('div.table__scrollable table tr');
+      
+      rows.forEach((row, idx) => {
+        // Skip first 3 rows (headers)
+        if (idx < 3) return;
+        
+        const brand = row.querySelector('td:nth-child(1), .table__field--brand-name')?.textContent?.trim();
+        const points = row.querySelector('td:nth-child(2), .table__field--total-points')?.textContent?.trim();
+        
+        if (brand && points) {
+          standings.push({
+            pos: (standings.length + 1).toString(),
+            driver: brand, // Using driver field for brand name
+            team: 'Global Manufacturer',
+            points: points || '0'
+          });
+        }
+      });
+    } catch (e) { console.error('[DataService] GTWC standings error:', e); }
+    return standings;
+  },
+
+  // === GT WORLD CHALLENGE CALENDAR ===
+  async getGTWCCalendar(): Promise<CalendarRace[]> {
+    const races: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(GTWC_CALENDAR_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = doc.querySelectorAll('a.event-item__link');
+      
+      items.forEach((item, idx) => {
+        const venue = item.querySelector('.event-item__title span')?.textContent?.trim();
+        const region = item.querySelector('.event-item__category span')?.textContent?.trim();
+        const day = item.querySelector('.event-item__date .day')?.textContent?.trim();
+        const month = item.querySelector('.event-item__date .month')?.textContent?.trim();
+        const year = item.querySelector('.event-item__date .year')?.textContent?.trim();
+        
+        const raceName = region ? `${region}: ${venue}` : venue;
+        const dateStr = day && month ? `${day} ${month} ${year || ''}`.trim() : '';
+        
+        if (venue) {
+          races.push({
+            round: idx + 1,
+            race: raceName || 'TBA',
+            dates: dateStr,
+            status: 'Upcoming',
+            winner: ''
+          });
+        }
+      });
+    } catch (e) { console.error('[DataService] GTWC calendar error:', e); }
+    return races;
+  },
 };

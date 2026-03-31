@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -30,8 +30,9 @@ const NASCARO_LOGO = '/NASCARO.png';
 const NASCART_LOGO = '/NASCART.png';
 const F1A_LOGO = '/F1A.png';
 const SUPERCARS_LOGO = '/SUPERCARS.png';
+const GTWC_LOGO = '/GT.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'Supercars', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -61,6 +62,7 @@ const App = () => {
   const [feCalendar, setFECalendar] = useState<CalendarRace[]>([]);
   const [f1aCalendar, setF1aCalendar] = useState<CalendarRace[]>([]);
   const [supercarsCalendar, setSupercarsCalendar] = useState<CalendarRace[]>([]);
+  const [gtwcCalendar, setGtwcCalendar] = useState<CalendarRace[]>([]);
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
@@ -87,6 +89,7 @@ const App = () => {
   const [f1aTeams, setF1aTeams] = useState<TCStandingRow[]>([]);
   const [supercarsDrivers, setSupercarsDrivers] = useState<TCStandingRow[]>([]);
   const [supercarsTeams, setSupercarsTeams] = useState<TCStandingRow[]>([]);
+  const [gtwcStandings, setGtwcStandings] = useState<TCStandingRow[]>([]);
   const [supercarsStandingsTab, setSupercarsStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f1aStandingsTab, setF1aStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f2StandingsTab, setF2StandingsTab] = useState<'drivers' | 'teams'>('drivers');
@@ -109,6 +112,7 @@ const App = () => {
   const [feNews, setFENews] = useState<NewsItem[]>([]);
   const [f1aNews, setF1aNews] = useState<NewsItem[]>([]);
   const [supercarsNews, setSupercarsNews] = useState<NewsItem[]>([]);
+  const [gtwcNews, setGtwcNews] = useState<NewsItem[]>([]);
   const [tc2000StandingsTab, setTc2000StandingsTab] = useState<'drivers' | 'teams' | 'brands'>('drivers');
   const [nascarCalendar, setNascarCalendar] = useState<CalendarRace[]>([]);
   const [nascarStandings, setNascarStandings] = useState<NascarStandings>({ drivers: [], owners: [], manufacturers: [] });
@@ -185,6 +189,7 @@ const App = () => {
       else if (cat === 'FE') setFECalendar(await dataService.getFECalendar());
       else if (cat === 'F1A') setF1aCalendar(await dataService.getF1AcademyCalendar());
       else if (cat === 'SUPERCARS') setSupercarsCalendar(await dataService.getSUPERCARSCalendar());
+      else if (cat === 'GTWC') setGtwcCalendar(await dataService.getGTWCCalendar());
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
@@ -243,6 +248,8 @@ const App = () => {
         const [drivers, teams] = await Promise.all([dataService.getSUPERCARSStandings(), dataService.getSUPERCARSTeams()]);
         setSupercarsDrivers(drivers);
         setSupercarsTeams(teams);
+      } else if (cat === 'GTWC') {
+        setGtwcStandings(await dataService.getGTWCStandings());
       } else if (cat === 'MotoGP') {
         const res = await dataService.getMotoGPStandings();
         setMotoGPStandings(res);
@@ -279,6 +286,7 @@ const App = () => {
       else if (cat === 'FE') setFENews(await dataService.getFENews());
       else if (cat === 'F1A') setF1aNews(await dataService.getF1AcademyNews());
       else if (cat === 'SUPERCARS') setSupercarsNews(await dataService.getSUPERCARSNews());
+      else if (cat === 'GTWC') setGtwcNews(await dataService.getGTWCNews());
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
@@ -725,6 +733,18 @@ const App = () => {
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card gtwc-card" onClick={() => handleCategoryClick('GTWC')} style={{ background: '#E30613' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={GTWC_LOGO} 
+            alt="GTWC" 
+            className="cat-logo gtwc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">GT World Challenge</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -1126,6 +1146,7 @@ const App = () => {
     const isFE = selectedCategory === 'FE';
     const isF1A = selectedCategory === 'F1A';
     const isSUPERCARS = selectedCategory === 'SUPERCARS';
+    const isGTWC = selectedCategory === 'GTWC';
     const isMotoGP = selectedCategory === 'MotoGP';
     
     let logo = F1_LOGO;
@@ -1151,6 +1172,7 @@ const App = () => {
     if (isFE) logo = FE_LOGO;
     if (isF1A) logo = F1A_LOGO;
     if (isSUPERCARS) logo = SUPERCARS_LOGO;
+    if (isGTWC) logo = GTWC_LOGO;
     if (isMotoGP) logo = MotoGP_LOGO;
 
     let catTitle = 'Formula 1';
@@ -1176,6 +1198,7 @@ const App = () => {
     if (isFE) catTitle = 'Formula E';
     if (isF1A) catTitle = 'F1 Academy';
     if (isSUPERCARS) catTitle = 'Supercars';
+    if (isGTWC) catTitle = 'GT World Challenge';
     if (isMotoGP) catTitle = 'MotoGP';
 
     let news = f1News;
@@ -1201,6 +1224,7 @@ const App = () => {
     if (isFE) news = feNews;
     if (isF1A) news = f1aNews;
     if (isSUPERCARS) news = supercarsNews;
+    if (isGTWC) news = gtwcNews;
     if (isMotoGP) news = motoGPNews;
 
     let resultsUrl = '';
@@ -1224,6 +1248,7 @@ const App = () => {
     if (isNascar || isNASCARO || isNASCART) resultsUrl = 'https://www.nascar.com/results';
     if (isWEC) resultsUrl = 'https://www.fiawec.com/en/results';
     if (isIMSA) resultsUrl = 'https://www.imsa.com/results/';
+    if (isGTWC) resultsUrl = 'https://www.gt-world-challenge.com/calendar';
     if (isMotoGP) resultsUrl = 'https://www.motogp.com/es/results-statistics';
 
 
@@ -2097,6 +2122,19 @@ const App = () => {
                         <p className="empty-msg">No se encontraron posiciones WEC.</p>}
                     </div>
                   </>
+                ) : isGTWC ? (
+                  <div className="standings-list gtwc-standings">
+                    {gtwcStandings.map((d, idx) => (
+                      <div key={idx} className={`stand-row gtwc-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {gtwcStandings.length === 0 && !isLoading && <p className="empty-msg">No se encontraron posiciones GT World Challenge.</p>}
+                  </div>
                 ) : null}
               </>
               )}
