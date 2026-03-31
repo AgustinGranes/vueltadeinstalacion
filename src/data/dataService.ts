@@ -163,7 +163,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'TNC3': 'https://apat.org.ar/carreras/calendario',
   'MotoGP': 'https://as.com/resultados/motor/motogp/clasificacion/races/',
   'F1A': 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/',
-  'SUPERCARS': 'https://www.supercars.com/results/2026/supercars',
+  'SUPERCARS': 'https://lat.motorsport.com/v8supercars/results/2026/sydney-500/',
 };
 
 export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
@@ -181,10 +181,10 @@ export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
 export const TNC2_STANDINGS_URL = 'https://apat.org.ar/campeonato/c2';
 
 export const NASCARO_STANDINGS_URL = 'https://www.nascar.com/standings/nascar-oreilly-auto-parts-series/';
-export const SUPERCARS_NEWS_URL = 'https://www.supercars.com/news';
-export const SUPERCARS_CALENDAR_URL = 'https://www.supercars.com/calendar';
-export const SUPERCARS_DRIVERS_URL = 'https://www.supercars.com/standings/2026/supercars';
-export const SUPERCARS_TEAMS_URL = 'https://www.supercars.com/standings/2026/supercars/teams';
+export const SUPERCARS_NEWS_URL = 'https://lat.motorsport.com/v8supercars/news/';
+export const SUPERCARS_CALENDAR_URL = 'https://www.motorsport.com/v8supercars/schedule/2026/';
+export const SUPERCARS_DRIVERS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Driver&class=';
+export const SUPERCARS_TEAMS_URL = 'https://es.motorsport.com/v8supercars/standings/2026/?type=Team&class=y';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -3681,15 +3681,22 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_NEWS_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        doc.querySelectorAll('a[href^="/news/"]').forEach(art => {
-          const t = art.getAttribute('aria-label') || art.querySelector('h2, .title, div:not([class])')?.textContent?.trim();
-          const l = art.getAttribute('href');
-          const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
+        // Motorsport category news structure
+        doc.querySelectorAll('.ms-item, .ms-article-list-item, div[data-id]').forEach(item => {
+          const linkElem = item.querySelector('a.ms-link, a[href*="/news/"]');
+          const titleElem = item.querySelector('.ms-item__title, .title, .ms-article-list-item__title, h2, h3');
+          const imgElem = item.querySelector('img');
+          
+          const t = titleElem?.textContent?.trim();
+          let l = linkElem?.getAttribute('href');
+          const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
+
           if (t && l && !allNews.some(n => n.title === t)) {
+            if (!l.startsWith('http')) l = `https://lat.motorsport.com${l}`;
             allNews.push({
               title: t, summary: '',
-              link: l.startsWith('/') ? `https://www.supercars.com${l}` : l,
-              source: 'Supercars',
+              link: l,
+              source: 'Motorsport',
               category: 'Supercars',
               imageUrl: img || undefined
             });
@@ -3706,26 +3713,24 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy(SUPERCARS_DRIVERS_URL);
       if (!html) return [];
-      
-      // Supercars.com uses Next.js RSC payloads. We extract data via Regex from script tags.
-      const driverRegex = /\{"driverName":"([^"]+)","totalSeasonPoints":(\d+),"teamName":"([^"]+)","driverNumber":"(\d+)"/g;
-      let match;
-      while ((match = driverRegex.exec(html)) !== null) {
-        const [_, name, pts, team, num] = match;
-        if (!standings.some(s => s.driver === name)) {
-          standings.push({
-            pos: (standings.length + 1).toString(),
-            driver: name,
-            team: team,
-            points: pts
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('tr.ms-table_row');
+      rows.forEach(row => {
+        const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim();
+        const driverElem = row.querySelector('.info-wrapper .name, .info-wrapper span:not([class])');
+        const driver = driverElem?.textContent?.trim();
+        const team = row.querySelector('.ms-table-link--team, .ms-table_cell--team')?.textContent?.trim();
+        const points = row.querySelector('.ms-table_cell--pts, .ms-table_cell--points')?.textContent?.trim();
+        
+        if (pos && driver) {
+          standings.push({ 
+            pos, 
+            driver, 
+            team: team || '', 
+            points: points || '0' 
           });
         }
-      }
-      
-      // If regex fails, try to find pos in the match or sort them
-      standings.sort((a, b) => parseInt(b.points) - parseInt(a.points));
-      standings.forEach((s, idx) => s.pos = (idx + 1).toString());
-
+      });
     } catch (e) { console.error('[DataService] Supercars standings error:', e); }
     return standings;
   },
@@ -3736,21 +3741,22 @@ export const dataService = {
     try {
       const html = await this.fetchWithProxy(SUPERCARS_TEAMS_URL);
       if (!html) return [];
-      
-      const teamRegex = /\{"teamName":"([^"]+)","totalSeasonPoints":(\d+)/g;
-      let match;
-      while ((match = teamRegex.exec(html)) !== null) {
-        const [_, name, pts] = match;
-        if (!standings.some(s => s.driver === name)) {
-          standings.push({
-            pos: (standings.length + 1).toString(),
-            driver: name,
-            points: pts
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('tr.ms-table_row');
+      rows.forEach(row => {
+        const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim();
+        const teamElem = row.querySelector('.info-wrapper .name, .info-wrapper span:not([class])');
+        const team = teamElem?.textContent?.trim();
+        const points = row.querySelector('.ms-table_cell--pts, .ms-table_cell--points')?.textContent?.trim();
+        
+        if (pos && team) {
+          standings.push({ 
+            pos, 
+            driver: team, // reusing driver field for team name
+            points: points || '0' 
           });
         }
-      }
-      standings.sort((a, b) => parseInt(b.points) - parseInt(a.points));
-      standings.forEach((s, idx) => s.pos = (idx + 1).toString());
+      });
     } catch (e) { console.error('[DataService] Supercars teams error:', e); }
     return standings;
   },
@@ -3763,34 +3769,43 @@ export const dataService = {
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // Events are in cards with h2 for titles
-      const eventTitles = doc.querySelectorAll('h2');
-      eventTitles.forEach((h2, idx) => {
-        const name = h2.textContent?.trim();
-        if (!name || name.toLowerCase().includes('news') || name.toLowerCase().includes('video')) return;
+      const items = doc.querySelectorAll('tbody.ms-schedule-table__item');
+      items.forEach((item, idx) => {
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
+        const round = item.querySelector('.ms-schedule-table-item-main__round')?.textContent?.trim() || (idx + 1).toString();
+        const raceName = item.querySelector('.ms-schedule-table-item-main__event a.ms-link')?.textContent?.trim() || 
+                         item.querySelector('.ms-schedule-table-item-main__event')?.textContent?.trim() || '';
+        const dateElem = item.querySelector('.ms-schedule-table-date-period');
+        const dates = dateElem?.textContent?.trim() || '';
         
-        // Find date in nearby aria-label "Rokt Calendar"
-        let date = '';
-        let parent = h2.parentElement;
-        for (let i = 0; i < 5 && parent; i++) {
-          const rokt = parent.querySelector('a[aria-label*="Calendar"] div');
-          if (rokt) {
-            date = rokt.textContent?.trim() || '';
-            break;
-          }
-          parent = parent.parentElement;
-        }
-
-        if (name && !races.some(r => r.race === name)) {
+        if (raceName) {
           races.push({
-            round: races.length + 1,
-            race: name,
-            dates: date,
-            status: 'Upcoming',
+            round: parseInt(round) || (idx + 1),
+            race: raceName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+            dates: dates,
+            status: isUpcoming ? 'Upcoming' : 'Finished',
             winner: ''
           });
         }
       });
+
+      // Fallback for simple tr rows if tbody structure differs
+      if (races.length === 0) {
+        const rows = doc.querySelectorAll('tr.ms-schedule-table-item');
+        rows.forEach((row, idx) => {
+          const raceName = row.querySelector('.ms-schedule-table-item-main__event a.ms-link')?.textContent?.trim();
+          const dates = row.querySelector('.ms-schedule-table-date-period')?.textContent?.trim();
+          if (raceName) {
+            races.push({
+              round: idx + 1,
+              race: raceName.trim(),
+              dates: dates || '',
+              status: 'Upcoming',
+              winner: ''
+            });
+          }
+        });
+      }
     } catch (e) { console.error('[DataService] Supercars calendar error:', e); }
     return races;
   },

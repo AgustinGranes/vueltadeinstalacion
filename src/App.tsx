@@ -1209,7 +1209,7 @@ const App = () => {
     if (isF3) resultsUrl = 'https://www.fiaformula3.com/Results';
     if (isFE) resultsUrl = 'https://www.fiaformulae.com/en/results';
     if (isF1A) resultsUrl = 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/';
-    if (isSUPERCARS) resultsUrl = 'https://www.supercars.com/results/2026/supercars';
+    if (isSUPERCARS) resultsUrl = 'https://lat.motorsport.com/v8supercars/results/2026/sydney-500/';
     if (isWRC) resultsUrl = 'https://www.wrc.com/c/events/2024';
     if (isTC) resultsUrl = 'https://actc.org.ar/tc/carreras.html';
     if (isTCP) resultsUrl = 'https://actc.org.ar/tcp/carreras.html';
@@ -1236,7 +1236,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''}`} 
+            className={`cat-header-logo ${isSUPERCARS ? 'supercars-logo' : ''} ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
