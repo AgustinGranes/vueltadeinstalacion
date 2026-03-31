@@ -1409,37 +1409,23 @@ const App = () => {
                   )}
                 </div>
               ) : isSUPERCARS ? (
-                <>
-                  <div className="f1-tabs nascar-tabs">
-                    <button className={`nascar-tab-btn ${supercarsStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setSupercarsStandingsTab('drivers')}>Pilotos</button>
-                    <button className={`nascar-tab-btn ${supercarsStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setSupercarsStandingsTab('teams')}>Equipos</button>
-                  </div>
-                  <div className="standings-list f1-standings">
-                    {supercarsStandingsTab === 'drivers' ? (
-                      supercarsDrivers.map((d, idx) => (
-                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                          <span className="stand-pos">{d.pos}</span>
-                          <div className="stand-info">
-                            <span className="stand-name">{d.driver}</span>
-                            {d.team && <span className="stand-sub">{d.team}</span>}
-                          </div>
-                          <span className="stand-pts">{d.points} pts</span>
-                        </div>
-                      ))
-                    ) : (
-                      supercarsTeams.map((c, idx) => (
-                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
-                          <span className="stand-pos">{c.pos}</span>
-                          <div className="stand-info">
-                            <span className="stand-name">{c.driver}</span>
-                          </div>
-                          <span className="stand-pts">{c.points} pts</span>
-                        </div>
-                      ))
-                    )}
-                    {((supercarsStandingsTab === 'drivers' && supercarsDrivers.length === 0) || (supercarsStandingsTab === 'teams' && supercarsTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
-                  </div>
-                </>
+                <div className="supercars-calendar-list">
+                  {supercarsCalendar.length > 0 ? supercarsCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">{isLoading ? 'Cargando calendario Supercars...' : 'No se encontró calendario Supercars.'}</p>
+                  )}
+                </div>
               ) : isMotoGP ? (
                 <div className="motogp-calendar-list">
                   {motoGPCalendar.length > 0 ? motoGPCalendar.map((ev, idx) => (
@@ -1688,6 +1674,38 @@ const App = () => {
                       ))
                     )}
                     {((f3StandingsTab === 'drivers' && f3Drivers.length === 0) || (f3StandingsTab === 'teams' && f3Teams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isSUPERCARS ? (
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${supercarsStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setSupercarsStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${supercarsStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setSupercarsStandingsTab('teams')}>Equipos</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {supercarsStandingsTab === 'drivers' ? (
+                      supercarsDrivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            {d.team && <span className="stand-sub">{d.team}</span>}
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      supercarsTeams.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.driver}</span>
+                          </div>
+                          <span className="stand-pts">{c.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((supercarsStandingsTab === 'drivers' && supercarsDrivers.length === 0) || (supercarsStandingsTab === 'teams' && supercarsTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isFE ? (

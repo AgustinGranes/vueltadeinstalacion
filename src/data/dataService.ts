@@ -3681,14 +3681,13 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_NEWS_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Motorsport category news structure
-        doc.querySelectorAll('.ms-item, .ms-article-list-item, div[data-id]').forEach(item => {
-          const linkElem = item.querySelector('a.ms-link, a[href*="/news/"]');
-          const titleElem = item.querySelector('.ms-item__title, .title, .ms-article-list-item__title, h2, h3');
+        // Motorsport item structure
+        doc.querySelectorAll('a.ms-item').forEach(item => {
+          const titleElem = item.querySelector('.ms-item__title');
           const imgElem = item.querySelector('img');
           
           const t = titleElem?.textContent?.trim();
-          let l = linkElem?.getAttribute('href');
+          let l = item.getAttribute('href');
           const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
 
           if (t && l && !allNews.some(n => n.title === t)) {
@@ -3714,13 +3713,16 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_DRIVERS_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('tr.ms-table_row');
+      const rows = doc.querySelectorAll('tbody tr');
       rows.forEach(row => {
-        const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim();
-        const driverElem = row.querySelector('.info-wrapper .name, .info-wrapper span:not([class])');
-        const driver = driverElem?.textContent?.trim();
-        const team = row.querySelector('.ms-table-link--team, .ms-table_cell--team')?.textContent?.trim();
-        const points = row.querySelector('.ms-table_cell--pts, .ms-table_cell--points')?.textContent?.trim();
+        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim();
+        const nameElem = row.querySelector('.info-wrapper span:nth-child(2) span:first-child span') || 
+                         row.querySelector('.info-wrapper .name');
+        const driver = nameElem?.textContent?.trim();
+        const teamElem = row.querySelector('.info-wrapper span:nth-child(2) span:nth-child(2)') || 
+                         row.querySelector('.ms-table-link--team');
+        const team = teamElem?.textContent?.trim();
+        const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
         
         if (pos && driver) {
           standings.push({ 
@@ -3742,12 +3744,13 @@ export const dataService = {
       const html = await this.fetchWithProxy(SUPERCARS_TEAMS_URL);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = doc.querySelectorAll('tr.ms-table_row');
+      const rows = doc.querySelectorAll('tbody tr');
       rows.forEach(row => {
-        const pos = row.querySelector('.ms-table_cell--pos')?.textContent?.trim();
-        const teamElem = row.querySelector('.info-wrapper .name, .info-wrapper span:not([class])');
+        const pos = row.querySelector('td:nth-child(1)')?.textContent?.trim();
+        const teamElem = row.querySelector('.info-wrapper span:nth-child(2)') || 
+                         row.querySelector('.info-wrapper .name');
         const team = teamElem?.textContent?.trim();
-        const points = row.querySelector('.ms-table_cell--pts, .ms-table_cell--points')?.textContent?.trim();
+        const points = row.querySelector('td:nth-child(3)')?.textContent?.trim();
         
         if (pos && team) {
           standings.push({ 
