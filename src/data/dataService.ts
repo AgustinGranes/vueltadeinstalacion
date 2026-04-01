@@ -4201,25 +4201,30 @@ export const dataService = {
       if (!html) throw new Error("Empty response from DTM calendar");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // Target the new event-list__container found by subagent
-      const items = doc.querySelectorAll('.event-list__item, .event-list__container > div, .event-card');
+      const items = doc.querySelectorAll('.event-list__container');
       
       items.forEach((item, idx) => {
-        // Date handling based on subagent report: h4 for days, next div for month
-        const dayStr = item.querySelector('h4')?.textContent?.trim();
-        const monthStr = item.querySelector('h4 + div')?.textContent?.trim() || 
-                         item.querySelector('.month')?.textContent?.trim();
+        const dayStr = item.querySelector('.h4')?.textContent?.trim();
+        // Month is usually the first text-italic.text-uppercase.text-condensed
+        const monthStr = item.querySelector('.text-uppercase.text-italic.text-condensed')?.textContent?.trim();
         
-        // Track name usually next to a flag img or in specific classes
-        const trackElem = item.querySelector('.track-name, [class*="track"], .title');
-        const trackName = trackElem?.textContent?.trim() || 
-                          item.querySelector('div:has(img[src*="flag"])')?.textContent?.trim();
+        // Track name usually containing span.text-primary
+        const trackElem = item.querySelector('div.text-italic.text-uppercase.text-condensed:has(span.text-primary)') || 
+                          item.querySelectorAll('div.text-italic.text-uppercase.text-condensed')[1] ||
+                          item.querySelector('div.text-italic.text-uppercase.text-condensed');
+        
+        let trackName = trackElem?.textContent?.trim() || '';
+        
+        // Remove event index number if present (e.g., "01 ")
+        if (trackName.match(/^\d+\s+/)) {
+            trackName = trackName.replace(/^\d+\s+/, '').trim();
+        }
         
         if (trackName && dayStr && monthStr) {
-          const dateStr = `${dayStr} ${monthStr} 2026`;
+          const dateStr = `${dayStr} ${monthStr} 2025`;
           
           let status: CalendarRace['status'] = 'Upcoming';
-          const isPast = item.querySelector('a[href*="result"], .link--results, .results-link');
+          const isPast = item.closest('.past-events') || item.querySelector('.results-link, .link--results');
           if (isPast) status = 'Finished';
           
           races.push({
@@ -4232,28 +4237,12 @@ export const dataService = {
         }
       });
 
-      // Fallback for previous structure if needed
-      if (races.length === 0) {
-        doc.querySelectorAll('.grid-item, .event-card').forEach((card, idx) => {
-          const eventTitle = card.querySelector('.title, .track-name, div.text-align--center')?.textContent?.trim();
-          const days = card.querySelector('.days, h4')?.textContent?.trim();
-          const month = card.querySelector('.month, .month-label')?.textContent?.trim();
-          if (eventTitle && days && month) {
-            races.push({
-              round: idx + 1,
-              race: eventTitle.trim(),
-              dates: `${days} ${month} 2026`,
-              status: 'Upcoming',
-              winner: ''
-            });
-          }
-        });
-      }
-
-      // Final pass to fix status
+      // Status Fix
       let foundNext = false;
       races.forEach(r => {
         if (!foundNext && r.status === 'Upcoming') {
+          // Check if some previous logic can tell us it's next. 
+          // For now, we'll mark the first one. 
           r.status = 'Next';
           foundNext = true;
         }
@@ -4266,7 +4255,8 @@ export const dataService = {
   async getDTMStandings(type: 'Driver' | 'Team' | 'Constructor' = 'Driver'): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      const url = `${DTM_STANDINGS_URL}?type=${type}`;
+      // Use the exact URL structure providing by the user with the class parameter
+      const url = `${DTM_STANDINGS_URL}?type=${type}&class=.`;
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -4292,16 +4282,16 @@ export const dataService = {
                    infoWrapper.textContent?.trim() || '';
             team = infoWrapper.querySelector('.team')?.textContent?.trim() || '';
             
-            // If team selector failed, look for it in the row (sometimes it's a separate cell)
             if (!team) {
               team = row.querySelector('.ms-table_field--team')?.textContent?.trim() || '';
             }
           }
-        } else {
-          // Team or Constructor
-          const nameCell = row.querySelector('.ms-table_field--team, .ms-table_field--constructor, td:nth-child(2)');
-          name = nameCell?.querySelector('.name')?.textContent?.trim() || 
-                 nameCell?.textContent?.trim() || '';
+        } else if (type === 'Team') {
+          const nameCell = row.querySelector('.ms-table_field--team, td:nth-child(2)');
+          name = nameCell?.querySelector('.name')?.textContent?.trim() || nameCell?.textContent?.trim() || '';
+        } else if (type === 'Constructor') {
+          const nameCell = row.querySelector('.ms-table_field--result_constructor, .ms-table_field--team, td:nth-child(2)');
+          name = nameCell?.textContent?.trim() || '';
         }
         
         if (name) {
