@@ -267,12 +267,14 @@
 }
 
 .gtwc-logo {
-  height: 160px !important;
-  max-width: 240px !important;
+  height: 50px !important;
+  max-width: 75% !important;
+  margin-bottom: 25px !important;
+  object-fit: contain;
 }
 
 .cat-header-logo.gtwc-logo {
-  height: 32px !important;
+  height: 28px !important;
   width: auto;
   object-fit: contain;
   margin-top: 0;

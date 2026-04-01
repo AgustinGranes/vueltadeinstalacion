@@ -1330,7 +1330,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? `Cargando calendario ${isWRC2 ? 'WRC2' : 'WRC'}...` : `No se encontró calendario ${isWRC2 ? 'WRC2' : 'WRC'}.`}</p>
+                                        <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
       ) : (isTC || isTCP) ? (
@@ -1348,7 +1348,7 @@ const App = () => {
               </div>
             </div>
           )) : (
-            <p className="empty-msg">{isLoading ? `Cargando calendario ${isTC ? 'TC' : 'TCP'}...` : `No se encontró calendario ${isTC ? 'TC' : 'TCP'}.`}</p>
+            <p className="empty-msg">No hay eventos programados.</p>
           )}
         </div>
       ) : isTCM ? (
@@ -1366,7 +1366,7 @@ const App = () => {
               </div>
             </div>
           )) : (
-            <p className="empty-msg">{isLoading ? 'Cargando calendario TCM...' : 'No se encontró calendario TCM.'}</p>
+            <p className="empty-msg">No hay eventos programados.</p>
           )}
         </div>
       ) : isTCPM ? (
@@ -1384,7 +1384,7 @@ const App = () => {
               </div>
             </div>
           )) : (
-            <p className="empty-msg">{isLoading ? 'Cargando calendario TCPM...' : 'No se encontró calendario TCPM.'}</p>
+            <p className="empty-msg">No hay eventos programados.</p>
           )}
         </div>
       ) : isTCPK ? (
@@ -1402,7 +1402,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario TCPK...' : 'No se encontró calendario TCPK.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isTCPPK ? (
@@ -1420,7 +1420,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario TCPPK...' : 'No se encontró calendario TCPPK.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isIndy ? (
@@ -1438,7 +1438,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario IndyCar...' : 'No se encontró calendario IndyCar.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isSUPERCARS ? (
@@ -1456,7 +1456,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario Supercars...' : 'No se encontró calendario Supercars.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isGTWC ? (
@@ -1474,7 +1474,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario GTWC...' : 'No se encontró calendario GTWC.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isMotoGP ? (
@@ -1492,7 +1492,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario MotoGP...' : 'No se encontró calendario MotoGP.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : (isNascar || isNASCART) ? (
@@ -1510,7 +1510,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR...' : 'No se encontró calendario NASCAR.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isTC2000 ? (
@@ -1582,7 +1582,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario IMSA...' : 'No se encontró calendario IMSA.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isNASCARO ? (
@@ -1600,7 +1600,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? "Cargando calendario NASCAR O'Reilly..." : "No se encontró calendario NASCAR O'Reilly."}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : isNASCART ? (
@@ -1618,7 +1618,7 @@ const App = () => {
                       </div>
                     </div>
                   )) : (
-                    <p className="empty-msg">{isLoading ? 'Cargando calendario NASCAR Truck...' : 'No se encontró calendario NASCAR Truck.'}</p>
+                    <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
               ) : null}
