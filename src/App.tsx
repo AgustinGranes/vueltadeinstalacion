@@ -1052,8 +1052,8 @@ const App = () => {
     // Interleave news based on Home Grid Order: F1, WRC, WEC, IMSA, NASCAR, NASCAR O REILLY, IndyCar, TC, TCP, TCM, TCPM, TCPK, TCPPK, TC2000
     const sourceArrays = [
       f1News, f2News, f3News, f1aNews, btccNews, supercarsNews, gtwcNews, motoGPNews,
-      wrcNews, wecNews, imsaNews, nascarNews, nascarONews, nascarTNews, indyNews,
-      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News
+      wrcNews, wrc2News, wecNews, imsaNews, nascarNews, nascarONews, nascarTNews, indyNews,
+      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News, feNews
     ];
 
     let allNewsList: NewsItem[] = [];
