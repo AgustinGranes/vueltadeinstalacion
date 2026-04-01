@@ -1870,7 +1870,7 @@ const App = () => {
                 </>
               ) : isBTCC ? (
                 <>
-                  <div className="f1-tabs nascar-tabs btcc-tabs" style={{ overflowX: 'auto', gap: '8px', paddingBottom: '8px', whiteSpace: 'nowrap' }}>
+                  <div className="f1-tabs nascar-tabs btcc-tabs">
                     <button className={`nascar-tab-btn ${btccStandingsType === 'drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('drivers'); fetchCategoryStandings('BTCC'); }}>Pilotos</button>
                     <button className={`nascar-tab-btn ${btccStandingsType === 'manufacturers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('manufacturers'); fetchCategoryStandings('BTCC'); }}>Constructores</button>
                     <button className={`nascar-tab-btn ${btccStandingsType === 'teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('teams'); fetchCategoryStandings('BTCC'); }}>Equipos</button>
