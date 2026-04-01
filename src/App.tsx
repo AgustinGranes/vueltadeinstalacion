@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -31,8 +31,9 @@ const NASCART_LOGO = '/NASCART.png';
 const F1A_LOGO = '/F1A.png';
 const SUPERCARS_LOGO = '/SUPERCARS.png';
 const GTWC_LOGO = '/GT.png';
+const BTCC_LOGO = '/BTCC.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -61,6 +62,10 @@ const App = () => {
   const [f3Calendar, setF3Calendar] = useState<CalendarRace[]>([]);
   const [feCalendar, setFECalendar] = useState<CalendarRace[]>([]);
   const [f1aCalendar, setF1aCalendar] = useState<CalendarRace[]>([]);
+  const [btccNews, setBtccNews] = useState<NewsItem[]>([]);
+  const [btccCalendar, setBtccCalendar] = useState<CalendarRace[]>([]);
+  const [btccStandingsType, setBtccStandingsType] = useState<string>('drivers');
+  const [btccStandings, setBtccStandings] = useState<TCStandingRow[]>([]);
   const [supercarsCalendar, setSupercarsCalendar] = useState<CalendarRace[]>([]);
   const [gtwcCalendar, setGtwcCalendar] = useState<CalendarRace[]>([]);
   
@@ -190,6 +195,7 @@ const App = () => {
       else if (cat === 'F1A') setF1aCalendar(await dataService.getF1AcademyCalendar());
       else if (cat === 'SUPERCARS') setSupercarsCalendar(await dataService.getSUPERCARSCalendar());
       else if (cat === 'GTWC') setGtwcCalendar(await dataService.getGTWCCalendar());
+      else if (cat === 'BTCC') setBtccCalendar(await dataService.getBTCCCalendar());
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
@@ -197,7 +203,7 @@ const App = () => {
   }, [loadedData]);
 
   const fetchCategoryStandings = useCallback(async (cat: CategoryType) => {
-    const key = `${cat}-standings`;
+    const key = cat === 'BTCC' ? `${cat}-standings-${btccStandingsType}` : `${cat}-standings`;
     if (loadedData.has(key)) return;
     setIsCatStandLoading(true);
     try {
@@ -250,6 +256,8 @@ const App = () => {
         setSupercarsTeams(teams);
       } else if (cat === 'GTWC') {
         setGtwcStandings(await dataService.getGTWCStandings());
+      } else if (cat === 'BTCC') {
+        setBtccStandings(await dataService.getBTCCStandings(btccStandingsType));
       } else if (cat === 'MotoGP') {
         const res = await dataService.getMotoGPStandings();
         setMotoGPStandings(res);
@@ -257,7 +265,7 @@ const App = () => {
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
     finally { setIsCatStandLoading(false); }
-  }, [loadedData]);
+  }, [loadedData, btccStandingsType]);
 
   const fetchCategoryNews = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-news`;
@@ -287,6 +295,7 @@ const App = () => {
       else if (cat === 'F1A') setF1aNews(await dataService.getF1AcademyNews());
       else if (cat === 'SUPERCARS') setSupercarsNews(await dataService.getSUPERCARSNews());
       else if (cat === 'GTWC') setGtwcNews(await dataService.getGTWCNews());
+      else if (cat === 'BTCC') setBtccNews(await dataService.getBTCCNews());
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
@@ -313,6 +322,7 @@ const App = () => {
         dataService.getF3News(),
         dataService.getFENews(),
         dataService.getF1AcademyNews(),
+        dataService.getBTCCNews(),
         dataService.getSUPERCARSNews(),
         dataService.getMotoGPNews(),
       ]);
@@ -332,8 +342,9 @@ const App = () => {
       if (results[12].status === 'fulfilled') setF3News(results[12].value);
       if (results[13].status === 'fulfilled') setFENews(results[13].value);
       if (results[14].status === 'fulfilled') setF1aNews(results[14].value as NewsItem[]);
-      if (results[15].status === 'fulfilled') setSupercarsNews(results[15].value as NewsItem[]);
-      if (results[16].status === 'fulfilled') setMotoGPNews(results[16].value as NewsItem[]);
+      if (results[15].status === 'fulfilled') setBtccNews(results[15].value as NewsItem[]);
+      if (results[16].status === 'fulfilled') setSupercarsNews(results[16].value as NewsItem[]);
+      if (results[17].status === 'fulfilled') setMotoGPNews(results[17].value as NewsItem[]);
 
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
@@ -556,6 +567,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">MotoGP</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card btcc-card" onClick={() => handleCategoryClick('BTCC')} style={{ background: '#4B0082' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={BTCC_LOGO} 
+            alt="BTCC" 
+            className="cat-logo btcc-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">BTCC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
 
@@ -1148,6 +1171,7 @@ const App = () => {
     const isSUPERCARS = selectedCategory === 'SUPERCARS';
     const isGTWC = selectedCategory === 'GTWC';
     const isMotoGP = selectedCategory === 'MotoGP';
+    const isBTCC = selectedCategory === 'BTCC';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1174,6 +1198,7 @@ const App = () => {
     if (isSUPERCARS) logo = SUPERCARS_LOGO;
     if (isGTWC) logo = GTWC_LOGO;
     if (isMotoGP) logo = MotoGP_LOGO;
+    if (isBTCC) logo = BTCC_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -1408,6 +1433,24 @@ const App = () => {
               ) : isTCPPK ? (
                 <div className="tcppk-calendar-list">
                   {tcppkCalendar.length > 0 ? tcppkCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
+                </div>
+              ) : isBTCC ? (
+                <div className="btcc-calendar-list">
+                  {btccCalendar.length > 0 ? btccCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
@@ -1821,6 +1864,31 @@ const App = () => {
                       ))
                     )}
                     {((f1aStandingsTab === 'drivers' && f1aDrivers.length === 0) || (f1aStandingsTab === 'teams' && f1aTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isBTCC ? (
+                <>
+                  <div className="f1-tabs nascar-tabs btcc-tabs" style={{ overflowX: 'auto', gap: '8px', paddingBottom: '8px', whiteSpace: 'nowrap' }}>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('drivers'); fetchCategoryStandings('BTCC'); }}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'manufacturers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('manufacturers'); fetchCategoryStandings('BTCC'); }}>Constructores</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('teams'); fetchCategoryStandings('BTCC'); }}>Equipos</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-drivers'); fetchCategoryStandings('BTCC'); }}>Pilotos Indep.</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-teams'); fetchCategoryStandings('BTCC'); }}>Equipos Indep.</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'jack-sears-trophy' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('jack-sears-trophy'); fetchCategoryStandings('BTCC'); }}>Jack Sears</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'goodyear-wingfoot-award' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('goodyear-wingfoot-award'); fetchCategoryStandings('BTCC'); }}>Goodyear Wingfoot</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {btccStandings.map((row: any, idx: number) => (
+                      <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{row.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{row.driver || row.team || row.constructor}</span>
+                          {row.car && <span className="stand-sub">{row.car}</span>}
+                        </div>
+                        <span className="stand-pts">{row.points} pts</span>
+                      </div>
+                    ))}
+                    {btccStandings.length === 0 && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isMotoGP ? (

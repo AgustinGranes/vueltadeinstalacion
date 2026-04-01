@@ -54,6 +54,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'F1A': '#9c27b0',
   'SUPERCARS': '#e10600',
   'GTWC': '#e10600',
+  'BTCC': '#4B0082',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -165,6 +166,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'MotoGP': 'https://as.com/resultados/motor/motogp/clasificacion/races/',
   'F1A': 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/',
   'SUPERCARS': 'https://lat.motorsport.com/v8supercars/results/2026/sydney-500/',
+  'BTCC': 'https://btcc.net/results/race-results/2026-donington-park/',
 };
 
 export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
@@ -3999,5 +4001,115 @@ export const dataService = {
       });
     } catch (e) { console.error('[DataService] GTWC calendar error:', e); }
     return races;
+  },
+
+  // === BTCC NEWS ===
+  async getBTCCNews(): Promise<NewsItem[]> {
+    const news: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://btcc.net/news/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = Array.from(doc.querySelectorAll('.wpgb-card'));
+
+      items.forEach(item => {
+        const title = item.querySelector('.blogBlockTitle')?.textContent?.trim();
+        const link = item.querySelector('.wpgb-card-layer-link')?.getAttribute('href') || 
+                     item.querySelector('a')?.getAttribute('href');
+        const img = item.querySelector('.wpgb-noscript-img')?.getAttribute('src');
+
+        if (title && link) {
+          news.push({
+            title,
+            summary: '',
+            link: link.startsWith('http') ? link : 'https://btcc.net' + link,
+            source: 'BTCC Official',
+            category: 'BTCC',
+            imageUrl: img || undefined
+          });
+        }
+      });
+    } catch (e) { console.warn('[DataService] BTCC news error:', e); }
+    return news.slice(0, 15);
+  },
+
+  // === BTCC CALENDAR ===
+  async getBTCCCalendar(): Promise<CalendarRace[]> {
+    const races: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://btcc.net/calendar/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const items = doc.querySelectorAll('a.ct-link');
+      
+      items.forEach((item, idx) => {
+        const spans = Array.from(item.querySelectorAll('.innerBoxesBlock .ct-span'));
+        const circuit = spans.length > 0 ? spans[spans.length - 1].textContent?.trim() : '';
+        
+        const dateTexts = Array.from(item.querySelectorAll('.circuitDatesBlock .circuitDatesText'));
+        const dateStr = dateTexts.map(d => d.textContent?.trim()).join(' - ');
+        
+        if (circuit) {
+          races.push({
+            round: idx + 1,
+            race: circuit,
+            dates: dateStr,
+            status: 'Upcoming', // Default to upcoming unless we find a finished class
+            winner: ''
+          });
+        }
+      });
+    } catch (e) { console.error('[DataService] BTCC calendar error:', e); }
+    return races;
+  },
+
+  // === BTCC STANDINGS ===
+  async getBTCCStandings(type: string): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    const urls: Record<string, string> = {
+      'drivers': 'https://btcc.net/standings/drivers/',
+      'manufacturers': 'https://btcc.net/standings/manufacturers-constructors/',
+      'teams': 'https://btcc.net/standings/teams/',
+      'indie-drivers': 'https://btcc.net/standings/independent-drivers/',
+      'indie-teams': 'https://btcc.net/standings/independent-teams/',
+      'jack-sears': 'https://btcc.net/standings/jack-sears-trophy/',
+      'goodyear': 'https://btcc.net/standings/goodyear-wingfoot-award/'
+    };
+
+    try {
+      const url = urls[type] || urls['drivers'];
+      const html = await this.fetchWithProxy(url);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('.easy-table tr');
+
+      rows.forEach((row, idx) => {
+        if (idx === 0) return; // Skip header
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 3) return;
+
+        let pos = cells[0].textContent?.trim() || '';
+        let name = '';
+        let points = '';
+
+        if (type === 'manufacturers' || type === 'teams' || type === 'indie-teams') {
+          name = cells[1].textContent?.trim() || '';
+          points = cells[2].textContent?.trim() || '';
+        } else {
+          name = cells[2].textContent?.trim() || '';
+          points = cells[4].textContent?.trim() || '';
+        }
+
+        if (name) {
+          standings.push({
+            pos,
+            driver: name,
+            team: '',
+            points
+          });
+        }
+      });
+    } catch (e) { console.error(`[DataService] BTCC standings error (${type}):`, e); }
+    return standings;
   },
 };
