@@ -179,7 +179,7 @@ export const MotoGP_CONS_URL = 'https://lat.motorsport.com/motogp/standings/2026
 
 export const F1A_STANDINGS_URL = 'https://lat.motorsport.com/f1-academy/standings/2026/';
 export const F1A_NEWS_URL = 'https://lat.motorsport.com/f1-academy/news/';
-export const F1A_CALENDAR_URL = 'https://lat.motorsport.com/f1-academy/schedule/2026/';
+export const F1A_CALENDAR_URL = 'https://es.motorsport.com/f1-academy/schedule/2026/?all_event_types=0';
 
 export const IMSA_STANDINGS_URL = 'https://www.imsa.com/standings/';
 export const TNC3_STANDINGS_URL = 'https://apat.org.ar/campeonato/ranking/c3';
@@ -3871,15 +3871,39 @@ export const dataService = {
 
   // === F1 ACADEMY CALENDAR ===
   async getF1AcademyCalendar(): Promise<CalendarRace[]> {
-    const races: CalendarRace[] = [
-      { round: 1, race: 'SHANGHAI', dates: '14 de Marzo', status: 'Finished', winner: '✅ Finalizado' },
-      { round: 2, race: 'YEDA', dates: 'CANCELADO', status: 'Cancelled', winner: '' },
-      { round: 3, race: 'MONTREAL', dates: '24 de Mayo', status: 'Upcoming', winner: '' },
-      { round: 4, race: 'SILVERSTONE', dates: '05 de Julio', status: 'Upcoming', winner: '' },
-      { round: 5, race: 'ZANDVOORT', dates: '23 de Agosto', status: 'Upcoming', winner: '' },
-      { round: 6, race: 'COTA', dates: '25 de Octubre', status: 'Upcoming', winner: '' },
-      { round: 7, race: 'LAS VEGAS', dates: '21 de Noviembre', status: 'Upcoming', winner: '' },
-    ];
+    const races: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(F1A_CALENDAR_URL);
+      if (!html) throw new Error("Empty response from F1 Academy calendar");
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const items = doc.querySelectorAll('tbody.ms-schedule-table__item');
+      items.forEach((item, idx) => {
+        const raceNameElem = item.querySelector('.ms-schedule-table-item-main__event a.ms-link');
+        const raceName = raceNameElem?.textContent?.trim() || 'F1 Academy Event';
+        
+        const dateElem = item.querySelector('.ms-schedule-table-date--your time, .ms-schedule-table-date--local time, .ms-schedule-table-date--your, .ms-schedule-table-date--local');
+        const dateStr = dateElem?.textContent?.trim() || '';
+        
+        const isCancelled = item.classList.contains('ms-schedule-table__item--canceled') || item.textContent?.includes('CANCELADO');
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
+        
+        let status: CalendarRace['status'] = 'Finished';
+        if (isCancelled) status = 'Cancelled';
+        else if (isUpcoming) status = 'Upcoming';
+        
+        races.push({
+          round: idx + 1,
+          race: raceName.toUpperCase(),
+          dates: dateStr,
+          status,
+          winner: status === 'Finished' ? '✅ Finalizado' : ''
+        });
+      });
+    } catch (e) {
+      console.error('[DataService] F1 Academy calendar error:', e);
+      // Fallback or return empty
+    }
 
     // Find "Next" event (first Upcoming)
     let foundNext = false;
@@ -4205,23 +4229,25 @@ export const dataService = {
       
       items.forEach((item, idx) => {
         const dayStr = item.querySelector('.h4')?.textContent?.trim();
-        // Month is usually the first text-italic.text-uppercase.text-condensed
-        const monthStr = item.querySelector('.text-uppercase.text-italic.text-condensed')?.textContent?.trim();
-        
-        // Track name usually containing span.text-primary
-        const trackElem = item.querySelector('div.text-italic.text-uppercase.text-condensed:has(span.text-primary)') || 
-                          item.querySelectorAll('div.text-italic.text-uppercase.text-condensed')[1] ||
-                          item.querySelector('div.text-italic.text-uppercase.text-condensed');
-        
-        let trackName = trackElem?.textContent?.trim() || '';
+        // The month is often in the first .text-condensed element that isn't the track name
+        const dateInfos = item.querySelectorAll('.text-condensed');
+        let monthStr = '';
+        let trackName = '';
+
+        if (dateInfos.length >= 2) {
+            monthStr = dateInfos[0].textContent?.trim() || '';
+            trackName = dateInfos[1].textContent?.trim() || '';
+        } else if (dateInfos.length === 1) {
+            trackName = dateInfos[0].textContent?.trim() || '';
+        }
         
         // Remove event index number if present (e.g., "01 ")
         if (trackName.match(/^\d+\s+/)) {
             trackName = trackName.replace(/^\d+\s+/, '').trim();
         }
         
-        if (trackName && dayStr && monthStr) {
-          const dateStr = `${dayStr} ${monthStr} 2025`;
+        if (trackName && dayStr) {
+          const dateStr = `${dayStr} ${monthStr} 2026`;
           
           let status: CalendarRace['status'] = 'Upcoming';
           const isPast = item.closest('.past-events') || item.querySelector('.results-link, .link--results');
@@ -4241,8 +4267,6 @@ export const dataService = {
       let foundNext = false;
       races.forEach(r => {
         if (!foundNext && r.status === 'Upcoming') {
-          // Check if some previous logic can tell us it's next. 
-          // For now, we'll mark the first one. 
           r.status = 'Next';
           foundNext = true;
         }
@@ -4256,6 +4280,7 @@ export const dataService = {
     const standings: TCStandingRow[] = [];
     try {
       // Use the exact URL structure providing by the user with the class parameter
+      // We use 2026 as preferred, but Motorsport redirects to 2025 if empty.
       const url = `${DTM_STANDINGS_URL}?type=${type}&class=.`;
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
@@ -4263,8 +4288,8 @@ export const dataService = {
       
       const rows = doc.querySelectorAll('tr.ms-table_row, tbody tr');
       rows.forEach(row => {
-        const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim() || 
-                    row.querySelector('td:first-child')?.textContent?.trim() || '';
+        const posEl = row.querySelector('.ms-table_field--pos') || row.querySelector('td:first-child');
+        const pos = posEl?.textContent?.trim() || '';
         if (!pos || isNaN(parseInt(pos))) return;
 
         const ptsEl = row.querySelector('.ms-table_field--total_points, .ms-table_field--pts') || 
@@ -4275,12 +4300,12 @@ export const dataService = {
         let team = '';
         
         if (type === 'Driver') {
-          const infoWrapper = row.querySelector('.ms-table_field--driver .info-wrapper, .ms-table_field--driver, td:nth-child(2)');
-          if (infoWrapper) {
-            name = infoWrapper.querySelector('.name-short')?.textContent?.trim() || 
-                   infoWrapper.querySelector('.name')?.textContent?.trim() || 
-                   infoWrapper.textContent?.trim() || '';
-            team = infoWrapper.querySelector('.team')?.textContent?.trim() || '';
+          const nameCell = row.querySelector('.ms-table_field--driver, td:nth-child(2)');
+          if (nameCell) {
+            name = nameCell.querySelector('.name-short')?.textContent?.trim() || 
+                   nameCell.querySelector('.name')?.textContent?.trim() || 
+                   nameCell.textContent?.trim() || '';
+            team = nameCell.querySelector('.team')?.textContent?.trim() || '';
             
             if (!team) {
               team = row.querySelector('.ms-table_field--team')?.textContent?.trim() || '';
