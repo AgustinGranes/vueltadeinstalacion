@@ -569,7 +569,7 @@ const App = () => {
           <span className="cat-label">MotoGP</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card btcc-card" onClick={() => handleCategoryClick('BTCC')} style={{ background: '#4B0082' }}>
+        <button className="cat-card btcc-card" onClick={() => handleCategoryClick('BTCC')}>
           <div className="cat-card-glow" />
           <img 
             src={BTCC_LOGO} 
