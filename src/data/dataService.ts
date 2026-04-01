@@ -199,8 +199,8 @@ export const DTM_NEWS_URLS = [
   'https://es.motorsport.com/dtm/news/',
   'https://www.dtm.com/en/news/dtm'
 ];
-export const DTM_CALENDAR_URL = 'https://www.dtm.com/en/events';
-export const DTM_STANDINGS_URL = 'https://es.motorsport.com/dtm/standings/2026/';
+export const DTM_CALENDAR_URL = 'https://www.autosport.com/dtm/schedule/2026/?all_event_types=0';
+export const DTM_STANDINGS_URL = 'https://www.autosport.com/dtm/standings/';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -4225,42 +4225,28 @@ export const dataService = {
       if (!html) throw new Error("Empty response from DTM calendar");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const items = doc.querySelectorAll('.event-list__container');
-      
+      const items = doc.querySelectorAll('tbody.ms-schedule-table__item');
       items.forEach((item, idx) => {
-        const dayStr = item.querySelector('.h4')?.textContent?.trim();
-        // The month is often in the first .text-condensed element that isn't the track name
-        const dateInfos = item.querySelectorAll('.text-condensed');
-        let monthStr = '';
-        let trackName = '';
-
-        if (dateInfos.length >= 2) {
-            monthStr = dateInfos[0].textContent?.trim() || '';
-            trackName = dateInfos[1].textContent?.trim() || '';
-        } else if (dateInfos.length === 1) {
-            trackName = dateInfos[0].textContent?.trim() || '';
-        }
+        const raceNameElem = item.querySelector('.ms-schedule-table-item-main__event a.ms-link');
+        const raceName = raceNameElem?.textContent?.trim() || 'DTM Event';
         
-        // Remove event index number if present (e.g., "01 ")
-        if (trackName.match(/^\d+\s+/)) {
-            trackName = trackName.replace(/^\d+\s+/, '').trim();
-        }
+        const dateElem = item.querySelector('.ms-schedule-table-date--your time, .ms-schedule-table-date--local time, .ms-schedule-table-date--your, .ms-schedule-table-date--local');
+        const dateStr = dateElem?.textContent?.trim() || '';
         
-        if (trackName && dayStr) {
-          const dateStr = `${dayStr} ${monthStr} 2026`;
-          
-          let status: CalendarRace['status'] = 'Upcoming';
-          const isPast = item.closest('.past-events') || item.querySelector('.results-link, .link--results');
-          if (isPast) status = 'Finished';
-          
-          races.push({
-            round: idx + 1,
-            race: trackName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
-            dates: dateStr,
-            status,
-            winner: ''
-          });
-        }
+        const isCancelled = item.classList.contains('ms-schedule-table__item--canceled') || item.textContent?.includes('CANCELADO');
+        const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
+        
+        let status: CalendarRace['status'] = 'Finished';
+        if (isCancelled) status = 'Cancelled';
+        else if (isUpcoming) status = 'Upcoming';
+        
+        races.push({
+          round: idx + 1,
+          race: raceName.toUpperCase(),
+          dates: dateStr,
+          status,
+          winner: status === 'Finished' ? '✅ Finalizado' : ''
+        });
       });
 
       // Status Fix
@@ -4279,9 +4265,12 @@ export const dataService = {
   async getDTMStandings(type: 'Driver' | 'Team' | 'Constructor' = 'Driver'): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      // Use the exact URL structure providing by the user with the class parameter
-      // We use 2026 as preferred, but Motorsport redirects to 2025 if empty.
-      const url = `${DTM_STANDINGS_URL}?type=${type}&class=.`;
+      // Dynamic year: April 26, 2026 threshold
+      const now = new Date();
+      const threshold = new Date(2026, 3, 26); // April is index 3
+      const year = now >= threshold ? 2026 : 2025;
+      
+      const url = `${DTM_STANDINGS_URL}${year}/?type=${type}&class=.`;
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
