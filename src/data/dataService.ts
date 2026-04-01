@@ -4201,24 +4201,30 @@ export const dataService = {
       if (!html) throw new Error("Empty response from DTM calendar");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // Select cards that contain track names and dates
-      const cards = doc.querySelectorAll('.event-card, [class*="event-card"], .grid-item');
+      // Target the new event-list__container found by subagent
+      const items = doc.querySelectorAll('.event-list__item, .event-list__container > div, .event-card');
       
-      cards.forEach((card, idx) => {
-        const eventTitle = card.querySelector('.title, .track-name, [class*="track"], div.text-align--center')?.textContent?.trim();
-        const days = card.querySelector('.days, [class*="days"]')?.textContent?.trim();
-        const month = card.querySelector('.month, [class*="month"]')?.textContent?.trim();
+      items.forEach((item, idx) => {
+        // Date handling based on subagent report: h4 for days, next div for month
+        const dayStr = item.querySelector('h4')?.textContent?.trim();
+        const monthStr = item.querySelector('h4 + div')?.textContent?.trim() || 
+                         item.querySelector('.month')?.textContent?.trim();
         
-        if (eventTitle && days && month) {
-          const dateStr = `${days} ${month} 2026`;
+        // Track name usually next to a flag img or in specific classes
+        const trackElem = item.querySelector('.track-name, [class*="track"], .title');
+        const trackName = trackElem?.textContent?.trim() || 
+                          item.querySelector('div:has(img[src*="flag"])')?.textContent?.trim();
+        
+        if (trackName && dayStr && monthStr) {
+          const dateStr = `${dayStr} ${monthStr} 2026`;
           
           let status: CalendarRace['status'] = 'Upcoming';
-          const isPast = card.closest('.past-events, [id*="past"]') || card.querySelector('.results-link, .link--results');
+          const isPast = item.querySelector('a[href*="result"], .link--results, .results-link');
           if (isPast) status = 'Finished';
           
           races.push({
             round: idx + 1,
-            race: eventTitle.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+            race: trackName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
             dates: dateStr,
             status,
             winner: ''
@@ -4226,30 +4232,25 @@ export const dataService = {
         }
       });
 
-      // Fallback: search for .link--more and go up (as in previous version)
+      // Fallback for previous structure if needed
       if (races.length === 0) {
-        doc.querySelectorAll('.link--more').forEach((link, idx) => {
-          const card = link.parentElement;
-          if (!card) return;
-          const eventTitle = card.querySelector('div.text-align--center')?.textContent?.trim() || 'DTM Event';
-          const dayStr = card.querySelector('div > div:nth-child(2) > div:nth-child(1)')?.textContent?.trim() || '';
-          const monthStr = card.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent?.trim() || '';
-          const location = card.querySelector('div > div:nth-child(3) > div:nth-child(1) > div:nth-child(2)')?.textContent?.trim() || '';
-          
-          const dates = `${dayStr} ${monthStr}`;
-          const raceName = location ? `${eventTitle} - ${location}` : eventTitle;
-
-          races.push({
-            round: idx + 1,
-            race: raceName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
-            dates: dates,
-            status: 'Upcoming',
-            winner: ''
-          });
+        doc.querySelectorAll('.grid-item, .event-card').forEach((card, idx) => {
+          const eventTitle = card.querySelector('.title, .track-name, div.text-align--center')?.textContent?.trim();
+          const days = card.querySelector('.days, h4')?.textContent?.trim();
+          const month = card.querySelector('.month, .month-label')?.textContent?.trim();
+          if (eventTitle && days && month) {
+            races.push({
+              round: idx + 1,
+              race: eventTitle.trim(),
+              dates: `${days} ${month} 2026`,
+              status: 'Upcoming',
+              winner: ''
+            });
+          }
         });
       }
-      
-      // Fix first upcoming as "Next"
+
+      // Final pass to fix status
       let foundNext = false;
       races.forEach(r => {
         if (!foundNext && r.status === 'Upcoming') {
@@ -4257,7 +4258,6 @@ export const dataService = {
           foundNext = true;
         }
       });
-
     } catch (e) { console.error('[DataService] DTM calendar error:', e); }
     return races;
   },
@@ -4266,49 +4266,50 @@ export const dataService = {
   async getDTMStandings(type: 'Driver' | 'Team' | 'Constructor' = 'Driver'): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      // Use 2025 if 2026 is redirected or empty, or handle the URL flexibly
       const url = `${DTM_STANDINGS_URL}?type=${type}`;
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      const rows = doc.querySelectorAll('tr.ms-table_row');
+      const rows = doc.querySelectorAll('tr.ms-table_row, tbody tr');
       rows.forEach(row => {
-        const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim();
-        const ptsEl = row.querySelector('.ms-table_field--total_points') || row.querySelector('td:nth-child(3)');
-        const points = ptsEl?.textContent?.trim();
+        const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim() || 
+                    row.querySelector('td:first-child')?.textContent?.trim() || '';
+        if (!pos || isNaN(parseInt(pos))) return;
+
+        const ptsEl = row.querySelector('.ms-table_field--total_points, .ms-table_field--pts') || 
+                      row.querySelectorAll('td')[2];
+        const points = ptsEl?.textContent?.trim() || '0';
         
         let name = '';
         let team = '';
         
         if (type === 'Driver') {
-          const infoWrapper = row.querySelector('.ms-table_field--driver .info-wrapper, .ms-table_field--driver .ms-link');
+          const infoWrapper = row.querySelector('.ms-table_field--driver .info-wrapper, .ms-table_field--driver, td:nth-child(2)');
           if (infoWrapper) {
-            // New Motorsport.com structure separates name and team in nested spans
-            const spans = infoWrapper.querySelectorAll('span span');
-            if (spans.length >= 2) {
-              name = spans[0].textContent?.trim() || '';
-              team = spans[1].textContent?.trim() || '';
-            } else {
-              name = infoWrapper.textContent?.trim() || '';
+            name = infoWrapper.querySelector('.name-short')?.textContent?.trim() || 
+                   infoWrapper.querySelector('.name')?.textContent?.trim() || 
+                   infoWrapper.textContent?.trim() || '';
+            team = infoWrapper.querySelector('.team')?.textContent?.trim() || '';
+            
+            // If team selector failed, look for it in the row (sometimes it's a separate cell)
+            if (!team) {
+              team = row.querySelector('.ms-table_field--team')?.textContent?.trim() || '';
             }
-          } else {
-            name = row.querySelector('.ms-table_field--driver')?.textContent?.trim() || '';
           }
-        } else if (type === 'Team') {
-          name = row.querySelector('.ms-table_field--team .ms-link, .ms-table_field--team')?.textContent?.trim() || 
-                 row.querySelectorAll('td')[1]?.textContent?.trim() || '';
         } else {
-          name = row.querySelector('.ms-table_field--constructor .ms-link, .ms-table_field--constructor')?.textContent?.trim() || 
-                 row.querySelectorAll('td')[1]?.textContent?.trim() || '';
+          // Team or Constructor
+          const nameCell = row.querySelector('.ms-table_field--team, .ms-table_field--constructor, td:nth-child(2)');
+          name = nameCell?.querySelector('.name')?.textContent?.trim() || 
+                 nameCell?.textContent?.trim() || '';
         }
         
-        if (pos && name && !isNaN(parseInt(pos))) {
+        if (name) {
           standings.push({
             pos,
             driver: name,
             team: team,
-            points: points || '0'
+            points: points
           });
         }
       });
