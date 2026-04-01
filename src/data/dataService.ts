@@ -55,6 +55,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'SUPERCARS': '#e10600',
   'GTWC': '#e10600',
   'BTCC': '#4B0082',
+  'DTM': '#FFCC00',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -167,6 +168,7 @@ export const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'F1A': 'https://lat.motorsport.com/f1-academy/results/2026/shanghai-664714/',
   'SUPERCARS': 'https://lat.motorsport.com/v8supercars/results/2026/sydney-500/',
   'BTCC': 'https://btcc.net/results/race-results/2026-donington-park/',
+  'DTM': 'https://es.motorsport.com/dtm/results/2026',
 };
 
 export const MotoGP_CALENDAR_URL = 'https://lat.motorsport.com/motogp/schedule/2026/';
@@ -193,6 +195,13 @@ export const GTWC_NEWS_URL = 'https://www.gt-world-challenge.com/news';
 export const GTWC_STANDINGS_URL = 'https://www.gt-world-challenge.com/standings';
 export const GTWC_CALENDAR_URL = 'https://www.gt-world-challenge.com/calendar';
 
+export const DTM_NEWS_URLS = [
+  'https://es.motorsport.com/dtm/news/',
+  'https://www.dtm.com/en/news/dtm'
+];
+export const DTM_CALENDAR_URL = 'https://www.dtm.com/en/events';
+export const DTM_STANDINGS_URL = 'https://es.motorsport.com/dtm/standings/2026/';
+
 export type TC2000Standings = {
   drivers: TCStandingRow[];
   teams: TCStandingRow[];
@@ -213,6 +222,12 @@ export type WRCRallyResult = {
 };
 
 export type MotoGPStandings = {
+  drivers: TCStandingRow[];
+  teams: TCStandingRow[];
+  constructors: TCStandingRow[];
+};
+
+export type DTMStandings = {
   drivers: TCStandingRow[];
   teams: TCStandingRow[];
   constructors: TCStandingRow[];
@@ -4110,6 +4125,135 @@ export const dataService = {
         }
       });
     } catch (e) { console.error(`[DataService] BTCC standings error (${type}):`, e); }
+    return standings;
+  },
+
+  // === DTM NEWS ===
+  async getDTMNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    
+    // Source 1: Motorsport.com (Spanish)
+    try {
+      const html = await this.fetchWithProxy(DTM_NEWS_URLS[0]);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('.ms-item').forEach(art => {
+          const title = art.querySelector('.ms-item__title')?.textContent?.trim();
+          const link = art.querySelector('a.ms-item__title')?.getAttribute('href');
+          const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
+          if (title && link) {
+            allNews.push({
+              title, summary: '',
+              link: link.startsWith('/') ? `https://es.motorsport.com${link}` : link,
+              source: 'Motorsport.com',
+              category: 'DTM',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn('[DataService] Motorsport DTM news error:', e); }
+
+    // Source 2: DTM Official
+    try {
+      const html = await this.fetchWithProxy(DTM_NEWS_URLS[1]);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        doc.querySelectorAll('h4').forEach(h4 => {
+          const title = h4.textContent?.trim();
+          const card = h4.closest('div');
+          const link = card?.querySelector('a')?.getAttribute('href');
+          const img = card?.querySelector('img')?.getAttribute('src');
+          if (title && link) {
+            allNews.push({
+              title, summary: '',
+              link: link.startsWith('/') ? `https://www.dtm.com${link}` : link,
+              source: 'DTM Official',
+              category: 'DTM',
+              imageUrl: img ? (img.startsWith('http') ? img : `https://www.dtm.com${img}`) : undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.warn('[DataService] DTM Official news error:', e); }
+
+    const seen = new Set<string>();
+    return allNews.filter(n => {
+      const key = n.title.toLowerCase().slice(0, 40);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  },
+
+  // === DTM CALENDAR ===
+  async getDTMCalendar(): Promise<CalendarRace[]> {
+    const races: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(DTM_CALENDAR_URL);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // The selector div:has(> .link--more) is not directly supported by DOMParser, 
+      // but we can find .link--more and go up.
+      const moreLinks = doc.querySelectorAll('.link--more');
+      moreLinks.forEach((link, idx) => {
+        const card = link.parentElement;
+        if (!card) return;
+        
+        const eventTitle = card.querySelector('div.text-align--center')?.textContent?.trim() || 'DTM Event';
+        const dayStr = card.querySelector('div > div:nth-child(2) > div:nth-child(1)')?.textContent?.trim() || '';
+        const monthStr = card.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent?.trim() || '';
+        const location = card.querySelector('div > div:nth-child(3) > div:nth-child(1) > div:nth-child(2)')?.textContent?.trim() || '';
+        
+        const dates = `${dayStr} ${monthStr}`;
+        const raceName = location ? `${eventTitle} - ${location}` : eventTitle;
+
+        races.push({
+          round: idx + 1,
+          race: raceName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+          dates: dates,
+          status: 'Upcoming',
+          winner: ''
+        });
+      });
+    } catch (e) { console.error('[DataService] DTM calendar error:', e); }
+    return races;
+  },
+
+  // === DTM STANDINGS ===
+  async getDTMStandings(type: 'Driver' | 'Team' | 'Constructor' = 'Driver'): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const url = `${DTM_STANDINGS_URL}?type=${type}`;
+      const html = await this.fetchWithProxy(url);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const rows = doc.querySelectorAll('tr.ms-table_row');
+      rows.forEach(row => {
+        const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim();
+        const points = row.querySelector('.ms-table_field--total_points')?.textContent?.trim();
+        
+        let name = '';
+        if (type === 'Driver') {
+          name = row.querySelector('.ms-table_field--driver .ms-link')?.textContent?.trim() || '';
+        } else if (type === 'Team') {
+          name = row.querySelector('.ms-table_field--team .ms-link')?.textContent?.trim() || '';
+        } else {
+          name = row.querySelector('.ms-table_field--constructor .ms-link')?.textContent?.trim() || '';
+        }
+        
+        if (pos && name) {
+          standings.push({
+            pos,
+            driver: name,
+            team: '', // Not needed for unified table
+            points: points || '0'
+          });
+        }
+      });
+    } catch (e) { console.error(`[DataService] DTM standings error (${type}):`, e); }
     return standings;
   },
 };

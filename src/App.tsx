@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -32,8 +32,9 @@ const F1A_LOGO = '/F1A.png';
 const SUPERCARS_LOGO = '/SUPERCARS.png';
 const GTWC_LOGO = '/GT.png';
 const BTCC_LOGO = '/BTCC.png';
+const DTM_LOGO = '/DTM.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -68,6 +69,7 @@ const App = () => {
   const [btccStandings, setBtccStandings] = useState<TCStandingRow[]>([]);
   const [supercarsCalendar, setSupercarsCalendar] = useState<CalendarRace[]>([]);
   const [gtwcCalendar, setGtwcCalendar] = useState<CalendarRace[]>([]);
+  const [dtmCalendar, setDtmCalendar] = useState<CalendarRace[]>([]);
   
   const [f1Drivers, setF1Drivers] = useState<F1StandingsRow[]>([]);
   const [f1Constructors, setF1Constructor] = useState<F1ConstructorRow[]>([]);
@@ -95,6 +97,8 @@ const App = () => {
   const [supercarsDrivers, setSupercarsDrivers] = useState<TCStandingRow[]>([]);
   const [supercarsTeams, setSupercarsTeams] = useState<TCStandingRow[]>([]);
   const [gtwcStandings, setGtwcStandings] = useState<TCStandingRow[]>([]);
+  const [dtmStandings, setDtmStandings] = useState<any>({ drivers: [], teams: [], constructors: [] });
+  const [dtmStandingsTab, setDtmStandingsTab] = useState<'drivers' | 'teams' | 'constructors'>('drivers');
   const [supercarsStandingsTab, setSupercarsStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f1aStandingsTab, setF1aStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f2StandingsTab, setF2StandingsTab] = useState<'drivers' | 'teams'>('drivers');
@@ -118,6 +122,7 @@ const App = () => {
   const [f1aNews, setF1aNews] = useState<NewsItem[]>([]);
   const [supercarsNews, setSupercarsNews] = useState<NewsItem[]>([]);
   const [gtwcNews, setGtwcNews] = useState<NewsItem[]>([]);
+  const [dtmNews, setDtmNews] = useState<NewsItem[]>([]);
   const [tc2000StandingsTab, setTc2000StandingsTab] = useState<'drivers' | 'teams' | 'brands'>('drivers');
   const [nascarCalendar, setNascarCalendar] = useState<CalendarRace[]>([]);
   const [nascarStandings, setNascarStandings] = useState<NascarStandings>({ drivers: [], owners: [], manufacturers: [] });
@@ -196,6 +201,7 @@ const App = () => {
       else if (cat === 'SUPERCARS') setSupercarsCalendar(await dataService.getSUPERCARSCalendar());
       else if (cat === 'GTWC') setGtwcCalendar(await dataService.getGTWCCalendar());
       else if (cat === 'BTCC') setBtccCalendar(await dataService.getBTCCCalendar());
+      else if (cat === 'DTM') setDtmCalendar(await dataService.getDTMCalendar());
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
@@ -258,6 +264,13 @@ const App = () => {
         setGtwcStandings(await dataService.getGTWCStandings());
       } else if (cat === 'BTCC') {
         setBtccStandings(await dataService.getBTCCStandings(btccStandingsType));
+      } else if (cat === 'DTM') {
+        const [drivers, teams, constructors] = await Promise.all([
+          dataService.getDTMStandings('Driver'),
+          dataService.getDTMStandings('Team'),
+          dataService.getDTMStandings('Constructor')
+        ]);
+        setDtmStandings({ drivers, teams, constructors });
       } else if (cat === 'MotoGP') {
         const res = await dataService.getMotoGPStandings();
         setMotoGPStandings(res);
@@ -296,6 +309,7 @@ const App = () => {
       else if (cat === 'SUPERCARS') setSupercarsNews(await dataService.getSUPERCARSNews());
       else if (cat === 'GTWC') setGtwcNews(await dataService.getGTWCNews());
       else if (cat === 'BTCC') setBtccNews(await dataService.getBTCCNews());
+      else if (cat === 'DTM') setDtmNews(await dataService.getDTMNews());
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       setLoadedData(prev => new Set(prev).add(key));
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
@@ -579,6 +593,18 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">BTCC</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card dtm-card" onClick={() => handleCategoryClick('DTM')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={DTM_LOGO} 
+            alt="DTM" 
+            className="cat-logo dtm-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">DTM</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
 
@@ -1173,6 +1199,7 @@ const App = () => {
     const isGTWC = selectedCategory === 'GTWC';
     const isMotoGP = selectedCategory === 'MotoGP';
     const isBTCC = selectedCategory === 'BTCC';
+    const isDTM = selectedCategory === 'DTM';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1200,6 +1227,7 @@ const App = () => {
     if (isGTWC) logo = GTWC_LOGO;
     if (isMotoGP) logo = MotoGP_LOGO;
     if (isBTCC) logo = BTCC_LOGO;
+    if (isDTM) logo = DTM_LOGO;
 
     let catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
@@ -1226,6 +1254,7 @@ const App = () => {
     if (isSUPERCARS) catTitle = 'Supercars';
     if (isGTWC) catTitle = 'GT World Challenge';
     if (isMotoGP) catTitle = 'MotoGP';
+    if (isDTM) catTitle = 'DTM';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1253,6 +1282,7 @@ const App = () => {
     if (isGTWC) news = gtwcNews;
     if (isBTCC) news = btccNews;
     if (isMotoGP) news = motoGPNews;
+    if (isDTM) news = dtmNews;
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
@@ -1277,6 +1307,7 @@ const App = () => {
     if (isIMSA) resultsUrl = 'https://www.imsa.com/results/';
     if (isGTWC) resultsUrl = 'https://www.gt-world-challenge.com/calendar';
     if (isMotoGP) resultsUrl = 'https://www.motogp.com/es/results-statistics';
+    if (isDTM) resultsUrl = 'https://es.motorsport.com/dtm/results/2026';
 
 
     return (
@@ -1288,7 +1319,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isSUPERCARS ? 'supercars-logo' : ''} ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''} ${isGTWC ? 'gtwc-logo' : ''}`} 
+            className={`cat-header-logo ${isSUPERCARS ? 'supercars-logo' : ''} ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''} ${isGTWC ? 'gtwc-logo' : ''} ${isDTM ? 'dtm-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1453,6 +1484,24 @@ const App = () => {
               ) : isBTCC ? (
                 <div className="btcc-calendar-list">
                   {btccCalendar.length > 0 ? btccCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
+                </div>
+              ) : isDTM ? (
+                <div className="dtm-calendar-list">
+                  {dtmCalendar.length > 0 ? dtmCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
@@ -1770,6 +1819,51 @@ const App = () => {
                       ))
                     )}
                     {((f3StandingsTab === 'drivers' && f3Drivers.length === 0) || (f3StandingsTab === 'teams' && f3Teams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isDTM ? (
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Driver' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Driver')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Team' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Team')}>Equipos</button>
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Constructor' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Constructor')}>Constructores</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {dtmStandingsTab === 'Driver' ? (
+                      dtmStandings.drivers.map((d, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver}</span>
+                            <span className="stand-sub">{d.team}</span>
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))
+                    ) : dtmStandingsTab === 'Team' ? (
+                      dtmStandings.teams.map((t, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{t.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{t.team}</span>
+                          </div>
+                          <span className="stand-pts">{t.points} pts</span>
+                        </div>
+                      ))
+                    ) : (
+                      dtmStandings.constructors.map((c, idx) => (
+                        <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{c.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{c.manufacturer}</span>
+                          </div>
+                          <span className="stand-pts">{c.points} pts</span>
+                        </div>
+                      ))
+                    )}
+                    {((dtmStandingsTab === 'Driver' && dtmStandings.drivers.length === 0) || 
+                      (dtmStandingsTab === 'Team' && dtmStandings.teams.length === 0) ||
+                      (dtmStandingsTab === 'Constructor' && dtmStandings.constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isSUPERCARS ? (
