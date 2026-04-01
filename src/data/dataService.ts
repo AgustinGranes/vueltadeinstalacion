@@ -3883,7 +3883,7 @@ export const dataService = {
         const raceName = raceNameElem?.textContent?.trim() || 'F1 Academy Event';
         
         const dateElem = item.querySelector('.ms-schedule-table-date--your time, .ms-schedule-table-date--local time, .ms-schedule-table-date--your, .ms-schedule-table-date--local');
-        const dateStr = dateElem?.textContent?.trim() || '';
+        const dateStr = dateElem?.textContent?.trim().replace(/\*/g, '').trim() || '';
         
         const isCancelled = item.classList.contains('ms-schedule-table__item--canceled') || item.textContent?.includes('CANCELADO');
         const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');
@@ -4231,7 +4231,7 @@ export const dataService = {
         const raceName = raceNameElem?.textContent?.trim() || 'DTM Event';
         
         const dateElem = item.querySelector('.ms-schedule-table-date--your time, .ms-schedule-table-date--local time, .ms-schedule-table-date--your, .ms-schedule-table-date--local');
-        const dateStr = dateElem?.textContent?.trim() || '';
+        const dateStr = dateElem?.textContent?.trim().replace(/\*/g, '').trim() || '';
         
         const isCancelled = item.classList.contains('ms-schedule-table__item--canceled') || item.textContent?.includes('CANCELADO');
         const isUpcoming = item.classList.contains('ms-schedule-table__item--upcoming');

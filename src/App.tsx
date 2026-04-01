@@ -1231,7 +1231,8 @@ const App = () => {
     if (isBTCC) logo = BTCC_LOGO;
     if (isDTM) logo = DTM_LOGO;
 
-    let catTitle = 'Formula 1';
+    let catTitle = '';
+    if (isF1) catTitle = 'Formula 1';
     if (isWRC) catTitle = 'World Rally Championship';
     if (isWRC2) catTitle = 'WRC2';
     if (isTC) catTitle = 'Turismo Carretera';
@@ -1253,10 +1254,11 @@ const App = () => {
     if (isF3) catTitle = 'Formula 3';
     if (isFE) catTitle = 'Formula E';
     if (isF1A) catTitle = 'F1 Academy';
-    if (isSUPERCARS) catTitle = 'Supercars';
     if (isGTWC) catTitle = 'GT World Challenge';
-    if (isMotoGP) catTitle = 'MotoGP';
+    if (isBTCC) catTitle = 'BTCC';
     if (isDTM) catTitle = 'DTM';
+    if (isMotoGP) catTitle = 'MotoGP';
+    if (isSUPERCARS) catTitle = 'Supercars';
 
     let news = f1News;
     if (isWRC) news = wrcNews;

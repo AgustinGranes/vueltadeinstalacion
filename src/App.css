@@ -1986,3 +1986,12 @@
   background: #4B0082 !important;
   border-bottom: none !important;
 }
+
+/* Logo Size Overrides for Headers */
+.cat-header-logo.gtwc-logo,
+.cat-header-logo.btcc-logo,
+.cat-header-logo.wrc-logo {
+  height: 48px !important;
+  width: auto;
+  margin-right: 8px;
+}
