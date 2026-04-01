@@ -1961,7 +1961,7 @@
 /* BTCC Styles */
 .btcc-logo { width: 100px; height: auto; transition: transform 0.3s ease; }
 .btcc-logo:hover { transform: scale(1.05); }
-.f1a-card, .btcc-card, .tcppk-card { border-bottom: 4px solid #4B0082 !important; background: linear-gradient(145deg, rgba(75, 0, 130, 0.15) 0%, rgba(26, 26, 26, 0.95) 100%) !important; }
+.f1a-card, .btcc-card, .tcppk-card { border-bottom: 4px solid #4B0082 !important; background: #4B0082 !important; }
 .btcc-tabs { display: flex; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; gap: 8px; padding: 4px 0 12px; margin-bottom: 8px; }
 .btcc-tabs::-webkit-scrollbar { display: none; }
 .btcc-tabs .nascar-tab-btn { flex: 0 0 auto; white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid transparent; transition: all 0.2s ease; }
