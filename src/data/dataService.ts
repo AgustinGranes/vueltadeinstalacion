@@ -4135,23 +4135,26 @@ export const dataService = {
     // Source 1: Motorsport.com (Spanish)
     try {
       const html = await this.fetchWithProxy(DTM_NEWS_URLS[0]);
-      if (html) {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        doc.querySelectorAll('.ms-item').forEach(art => {
-          const title = art.querySelector('.ms-item__title')?.textContent?.trim();
-          const link = art.querySelector('a.ms-item__title')?.getAttribute('href');
-          const img = art.querySelector('img')?.getAttribute('src') || art.querySelector('img')?.getAttribute('data-src');
-          if (title && link) {
-            allNews.push({
-              title, summary: '',
-              link: link.startsWith('/') ? `https://es.motorsport.com${link}` : link,
-              source: 'Motorsport.com',
-              category: 'DTM',
-              imageUrl: img || undefined
-            });
-          }
-        });
-      }
+      if (!html) throw new Error("Empty response from Motorsport.com DTM news");
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // Updated selectors for Motorsport.com ms-item structure
+      doc.querySelectorAll('a.ms-item, .ms-item').forEach(card => {
+        const title = card.querySelector('.ms-item__title, .ms-item_title, h2, h3')?.textContent?.trim() || card.textContent?.trim();
+        const link = card.getAttribute('href') || card.querySelector('a')?.getAttribute('href');
+        const img = card.querySelector('img')?.getAttribute('data-src') || card.querySelector('img')?.getAttribute('src');
+        
+        if (title && link && title.length > 10) {
+          allNews.push({
+            title, 
+            summary: '',
+            link: link.startsWith('/') ? `https://es.motorsport.com${link}` : link,
+            source: 'Motorsport.com',
+            category: 'DTM',
+            imageUrl: img || undefined
+          });
+        }
+      });
     } catch (e) { console.warn('[DataService] Motorsport DTM news error:', e); }
 
     // Source 2: DTM Official
@@ -4159,11 +4162,15 @@ export const dataService = {
       const html = await this.fetchWithProxy(DTM_NEWS_URLS[1]);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        doc.querySelectorAll('h4').forEach(h4 => {
-          const title = h4.textContent?.trim();
-          const card = h4.closest('div');
-          const link = card?.querySelector('a')?.getAttribute('href');
-          const img = card?.querySelector('img')?.getAttribute('src');
+        doc.querySelectorAll('.news-teaser, .teaser-item, article, h4').forEach(card => {
+          const titleElem = card.tagName === 'H4' ? card : card.querySelector('h2, h3, h4, .title');
+          const linkElem = card.tagName === 'A' ? card : card.querySelector('a');
+          const imgElem = card.querySelector('img');
+          
+          const title = titleElem?.textContent?.trim();
+          const link = linkElem?.getAttribute('href') || card.closest('a')?.getAttribute('href');
+          const img = imgElem?.getAttribute('src') || imgElem?.getAttribute('data-src');
+          
           if (title && link) {
             allNews.push({
               title, summary: '',
@@ -4191,32 +4198,66 @@ export const dataService = {
     const races: CalendarRace[] = [];
     try {
       const html = await this.fetchWithProxy(DTM_CALENDAR_URL);
-      if (!html) return [];
+      if (!html) throw new Error("Empty response from DTM calendar");
       const doc = new DOMParser().parseFromString(html, 'text/html');
       
-      // The selector div:has(> .link--more) is not directly supported by DOMParser, 
-      // but we can find .link--more and go up.
-      const moreLinks = doc.querySelectorAll('.link--more');
-      moreLinks.forEach((link, idx) => {
-        const card = link.parentElement;
-        if (!card) return;
+      // Select cards that contain track names and dates
+      const cards = doc.querySelectorAll('.event-card, [class*="event-card"], .grid-item');
+      
+      cards.forEach((card, idx) => {
+        const eventTitle = card.querySelector('.title, .track-name, [class*="track"], div.text-align--center')?.textContent?.trim();
+        const days = card.querySelector('.days, [class*="days"]')?.textContent?.trim();
+        const month = card.querySelector('.month, [class*="month"]')?.textContent?.trim();
         
-        const eventTitle = card.querySelector('div.text-align--center')?.textContent?.trim() || 'DTM Event';
-        const dayStr = card.querySelector('div > div:nth-child(2) > div:nth-child(1)')?.textContent?.trim() || '';
-        const monthStr = card.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent?.trim() || '';
-        const location = card.querySelector('div > div:nth-child(3) > div:nth-child(1) > div:nth-child(2)')?.textContent?.trim() || '';
-        
-        const dates = `${dayStr} ${monthStr}`;
-        const raceName = location ? `${eventTitle} - ${location}` : eventTitle;
-
-        races.push({
-          round: idx + 1,
-          race: raceName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
-          dates: dates,
-          status: 'Upcoming',
-          winner: ''
-        });
+        if (eventTitle && days && month) {
+          const dateStr = `${days} ${month} 2026`;
+          
+          let status: CalendarRace['status'] = 'Upcoming';
+          const isPast = card.closest('.past-events, [id*="past"]') || card.querySelector('.results-link, .link--results');
+          if (isPast) status = 'Finished';
+          
+          races.push({
+            round: idx + 1,
+            race: eventTitle.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+            dates: dateStr,
+            status,
+            winner: ''
+          });
+        }
       });
+
+      // Fallback: search for .link--more and go up (as in previous version)
+      if (races.length === 0) {
+        doc.querySelectorAll('.link--more').forEach((link, idx) => {
+          const card = link.parentElement;
+          if (!card) return;
+          const eventTitle = card.querySelector('div.text-align--center')?.textContent?.trim() || 'DTM Event';
+          const dayStr = card.querySelector('div > div:nth-child(2) > div:nth-child(1)')?.textContent?.trim() || '';
+          const monthStr = card.querySelector('div > div:nth-child(2) > div:nth-child(2)')?.textContent?.trim() || '';
+          const location = card.querySelector('div > div:nth-child(3) > div:nth-child(1) > div:nth-child(2)')?.textContent?.trim() || '';
+          
+          const dates = `${dayStr} ${monthStr}`;
+          const raceName = location ? `${eventTitle} - ${location}` : eventTitle;
+
+          races.push({
+            round: idx + 1,
+            race: raceName.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim(),
+            dates: dates,
+            status: 'Upcoming',
+            winner: ''
+          });
+        });
+      }
+      
+      // Fix first upcoming as "Next"
+      let foundNext = false;
+      races.forEach(r => {
+        if (!foundNext && r.status === 'Upcoming') {
+          r.status = 'Next';
+          foundNext = true;
+        }
+      });
+
     } catch (e) { console.error('[DataService] DTM calendar error:', e); }
     return races;
   },
@@ -4225,6 +4266,7 @@ export const dataService = {
   async getDTMStandings(type: 'Driver' | 'Team' | 'Constructor' = 'Driver'): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
+      // Use 2025 if 2026 is redirected or empty, or handle the URL flexibly
       const url = `${DTM_STANDINGS_URL}?type=${type}`;
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
@@ -4233,22 +4275,39 @@ export const dataService = {
       const rows = doc.querySelectorAll('tr.ms-table_row');
       rows.forEach(row => {
         const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim();
-        const points = row.querySelector('.ms-table_field--total_points')?.textContent?.trim();
+        const ptsEl = row.querySelector('.ms-table_field--total_points') || row.querySelector('td:nth-child(3)');
+        const points = ptsEl?.textContent?.trim();
         
         let name = '';
+        let team = '';
+        
         if (type === 'Driver') {
-          name = row.querySelector('.ms-table_field--driver .ms-link')?.textContent?.trim() || '';
+          const infoWrapper = row.querySelector('.ms-table_field--driver .info-wrapper, .ms-table_field--driver .ms-link');
+          if (infoWrapper) {
+            // New Motorsport.com structure separates name and team in nested spans
+            const spans = infoWrapper.querySelectorAll('span span');
+            if (spans.length >= 2) {
+              name = spans[0].textContent?.trim() || '';
+              team = spans[1].textContent?.trim() || '';
+            } else {
+              name = infoWrapper.textContent?.trim() || '';
+            }
+          } else {
+            name = row.querySelector('.ms-table_field--driver')?.textContent?.trim() || '';
+          }
         } else if (type === 'Team') {
-          name = row.querySelector('.ms-table_field--team .ms-link')?.textContent?.trim() || '';
+          name = row.querySelector('.ms-table_field--team .ms-link, .ms-table_field--team')?.textContent?.trim() || 
+                 row.querySelectorAll('td')[1]?.textContent?.trim() || '';
         } else {
-          name = row.querySelector('.ms-table_field--constructor .ms-link')?.textContent?.trim() || '';
+          name = row.querySelector('.ms-table_field--constructor .ms-link, .ms-table_field--constructor')?.textContent?.trim() || 
+                 row.querySelectorAll('td')[1]?.textContent?.trim() || '';
         }
         
-        if (pos && name) {
+        if (pos && name && !isNaN(parseInt(pos))) {
           standings.push({
             pos,
             driver: name,
-            team: '', // Not needed for unified table
+            team: team,
             points: points || '0'
           });
         }

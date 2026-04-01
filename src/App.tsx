@@ -339,6 +339,7 @@ const App = () => {
         dataService.getBTCCNews(),
         dataService.getSUPERCARSNews(),
         dataService.getMotoGPNews(),
+        dataService.getDTMNews(),
       ]);
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
@@ -359,6 +360,7 @@ const App = () => {
       if (results[15].status === 'fulfilled') setBtccNews(results[15].value as NewsItem[]);
       if (results[16].status === 'fulfilled') setSupercarsNews(results[16].value as NewsItem[]);
       if (results[17].status === 'fulfilled') setMotoGPNews(results[17].value as NewsItem[]);
+      if (results[18].status === 'fulfilled') setDtmNews(results[18].value as NewsItem[]);
 
       setLoadedData(prev => new Set(prev).add('globalNews'));
     } catch (e) {
