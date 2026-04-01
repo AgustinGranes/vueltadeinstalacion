@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
-import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings } from './data/dataService';
+import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import './App.css';
 
 type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM';
@@ -97,7 +97,7 @@ const App = () => {
   const [supercarsDrivers, setSupercarsDrivers] = useState<TCStandingRow[]>([]);
   const [supercarsTeams, setSupercarsTeams] = useState<TCStandingRow[]>([]);
   const [gtwcStandings, setGtwcStandings] = useState<TCStandingRow[]>([]);
-  const [dtmStandings, setDtmStandings] = useState<any>({ drivers: [], teams: [], constructors: [] });
+  const [dtmStandings, setDtmStandings] = useState<DTMStandings>({ drivers: [], teams: [], constructors: [] });
   const [dtmStandingsTab, setDtmStandingsTab] = useState<'drivers' | 'teams' | 'constructors'>('drivers');
   const [supercarsStandingsTab, setSupercarsStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [f1aStandingsTab, setF1aStandingsTab] = useState<'drivers' | 'teams'>('drivers');
@@ -1824,13 +1824,13 @@ const App = () => {
               ) : isDTM ? (
                 <>
                   <div className="f1-tabs nascar-tabs">
-                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Driver' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Driver')}>Pilotos</button>
-                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Team' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Team')}>Equipos</button>
-                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'Constructor' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('Constructor')}>Constructores</button>
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('drivers')}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'teams' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('teams')}>Equipos</button>
+                    <button className={`nascar-tab-btn ${dtmStandingsTab === 'constructors' ? 'active' : ''}`} onClick={() => setDtmStandingsTab('constructors')}>Constructores</button>
                   </div>
                   <div className="standings-list f1-standings">
-                    {dtmStandingsTab === 'Driver' ? (
-                      dtmStandings.drivers.map((d, idx) => (
+                    {dtmStandingsTab === 'drivers' ? (
+                      dtmStandings.drivers.map((d: TCStandingRow, idx: number) => (
                         <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{d.pos}</span>
                           <div className="stand-info">
@@ -1840,30 +1840,30 @@ const App = () => {
                           <span className="stand-pts">{d.points} pts</span>
                         </div>
                       ))
-                    ) : dtmStandingsTab === 'Team' ? (
-                      dtmStandings.teams.map((t, idx) => (
+                    ) : dtmStandingsTab === 'teams' ? (
+                      dtmStandings.teams.map((t: TCStandingRow, idx: number) => (
                         <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{t.pos}</span>
                           <div className="stand-info">
-                            <span className="stand-name">{t.team}</span>
+                            <span className="stand-name">{t.driver}</span>
                           </div>
                           <span className="stand-pts">{t.points} pts</span>
                         </div>
                       ))
                     ) : (
-                      dtmStandings.constructors.map((c, idx) => (
+                      dtmStandings.constructors.map((c: TCStandingRow, idx: number) => (
                         <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                           <span className="stand-pos">{c.pos}</span>
                           <div className="stand-info">
-                            <span className="stand-name">{c.manufacturer}</span>
+                            <span className="stand-name">{c.driver}</span>
                           </div>
                           <span className="stand-pts">{c.points} pts</span>
                         </div>
                       ))
                     )}
-                    {((dtmStandingsTab === 'Driver' && dtmStandings.drivers.length === 0) || 
-                      (dtmStandingsTab === 'Team' && dtmStandings.teams.length === 0) ||
-                      (dtmStandingsTab === 'Constructor' && dtmStandings.constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                    {((dtmStandingsTab === 'drivers' && dtmStandings.drivers.length === 0) || 
+                      (dtmStandingsTab === 'teams' && dtmStandings.teams.length === 0) ||
+                      (dtmStandingsTab === 'constructors' && dtmStandings.constructors.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
               ) : isSUPERCARS ? (
