@@ -619,7 +619,7 @@ const App = () => {
           <span className="cat-label">DTM</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card sf-card" onClick={() => handleCategoryClick('SF')} style={{ background: '#FFFFFF' }}>
+        <button className="cat-card sf-card" onClick={() => handleCategoryClick('SF')}>
           <div className="cat-card-glow" />
           <img 
             src={SF_LOGO} 
@@ -628,8 +628,8 @@ const App = () => {
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
-          <span className="cat-label" style={{ color: '#000000' }}>Super Formula</span>
-          <ChevronRight size={18} className="cat-arrow" style={{ color: '#000000' }} />
+          <span className="cat-label">Super Formula</span>
+          <ChevronRight size={18} className="cat-arrow" />
         </button>
 
         <button className="cat-card wrc-card" onClick={() => handleCategoryClick('WRC')}>
