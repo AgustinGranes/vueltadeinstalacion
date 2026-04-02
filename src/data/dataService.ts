@@ -4109,14 +4109,15 @@ export const dataService = {
       'drivers': 'https://btcc.net/standings/drivers/',
       'manufacturers': 'https://btcc.net/standings/manufacturers-constructors/',
       'teams': 'https://btcc.net/standings/teams/',
-      'indie-drivers': 'https://btcc.net/standings/independent-drivers/',
-      'indie-teams': 'https://btcc.net/standings/independent-teams/',
-      'jack-sears': 'https://btcc.net/standings/jack-sears-trophy/',
-      'goodyear': 'https://btcc.net/standings/goodyear-wingfoot-award/'
+      'independent-drivers': 'https://btcc.net/standings/independent-drivers/',
+      'independent-teams': 'https://btcc.net/standings/independent-teams/',
+      'jack-sears-trophy': 'https://btcc.net/standings/jack-sears-trophy/',
+      'goodyear-wingfoot-award': 'https://btcc.net/standings/goodyear-wingfoot-award/'
     };
 
     try {
       const url = urls[type] || urls['drivers'];
+      console.log(`[DataService] Requesting BTCC standings: ${type} from ${url}`);
       const html = await this.fetchWithProxy(url);
       if (!html) return [];
       const doc = new DOMParser().parseFromString(html, 'text/html');

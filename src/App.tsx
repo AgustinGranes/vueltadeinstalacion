@@ -212,6 +212,7 @@ const App = () => {
     const key = cat === 'BTCC' ? `${cat}-standings-${btccStandingsType}` : `${cat}-standings`;
     if (loadedData.has(key)) return;
     setIsCatStandLoading(true);
+    if (cat === 'BTCC') setBtccStandings([]); // Clear while loading new type
     try {
       if (cat === 'F1') {
         const res = await dataService.getF1StandingsFull();
@@ -1969,13 +1970,13 @@ const App = () => {
               ) : isBTCC ? (
                 <>
                   <div className="f1-tabs nascar-tabs btcc-tabs">
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('drivers'); fetchCategoryStandings('BTCC'); }}>Pilotos</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'manufacturers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('manufacturers'); fetchCategoryStandings('BTCC'); }}>Constructores</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('teams'); fetchCategoryStandings('BTCC'); }}>Equipos</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-drivers'); fetchCategoryStandings('BTCC'); }}>Pilotos Indep.</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-teams'); fetchCategoryStandings('BTCC'); }}>Equipos Indep.</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'jack-sears-trophy' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('jack-sears-trophy'); fetchCategoryStandings('BTCC'); }}>Jack Sears</button>
-                    <button className={`nascar-tab-btn ${btccStandingsType === 'goodyear-wingfoot-award' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('goodyear-wingfoot-award'); fetchCategoryStandings('BTCC'); }}>Goodyear Wingfoot</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('drivers'); }}>Pilotos</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'manufacturers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('manufacturers'); }}>Constructores</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('teams'); }}>Equipos</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-drivers' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-drivers'); }}>Pilotos Indep.</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'independent-teams' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('independent-teams'); }}>Equipos Indep.</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'jack-sears-trophy' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('jack-sears-trophy'); }}>Jack Sears</button>
+                    <button className={`nascar-tab-btn ${btccStandingsType === 'goodyear-wingfoot-award' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('goodyear-wingfoot-award'); }}>Goodyear Wingfoot</button>
                   </div>
                   <div className="standings-list f1-standings">
                     {btccStandings.map((row: any, idx: number) => (
