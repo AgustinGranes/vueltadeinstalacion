@@ -56,6 +56,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'GTWC': '#e10600',
   'BTCC': '#4B0082',
   'DTM': '#FFCC00',
+  'SF': '#1a1a1a',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -4332,4 +4333,131 @@ export const dataService = {
     } catch (e) { console.error(`[DataService] DTM standings error (${type}):`, e); }
     return standings;
   },
+
+  // === SUPER FORMULA ===
+  async getSFCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://www.autosport.com/super-formula/schedule/2026/');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const bodies = doc.querySelectorAll('.ms-schedule-table tbody.ms-schedule-table__item');
+      
+      bodies.forEach((body, idx) => {
+        const mainRow = body.querySelector('tr');
+        if (!mainRow) return;
+
+        const nameCell = mainRow.querySelector('.ms-schedule-table__cell--main a');
+        const dateCell = mainRow.querySelectorAll('.ms-schedule-table__cell')[1];
+        
+        const race = nameCell?.textContent?.trim() || 'TBA';
+        const dates = dateCell?.textContent?.trim() || '';
+        
+        let status: CalendarRace['status'] = 'Upcoming';
+        if (body.classList.contains('ms-schedule-table__item--complete')) status = 'Finished';
+        else if (body.classList.contains('ms-schedule-table__item--open')) status = 'Live';
+
+        calendar.push({
+          round: idx + 1,
+          race,
+          dates,
+          status,
+          winner: '' // Winner is usually on another page
+        });
+      });
+    } catch (e) { console.error('[DataService] SF calendar error:', e); }
+    return calendar;
+  },
+
+  async getSFStandings(type: 'drivers' | 'teams'): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const now = new Date();
+      // April 6, 2026 is the cutoff for the teams URL
+      const cutoffDate = new Date('2026-04-06');
+      const teamsYear = now >= cutoffDate ? '2026' : '2025';
+      
+      const url = type === 'drivers' 
+        ? 'https://www.autosport.com/super-formula/standings/2026/' 
+        : `https://www.autosport.com/super-formula/standings/${teamsYear}/?type=Team&class=`;
+        
+      const html = await this.fetchWithProxy(url);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = doc.querySelectorAll('table.ms-table--standings tbody tr.ms-table_row');
+      
+      rows.forEach(row => {
+        const pos = row.querySelector('.ms-table_field--pos')?.textContent?.trim() || '';
+        const points = row.querySelector('.ms-table_field--total_points')?.textContent?.trim() || '';
+        
+        let name = '';
+        if (type === 'drivers') {
+          name = row.querySelector('.ms-table_field--driver .info-wrapper')?.textContent?.trim() || '';
+        } else {
+          name = row.querySelector('.ms-table_field--team .info-wrapper')?.textContent?.trim() || '';
+        }
+        
+        if (name) {
+          standings.push({
+            pos,
+            driver: name,
+            team: '',
+            points
+          });
+        }
+      });
+    } catch (e) { console.error(`[DataService] SF standings error (${type}):`, e); }
+    return standings;
+  },
+
+  async getSFNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    // Source 1: Motorsport.com
+    try {
+      const html = await this.fetchWithProxy('https://es.motorsport.com/super-formula/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('a.ms-item');
+        items.forEach(item => {
+          const title = item.querySelector('.ms-item__title')?.textContent?.trim();
+          const link = (item as HTMLAnchorElement).href;
+          const img = item.querySelector('img')?.getAttribute('src');
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://es.motorsport.com${link}`,
+              source: 'Motorsport.com',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] SF News (Motorsport) error:', e); }
+
+    // Source 2: Autosport.com
+    try {
+      const html = await this.fetchWithProxy('https://www.autosport.com/super-formula/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('a.ms-item');
+        items.forEach(item => {
+          const title = item.querySelector('.ms-item__title')?.textContent?.trim();
+          const link = (item as HTMLAnchorElement).href;
+          const img = item.querySelector('img')?.getAttribute('src');
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://www.autosport.com${link}`,
+              source: 'Autosport',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] SF News (Autosport) error:', e); }
+
+    return allNews.slice(0, 15);
+  }
 };
