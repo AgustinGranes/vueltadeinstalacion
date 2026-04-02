@@ -4132,12 +4132,23 @@ export const dataService = {
         let name = '';
         let points = '';
 
-        if (type === 'manufacturers' || type === 'teams' || type === 'indie-teams') {
-          name = cells[1].textContent?.trim() || '';
-          points = cells[2].textContent?.trim() || '';
+        if (type === 'manufacturers' || type === 'teams' || type === 'independent-teams') {
+          // Structure: Pos(0), Team/Manufacturer(1), Total(2)
+          name = cells[1]?.textContent?.trim() || '';
+          points = cells[2]?.textContent?.trim() || '';
+        } else if (type === 'goodyear-wingfoot-award') {
+          // Structure: Pos(0), No(1), Driver(2), Total(3)
+          name = cells[2]?.textContent?.trim() || '';
+          points = cells[3]?.textContent?.trim() || '';
+        } else if (type === 'drivers') {
+          // Structure: Pos(0), No(1), Driver(2), CL(3), Total(4)
+          name = cells[2]?.textContent?.trim() || '';
+          points = cells[4]?.textContent?.trim() || '';
         } else {
-          name = cells[2].textContent?.trim() || '';
-          points = cells[4].textContent?.trim() || '';
+          // independent-drivers, jack-sears-trophy
+          // Structure: Pos(0), No(1), Driver(2), Total(3)
+          name = cells[2]?.textContent?.trim() || '';
+          points = cells[3]?.textContent?.trim() || '';
         }
 
         if (name) {

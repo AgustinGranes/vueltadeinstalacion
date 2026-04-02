@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
@@ -162,7 +162,7 @@ const App = () => {
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>('upcoming');
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
 
-  const [loadedData, setLoadedData] = useState<Set<string>>(new Set());
+  const loadedDataRef = useRef<Set<string>>(new Set());
 
   // Filter states
   const [selectedNewsCategories, setSelectedNewsCategories] = useState<string[]>(NEWS_CATEGORIES);
@@ -172,7 +172,7 @@ const App = () => {
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-calendar`;
-    if (loadedData.has(key)) return;
+    if (loadedDataRef.current.has(key)) return;
     setIsCatCalLoading(true);
     try {
       if (cat === 'F1') setF1Calendar(await dataService.getF1Calendar());
@@ -203,14 +203,14 @@ const App = () => {
       else if (cat === 'BTCC') setBtccCalendar(await dataService.getBTCCCalendar());
       else if (cat === 'DTM') setDtmCalendar(await dataService.getDTMCalendar());
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
-      setLoadedData(prev => new Set(prev).add(key));
+      loadedDataRef.current.add(key);
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
-  }, [loadedData]);
+  }, []);
 
   const fetchCategoryStandings = useCallback(async (cat: CategoryType) => {
     const key = cat === 'BTCC' ? `${cat}-standings-${btccStandingsType}` : `${cat}-standings`;
-    if (loadedData.has(key)) return;
+    if (loadedDataRef.current.has(key)) return;
     setIsCatStandLoading(true);
     if (cat === 'BTCC') setBtccStandings([]); // Clear while loading new type
     try {
@@ -276,14 +276,14 @@ const App = () => {
         const res = await dataService.getMotoGPStandings();
         setMotoGPStandings(res);
       }
-      setLoadedData(prev => new Set(prev).add(key));
+      loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
     finally { setIsCatStandLoading(false); }
-  }, [loadedData, btccStandingsType]);
+  }, [btccStandingsType]);
 
   const fetchCategoryNews = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-news`;
-    if (loadedData.has(key)) return;
+    if (loadedDataRef.current.has(key)) return;
     setIsCatNewsLoading(true);
     try {
       if (cat === 'F1') setF1News(await dataService.getF1News());
@@ -312,13 +312,13 @@ const App = () => {
       else if (cat === 'BTCC') setBtccNews(await dataService.getBTCCNews());
       else if (cat === 'DTM') setDtmNews(await dataService.getDTMNews());
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
-      setLoadedData(prev => new Set(prev).add(key));
+      loadedDataRef.current.add(key);
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
-  }, [loadedData]);
+  }, []);
 
   const fetchGlobalNews = useCallback(async () => {
-    if (loadedData.has('globalNews')) return;
+    if (loadedDataRef.current.has('globalNews')) return;
     setIsGlobalNewsLoading(true);
     try {
       const results = await Promise.allSettled([
@@ -363,20 +363,20 @@ const App = () => {
       if (results[17].status === 'fulfilled') setMotoGPNews(results[17].value as NewsItem[]);
       if (results[18].status === 'fulfilled') setDtmNews(results[18].value as NewsItem[]);
 
-      setLoadedData(prev => new Set(prev).add('globalNews'));
+      loadedDataRef.current.add('globalNews');
     } catch (e) {
       console.error('Global news fetch error:', e);
     } finally {
       setIsGlobalNewsLoading(false);
     }
-  }, [loadedData]);
+  }, []);
 
   const fetchHomeData = useCallback(async () => {
     setIsHomeLoading(true);
     try {
       const weekly = await dataService.getWeeklyCalendar();
       setWeeklyRaces(weekly);
-      setLoadedData(prev => new Set(prev).add('home'));
+      loadedDataRef.current.add('home');
     } catch (e) {
       console.error('Home fetch error:', e);
     } finally {
@@ -387,17 +387,13 @@ const App = () => {
 
   const refreshAll = useCallback(async () => {
     setIsRefreshing(true);
-    setLoadedData(new Set()); // Reset to force refetch
+    loadedDataRef.current.clear(); // Reset cache to force refetch
     
     if (view === 'category') {
       const cat = selectedCategory;
-      setLoadedData(prev => {
-        const n = new Set(prev);
-        n.delete(`${cat}-calendar`);
-        n.delete(`${cat}-standings`);
-        n.delete(`${cat}-news`);
-        return n;
-      });
+      loadedDataRef.current.delete(`${cat}-calendar`);
+      loadedDataRef.current.delete(`${cat}-standings`);
+      loadedDataRef.current.delete(`${cat}-news`);
       await Promise.allSettled([
         fetchCategoryCalendar(cat),
         fetchCategoryStandings(cat),
@@ -1989,7 +1985,11 @@ const App = () => {
                         <span className="stand-pts">{row.points} pts</span>
                       </div>
                     ))}
-                    {btccStandings.length === 0 && <p className="empty-msg">Cargando posiciones...</p>}
+                    {isCatStandLoading ? (
+                      <p className="empty-msg">Cargando posiciones...</p>
+                    ) : btccStandings.length === 0 && (
+                      <p className="empty-msg">No hay posiciones disponibles en este momento.</p>
+                    )}
                   </div>
                 </>
               ) : isMotoGP ? (
