@@ -166,8 +166,8 @@ const App = () => {
   const [sfNews, setSfNews] = useState<NewsItem[]>([]);
   const [sfStandingsTab, setSfStandingsTab] = useState<'drivers' | 'teams'>('drivers');
   const [elmsCalendar, setElmsCalendar] = useState<CalendarRace[]>([]);
-  const [elmsStandings, setElmsStandings] = useState<Record<number, TCStandingRow[]>>({});
-  const [elmsStandingsTab, setElmsStandingsTab] = useState<number>(0);
+  const [elmsStandings, setElmsStandings] = useState<Record<string, TCStandingRow[]>>({});
+  const [elmsStandingsTab, setElmsStandingsTab] = useState<string>('LMP2 Drivers');
   const [elmsNews, setElmsNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
