@@ -111,7 +111,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  padding-bottom: 42px; /* Reserved space for label */
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.08);
@@ -277,9 +277,8 @@
 }
 
 .gtwc-logo {
-  height: 95px !important;
-  max-width: 95% !important;
-  margin-bottom: 12px !important;
+  height: 85px !important;
+  max-width: 90% !important;
   object-fit: contain;
 }
 
@@ -354,8 +353,8 @@
 }
 
 .elms-logo {
-  height: 90px !important;
-  max-width: 95% !important;
+  height: 85px !important;
+  max-width: 90% !important;
 }
 
 .cat-event-category-row {
@@ -388,17 +387,26 @@
 }
 
 .cat-label {
-  font-size: 15px;
+  position: absolute;
+  bottom: 22px;
+  left: 12px;
+  right: 12px;
+  text-align: center;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cat-arrow {
   position: absolute;
-  bottom: 14px;
-  right: 14px;
+  bottom: 12px;
+  right: 12px;
   color: var(--text-tertiary);
+  opacity: 0.5;
 }
 
 /* =============== CALENDARIO VIEW =============== */
