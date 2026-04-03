@@ -58,6 +58,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'DTM': '#FFCC00',
   'SF': '#1a1a1a',
   'PROCAR4000': '#e8002d',
+  'ELMS': '#0288d1',
 };
 
 export function getCategoryColor(cat: string): string {
