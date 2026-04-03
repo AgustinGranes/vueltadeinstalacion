@@ -4522,15 +4522,16 @@ export const dataService = {
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const items = doc.querySelectorAll('a[href*="/en/race/"]');
         
-        items.forEach((item, idx) => {
+        items.forEach((item) => {
           const href = item.getAttribute('href') || '';
           const slug = href.split('/').pop()?.replace(/-/g, ' ') || '';
-          const name = slug.charAt(0).toUpperCase() + slug.slice(1);
+          if (slug.toLowerCase().includes('test')) return; // Skip tests
           
+          const name = slug.charAt(0).toUpperCase() + slug.slice(1);
           const dateText = item.textContent?.trim().match(/\d+\s+[A-Z]{3}/i)?.[0] || 'TBD';
           
           races.push({
-            round: idx + 1,
+            round: races.length + 1,
             race: name,
             dates: dateText,
             status: 'Upcoming',
