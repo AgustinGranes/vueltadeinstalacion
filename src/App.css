@@ -213,6 +213,11 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+.elms-card {
+  background: #004C97 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .motogp-card {
   background: #BE0026 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
@@ -758,6 +763,7 @@
 .wec-stand-row { border-left-color: #004C97; }
 .f2-stand-row { border-left-color: #004C97; }
 .f3-stand-row { border-left-color: #ff0000; }
+.elms-stand-row { border-left-color: #004C97; }
 
 /* Podium Highlights */
 .stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }

@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -34,8 +34,9 @@ const GTWC_LOGO = '/GT.png';
 const BTCC_LOGO = '/BTCC.png';
 const DTM_LOGO = '/DTM.png';
 const SF_LOGO = '/SF.png';
+const ELMS_LOGO = '/ELMS.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -164,6 +165,10 @@ const App = () => {
   const [sfTeams, setSfTeams] = useState<TCStandingRow[]>([]);
   const [sfNews, setSfNews] = useState<NewsItem[]>([]);
   const [sfStandingsTab, setSfStandingsTab] = useState<'drivers' | 'teams'>('drivers');
+  const [elmsCalendar, setElmsCalendar] = useState<CalendarRace[]>([]);
+  const [elmsStandings, setElmsStandings] = useState<Record<number, TCStandingRow[]>>({});
+  const [elmsStandingsTab, setElmsStandingsTab] = useState<number>(0);
+  const [elmsNews, setElmsNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -218,6 +223,7 @@ const App = () => {
       else if (cat === 'DTM') setDtmCalendar(await dataService.getDTMCalendar());
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       else if (cat === 'SF') setSfCalendar(await dataService.getSFCalendar());
+      else if (cat === 'ELMS') setElmsCalendar(await dataService.getELMSCalendar());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -305,6 +311,18 @@ const App = () => {
         const t = await dataService.getSFStandings('teams');
         setSfDrivers(d);
         setSfTeams(t);
+      } else if (cat === 'ELMS') {
+        const types = [0, 1, 2, 3, 4, 5, 6, 7];
+        const results = await Promise.allSettled(types.map(t => dataService.getELMSStandings(t)));
+        setElmsStandings(prev => {
+          const updated = { ...prev };
+          types.forEach((t, i) => {
+            if (results[i].status === 'fulfilled') {
+              updated[t] = (results[i] as any).value;
+            }
+          });
+          return updated;
+        });
       }
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -343,6 +361,7 @@ const App = () => {
       else if (cat === 'DTM') setDtmNews(await dataService.getDTMNews());
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       else if (cat === 'SF') setSfNews(await dataService.getSFNews());
+      else if (cat === 'ELMS') setElmsNews(await dataService.getELMSNews());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -372,6 +391,8 @@ const App = () => {
         dataService.getSUPERCARSNews(),
         dataService.getMotoGPNews(),
         dataService.getDTMNews(),
+        dataService.getSFNews(),
+        dataService.getELMSNews(),
       ]);
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
@@ -393,6 +414,8 @@ const App = () => {
       if (results[16].status === 'fulfilled') setSupercarsNews(results[16].value as NewsItem[]);
       if (results[17].status === 'fulfilled') setMotoGPNews(results[17].value as NewsItem[]);
       if (results[18].status === 'fulfilled') setDtmNews(results[18].value as NewsItem[]);
+      if (results[19].status === 'fulfilled') setSfNews(results[19].value as NewsItem[]);
+      if (results[20].status === 'fulfilled') setElmsNews(results[20].value as NewsItem[]);
 
       loadedDataRef.current.add('globalNews');
     } catch (e) {
@@ -680,6 +703,18 @@ const App = () => {
           <span className="cat-label">WEC</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card elms-card" onClick={() => handleCategoryClick('ELMS')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={ELMS_LOGO} 
+            alt="ELMS" 
+            className="cat-logo elms-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">ELMS</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card imsa-card" onClick={() => handleCategoryClick('IMSA')}>
           <div className="cat-card-glow" />
           <img 
@@ -865,6 +900,7 @@ const App = () => {
     if (c.includes('TCP') || c.includes('PISTA')) return TCP_LOGO;
     if (c === 'TC' || c.includes('TURISMO CARRETERA')) return TC_LOGO;
     if (c.includes('SF') || c.includes('SUPER FORMULA')) return SF_LOGO;
+    if (c.includes('ELMS') || c.includes('EUROPEAN LE MANS')) return ELMS_LOGO;
     return null;
   };
 
@@ -1244,6 +1280,7 @@ const App = () => {
     const isBTCC = selectedCategory === 'BTCC';
     const isDTM = selectedCategory === 'DTM';
     const isSF = selectedCategory === 'SF';
+    const isELMS = selectedCategory === 'ELMS';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1273,6 +1310,7 @@ const App = () => {
     if (isBTCC) logo = BTCC_LOGO;
     if (isDTM) logo = DTM_LOGO;
     if (isSF) logo = SF_LOGO;
+    if (isELMS) logo = ELMS_LOGO;
 
     let catTitle = '';
     if (isF1) catTitle = 'Formula 1';
@@ -1303,6 +1341,7 @@ const App = () => {
     if (isMotoGP) catTitle = 'MotoGP';
     if (isSUPERCARS) catTitle = 'Supercars';
     if (isSF) catTitle = 'Super Formula';
+    if (isELMS) catTitle = 'European Le Mans Series';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1332,6 +1371,7 @@ const App = () => {
     if (isMotoGP) news = motoGPNews;
     if (isDTM) news = dtmNews;
     if (isSF) news = sfNews;
+    if (isELMS) news = elmsNews;
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
@@ -1358,6 +1398,7 @@ const App = () => {
     if (isMotoGP) resultsUrl = 'https://www.motogp.com/es/results-statistics';
     if (isDTM) resultsUrl = 'https://es.motorsport.com/dtm/results/2026';
     if (isSF) resultsUrl = 'https://es.motorsport.com/super-formula/results/2026';
+    if (isELMS) resultsUrl = 'https://lat.motorsport.com/elms/results/2026';
 
 
     return (
@@ -1766,6 +1807,24 @@ const App = () => {
                     <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
+              ) : isELMS ? (
+                <div className="elms-calendar-list">
+                  {elmsCalendar.length > 0 ? elmsCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
+                </div>
               ) : null}
               </>
               )}
@@ -1979,6 +2038,41 @@ const App = () => {
                       ))
                     )}
                     {((sfStandingsTab === 'drivers' && sfDrivers.length === 0) || (sfStandingsTab === 'teams' && sfTeams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
+                  </div>
+                </>
+              ) : isELMS ? (
+                <>
+                  <div className="f1-tabs nascar-tabs btcc-tabs elms-tabs">
+                    {[
+                      'LMP2 Drivers', 'LMP2 P/A Drivers', 'LMP3 Drivers', 'LMGT3 Drivers',
+                      'LMP2 Teams', 'LMP2 P/A Teams', 'LMP3 Teams', 'LMGT3 Teams'
+                    ].map(tab => (
+                      <button 
+                        key={tab}
+                        className={`nascar-tab-btn ${elmsStandingsTab === tab ? 'active' : ''}`} 
+                        onClick={() => setElmsStandingsTab(tab as any)}
+                      >
+                        {tab.replace(' Drivers', '').replace(' Teams', (tab.includes('P/A') ? ' T' : ' Teams'))}
+                        <span className="tab-suffix">{tab.includes('Drivers') ? ' (P)' : ' (E)'}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="standings-list elms-standings">
+                    {(elmsStandings[elmsStandingsTab] || []).map((row: any, idx: number) => (
+                      <div key={idx} className={`stand-row elms-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{row.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{row.driver || row.team}</span>
+                          {row.car && <span className="stand-sub">{row.car}</span>}
+                        </div>
+                        <span className="stand-pts">{row.points} pts</span>
+                      </div>
+                    ))}
+                    {isCatStandLoading ? (
+                      <p className="empty-msg">Cargando posiciones...</p>
+                    ) : (elmsStandings[elmsStandingsTab] || []).length === 0 && (
+                      <p className="empty-msg">No hay posiciones disponibles.</p>
+                    )}
                   </div>
                 </>
               ) : isFE ? (

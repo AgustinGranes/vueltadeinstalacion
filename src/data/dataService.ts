@@ -4486,5 +4486,139 @@ export const dataService = {
     } catch (e) { console.error('[DataService] SF News (Autosport) error:', e); }
 
     return allNews.slice(0, 15);
+  },
+
+  formatELMSDate(rawDate: string): string {
+    if (!rawDate) return '';
+    let clean = rawDate.replace(/\*/g, '').trim();
+    // Case 1: "12 APR" or "12 – 13 APR"
+    const parts = clean.split(/\s+/);
+    let day = '';
+    let monthAbbr = '';
+    
+    if (parts.length >= 2) {
+      day = parts[0];
+      monthAbbr = parts[parts.length - 1]; // Last part is month
+    } else {
+      return clean;
+    }
+
+    const months: Record<string, string> = {
+      'JAN': 'Enero', 'FEB': 'Febrero', 'MAR': 'Marzo', 'APR': 'Abril',
+      'MAY': 'Mayo', 'JUN': 'Junio', 'JUL': 'Julio', 'AUG': 'Agosto',
+      'SEP': 'Septiembre', 'OCT': 'Octubre', 'NOV': 'Noviembre', 'DEC': 'Diciembre'
+    };
+
+    const monthFull = months[monthAbbr.toUpperCase()] || monthAbbr;
+    return `${day} ${monthFull}`;
+  },
+
+  async getELMSCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const year = new Date().getFullYear();
+      const html = await this.fetchWithProxy(`https://www.europeanlemansseries.com/en/season/${year}`);
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      const raceCards = doc.querySelectorAll('a.race-card, a[href*="/en/race/"]');
+      raceCards.forEach((card, idx) => {
+          const race = card.querySelector('.race-title, .title')?.textContent?.trim() || 
+                       card.querySelector('h3, h2')?.textContent?.trim() || 'TBA';
+          const dateText = card.querySelector('.date, .race-date')?.textContent?.trim() || '';
+          
+          let status: CalendarRace['status'] = 'Upcoming';
+          if (card.querySelector('.status-complete, .badge-finished')) status = 'Finished';
+
+          calendar.push({
+              round: idx + 1,
+              race,
+              dates: this.formatELMSDate(dateText),
+              status,
+              winner: ''
+          });
+      });
+    } catch (e) { console.error('[DataService] ELMS calendar error:', e); }
+    return calendar;
+  },
+
+  async getELMSStandings(classIdx: number): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy('https://www.europeanlemansseries.com/en/page/classification-2');
+      if (!html) return [];
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const accordions = doc.querySelectorAll('.accordion-item');
+      
+      if (accordions[classIdx]) {
+          const table = accordions[classIdx].querySelector('table.table-standing, table');
+          if (table) {
+              const rows = table.querySelectorAll('tbody tr');
+              rows.forEach(row => {
+                  const cells = row.querySelectorAll('td');
+                  if (cells.length >= 3) {
+                      const pos = cells[0].textContent?.trim() || '';
+                      const name = cells[2].textContent?.trim() || '';
+                      const points = cells[cells.length - 1].textContent?.trim() || '';
+                      if (pos && name) {
+                          standings.push({ pos, driver: name, team: '', points });
+                      }
+                  }
+              });
+          }
+      }
+    } catch (e) { console.error('[DataService] ELMS standings error:', e); }
+    return standings;
+  },
+
+  async getELMSNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    // Source 1: Motorsport.com (ES)
+    try {
+      const html = await this.fetchWithProxy('https://es.motorsport.com/elms/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('.ms-item');
+        items.forEach(item => {
+          const title = item.querySelector('.ms-item__title')?.textContent?.trim();
+          const link = item.querySelector('a')?.getAttribute('href');
+          const img = item.querySelector('img')?.getAttribute('src');
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://es.motorsport.com${link}`,
+              source: 'Motorsport.com',
+              category: 'ELMS',
+              imageUrl: img || undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] ELMS news (Motorsport) error:', e); }
+
+    // Source 2: Official ELMS
+    try {
+      const html = await this.fetchWithProxy('https://www.europeanlemansseries.com/en/page/news');
+      if (html) {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const items = doc.querySelectorAll('.news-item, .card');
+          items.forEach(item => {
+              const title = item.querySelector('h3, h2, .title')?.textContent?.trim();
+              const link = item.querySelector('a')?.getAttribute('href');
+              if (title && link) {
+                  allNews.push({
+                      title,
+                      summary: '',
+                      link: link.startsWith('http') ? link : `https://www.europeanlemansseries.com${link}`,
+                      source: 'ELMS Official',
+                      category: 'ELMS'
+                  });
+              }
+          });
+      }
+    } catch (e) { console.error('[DataService] ELMS news (Official) error:', e); }
+
+    return allNews.slice(0, 15);
   }
 };
