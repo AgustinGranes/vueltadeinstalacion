@@ -405,8 +405,8 @@
   position: absolute;
   bottom: 20px;
   right: 12px;
-  color: var(--text-tertiary);
-  opacity: 0.5;
+  color: #fff !important;
+  opacity: 0.9;
 }
 
 /* =============== CALENDARIO VIEW =============== */
