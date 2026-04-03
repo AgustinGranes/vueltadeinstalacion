@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -35,8 +35,9 @@ const BTCC_LOGO = '/BTCC.png';
 const DTM_LOGO = '/DTM.png';
 const SF_LOGO = '/SF.png';
 const ELMS_LOGO = '/ELMS.png';
+const PROCAR_LOGO = '/PROCAR.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -169,6 +170,10 @@ const App = () => {
   const [elmsStandings, setElmsStandings] = useState<Record<string, TCStandingRow[]>>({});
   const [elmsStandingsTab, setElmsStandingsTab] = useState<string>('LMP2 Drivers');
   const [elmsNews, setElmsNews] = useState<NewsItem[]>([]);
+  const [procarCalendar, setProcarCalendar] = useState<CalendarRace[]>([]);
+  const [procarStandings, setProcarStandings] = useState<Record<string, TCStandingRow[]>>({ 'Clase A': [], 'Clase B': [] });
+  const [procarStandingsTab, setProcarStandingsTab] = useState<string>('Clase A');
+  const [procarNews, setProcarNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -224,6 +229,7 @@ const App = () => {
       else if (cat === 'MotoGP') setMotoGPCalendar(await dataService.getMotoGPCalendar());
       else if (cat === 'SF') setSfCalendar(await dataService.getSFCalendar());
       else if (cat === 'ELMS') setElmsCalendar(await dataService.getELMSCalendar());
+      else if (cat === 'PROCAR4000') setProcarCalendar(await dataService.getProcarCalendar());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -329,6 +335,15 @@ const App = () => {
           });
           return updated;
         });
+      } else if (cat === 'PROCAR4000') {
+        const [claseA, claseB] = await Promise.all([
+          dataService.getProcarStandings('A'),
+          dataService.getProcarStandings('B')
+        ]);
+        setProcarStandings({
+          'Clase A': claseA,
+          'Clase B': claseB
+        });
       }
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -368,6 +383,7 @@ const App = () => {
       else if (cat === 'MotoGP') setMotoGPNews(await dataService.getMotoGPNews());
       else if (cat === 'SF') setSfNews(await dataService.getSFNews());
       else if (cat === 'ELMS') setElmsNews(await dataService.getELMSNews());
+      else if (cat === 'PROCAR4000') setProcarNews(await dataService.getProcarNews());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -877,6 +893,30 @@ const App = () => {
           <span className="cat-label">TC2000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card procar-card" onClick={() => handleCategoryClick('PROCAR4000')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={PROCAR_LOGO} 
+            alt="PROCAR4000" 
+            className="cat-logo procar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">PROCAR4000</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card procar-card" onClick={() => handleCategoryClick('PROCAR4000')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={PROCAR_LOGO} 
+            alt="PROCAR4000" 
+            className="cat-logo procar-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">PROCAR4000</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -1115,7 +1155,7 @@ const App = () => {
                 </div>
                 {expandedEvent === category && (
                   <div className="cat-event-expanded-details">
-                    {races[0]?.circuitImage && (
+                    {races[0]?.circuitImage && category !== 'ELMS' && (
                       <img 
                         src={races[0].circuitImage} 
                         alt="Circuito" 
@@ -1287,6 +1327,7 @@ const App = () => {
     const isDTM = selectedCategory === 'DTM';
     const isSF = selectedCategory === 'SF';
     const isELMS = selectedCategory === 'ELMS';
+    const isPROCAR4000 = selectedCategory === 'PROCAR4000';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1317,6 +1358,7 @@ const App = () => {
     if (isDTM) logo = DTM_LOGO;
     if (isSF) logo = SF_LOGO;
     if (isELMS) logo = ELMS_LOGO;
+    if (isPROCAR4000) logo = PROCAR_LOGO;
 
     let catTitle = '';
     if (isF1) catTitle = 'Formula 1';
@@ -1348,6 +1390,7 @@ const App = () => {
     if (isSUPERCARS) catTitle = 'Supercars';
     if (isSF) catTitle = 'Super Formula';
     if (isELMS) catTitle = 'European Le Mans Series';
+    if (isPROCAR4000) catTitle = 'PROCAR4000';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1378,6 +1421,7 @@ const App = () => {
     if (isDTM) news = dtmNews;
     if (isSF) news = sfNews;
     if (isELMS) news = elmsNews;
+    if (isPROCAR4000) news = procarNews;
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
@@ -1405,6 +1449,7 @@ const App = () => {
     if (isDTM) resultsUrl = 'https://es.motorsport.com/dtm/results/2026';
     if (isSF) resultsUrl = 'https://es.motorsport.com/super-formula/results/2026';
     if (isELMS) resultsUrl = 'https://lat.motorsport.com/elms/results/2026';
+    if (isPROCAR4000) resultsUrl = 'https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados';
 
 
     return (
@@ -1813,9 +1858,17 @@ const App = () => {
                     <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
-              ) : isELMS ? (
-                <div className="elms-calendar-list">
-                  {elmsCalendar.length > 0 ? elmsCalendar.map((ev, idx) => (
+              ) : isPROCAR4000 ? (
+                <div className="procar-calendar-list">
+                  <div className="procar-results-buttons">
+                    <button className="procar-res-btn clase-a" onClick={() => window.open('https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados', '_blank')}>
+                      <FileText size={16} /> Resultados Clase A
+                    </button>
+                    <button className="procar-res-btn clase-b" onClick={() => window.open('https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-07-00-49/resultados', '_blank')}>
+                      <FileText size={16} /> Resultados Clase B
+                    </button>
+                  </div>
+                  {procarCalendar.length > 0 ? procarCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
@@ -2280,6 +2333,26 @@ const App = () => {
                     {tcDrivers.length === 0 && <p className="empty-msg">Cargando posiciones TC...</p>}
                   </div>
                 </>
+              ) : isPROCAR4000 ? (
+                <>
+                  <div className="f1-tabs nascar-tabs">
+                    <button className={`nascar-tab-btn ${procarStandingsTab === 'Clase A' ? 'active' : ''}`} onClick={() => setProcarStandingsTab('Clase A')}>Clase A</button>
+                    <button className={`nascar-tab-btn ${procarStandingsTab === 'Clase B' ? 'active' : ''}`} onClick={() => setProcarStandingsTab('Clase B')}>Clase B</button>
+                  </div>
+                  <div className="standings-list f1-standings">
+                    {(procarStandings[procarStandingsTab] || []).map((d, idx) => (
+                      <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                          {d.car && <span className="stand-sub">{d.car}</span>}
+                        </div>
+                        <span className="stand-pts">{d.points} pts</span>
+                      </div>
+                    ))}
+                    {(procarStandings[procarStandingsTab] || []).length === 0 && <p className="empty-msg">Cargando posiciones PROCAR4000...</p>}
+                  </div>
+                </>
               ) : isTCP ? (
                 <>
                   <div className="standings-list tcp-standings">
@@ -2521,10 +2594,23 @@ const App = () => {
           {categorySubTab === 'results' && (
             <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
               <div className="results-container">
-                <div className="tc-calendar-message results-box">
-                  <p className="tc-msg-text">Consulta los resultados oficiales del campeonato {catTitle}.</p>
-                  <a href={resultsUrl || '#'} target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver resultados</a>
-                </div>
+                {isPROCAR4000 ? (
+                  <div className="procar-results-grid">
+                    <div className="tc-calendar-message results-box">
+                      <p className="tc-msg-text">Consulta los resultados oficiales de la Clase A.</p>
+                      <a href="https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados" target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Clase A</a>
+                    </div>
+                    <div className="tc-calendar-message results-box">
+                      <p className="tc-msg-text">Consulta los resultados oficiales de la Clase B.</p>
+                      <a href="https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-07-00-49/resultados" target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Clase B</a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="tc-calendar-message results-box">
+                    <p className="tc-msg-text">Consulta los resultados oficiales del campeonato {catTitle}.</p>
+                    <a href={resultsUrl || '#'} target="_blank" rel="noopener noreferrer" className="tc-msg-btn">Ver resultados</a>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

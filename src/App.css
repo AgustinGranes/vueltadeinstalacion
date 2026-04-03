@@ -218,6 +218,11 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
+.procar-card {
+  background: #e10600 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 .motogp-card {
   background: #BE0026 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
@@ -267,14 +272,38 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo, .btcc-logo, .procar-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
 .gtwc-logo {
-  height: 80px !important;
-  max-width: 90% !important;
+  height: 95px !important;
+  max-width: 95% !important;
   margin-bottom: 12px !important;
+  object-fit: contain;
+}
+
+.btcc-logo {
+  height: 85px !important;
+  max-width: 95% !important;
+  object-fit: contain;
+}
+
+.wrc-logo {
+  height: 75px !important;
+  max-width: 90% !important;
+  object-fit: contain;
+}
+
+.elms-logo {
+  height: 80px !important;
+  max-width: 95% !important;
+  object-fit: contain;
+}
+
+.procar-logo {
+  height: 85px !important;
+  max-width: 95% !important;
   object-fit: contain;
 }
 
@@ -777,6 +806,41 @@
 .stand-row.top-2 .stand-pos { color: #c0c0c0; }
 .stand-row.top-3 { background: rgba(205, 127, 50, 0.05); }
 .stand-row.top-3 .stand-pos { color: #cd7f32; }
+
+.procar-results-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.procar-res-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.procar-res-btn.clase-a {
+  background: #e10600;
+}
+
+.procar-res-btn.clase-b {
+  background: #333;
+}
+
+.procar-res-btn:active {
+  opacity: 0.8;
+}
 
 /* Existing legacy classes for backward compatibility during transition if needed */
 .wrc-standings-list, .tc-standings-list {

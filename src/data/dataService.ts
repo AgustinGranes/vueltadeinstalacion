@@ -57,6 +57,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'BTCC': '#4B0082',
   'DTM': '#FFCC00',
   'SF': '#1a1a1a',
+  'PROCAR4000': '#e8002d',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -4629,6 +4630,98 @@ export const dataService = {
     } catch (e) {
       console.error('[DataService] ELMS news (Official) error:', e);
     }
+
+    return allNews.slice(0, 20);
+  },
+
+  async getProcarCalendar(): Promise<CalendarRace[]> {
+    return [
+      { round: 1, race: 'La Plata', dates: '1 Marzo', status: 'Finished', winner: '' },
+      { round: 2, race: 'La Plata', dates: '29 Marzo', status: 'Finished', winner: '' },
+      { round: 3, race: 'Toay, La Pampa', dates: '19 Abril', status: 'Upcoming', winner: '' },
+      { round: 4, race: 'La Plata', dates: '17 Mayo', status: 'Upcoming', winner: '' },
+      { round: 5, race: 'La Plata', dates: '14 Junio', status: 'Upcoming', winner: '' },
+      { round: 6, race: 'La Plata', dates: '12 Julio', status: 'Upcoming', winner: '' },
+      { round: 7, race: 'La Plata', dates: '16 Agosto', status: 'Upcoming', winner: '' },
+      { round: 8, race: 'La Plata', dates: '13 Septiembre', status: 'Upcoming', winner: '' },
+      { round: 9, race: 'La Plata', dates: '11 Octubre', status: 'Upcoming', winner: '' },
+      { round: 10, race: 'La Plata', dates: '8 Noviembre', status: 'Upcoming', winner: '' }
+    ];
+  },
+
+  async getProcarStandings(clase: 'A' | 'B'): Promise<TCStandingRow[]> {
+    const url = clase === 'A' 
+      ? 'https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/posiciones'
+      : 'https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-07-00-49/posiciones';
+    
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(url);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('table tr');
+        rows.forEach((row, idx) => {
+          if (idx === 0) return; // Skip header
+          const cells = row.querySelectorAll('td');
+          if (cells.length >= 4) {
+            const pos = cells[0].textContent?.trim() || '';
+            const driver = cells[2].textContent?.trim() || '';
+            const points = cells[3].textContent?.trim() || '';
+            if (pos && driver && points) {
+              standings.push({ pos, driver, team: '', points });
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.error(`[DataService] Procar Standing ${clase} error:`, e);
+    }
+    return standings;
+  },
+
+  async getProcarNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const htmlOf = await this.fetchWithProxy('https://www.procar4000.com.ar/procar_4000/index.php/noticias');
+      if (htmlOf) {
+        const doc = new DOMParser().parseFromString(htmlOf, 'text/html');
+        const items = doc.querySelectorAll('.itemContainer, .catItemView');
+        items.forEach(item => {
+          const title = item.querySelector('.catItemTitle a')?.textContent?.trim();
+          const link = item.querySelector('.catItemTitle a')?.getAttribute('href');
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://www.procar4000.com.ar${link}`,
+              source: 'Procar Official',
+              category: 'PROCAR4000'
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] Procar Official News error:', e); }
+
+    try {
+      const htmlC = await this.fetchWithProxy('https://campeones.com.ar/category/nacionales/procar4000/');
+      if (htmlC) {
+        const doc = new DOMParser().parseFromString(htmlC, 'text/html');
+        const items = doc.querySelectorAll('.elementor-post');
+        items.forEach(item => {
+          const title = item.querySelector('.elementor-post__title a')?.textContent?.trim();
+          const link = item.querySelector('.elementor-post__title a')?.getAttribute('href');
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link,
+              source: 'Campeones',
+              category: 'PROCAR4000'
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] Procar Campeones News error:', e); }
 
     return allNews.slice(0, 20);
   }
