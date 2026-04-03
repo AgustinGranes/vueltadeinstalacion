@@ -145,6 +145,7 @@ export type TCStandingRow = {
   points: string;
   team?: string;
   totalPts?: string;
+  car?: string | number;
 };
 
 export const CATEGORY_RESULTS_URLS: Record<string, string> = {
