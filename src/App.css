@@ -272,9 +272,9 @@
 }
 
 .gtwc-logo {
-  height: 50px !important;
-  max-width: 75% !important;
-  margin-bottom: 25px !important;
+  height: 80px !important;
+  max-width: 90% !important;
+  margin-bottom: 12px !important;
   object-fit: contain;
 }
 
@@ -322,6 +322,11 @@
 
 .tc2000-logo, .wec-logo, .f1-logo, .f2-logo, .f3-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+.elms-logo {
+  height: 90px !important;
+  max-width: 95% !important;
 }
 
 .cat-event-category-row {
@@ -1545,8 +1550,8 @@
 }
 
 .wrc-logo {
-  height: 60px !important;
-  max-width: 85%;
+  height: 85px !important;
+  max-width: 90% !important;
 }
 
 .indy-stand-row {
@@ -1965,7 +1970,7 @@
   color: #eab308;
 }
 /* BTCC Styles */
-.btcc-logo { width: 100px; height: auto; transition: transform 0.3s ease; }
+.btcc-logo { width: 140px; height: auto; transition: transform 0.3s ease; }
 .btcc-logo:hover { transform: scale(1.05); }
 .f1a-card, .btcc-card, .tcppk-card { 
   background: #4B0082 !important; 
