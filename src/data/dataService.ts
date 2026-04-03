@@ -4334,7 +4334,31 @@ export const dataService = {
     return standings;
   },
 
-  // === SUPER FORMULA ===
+  formatSFDate(rawDate: string): string {
+    if (!rawDate) return '';
+    let clean = rawDate.replace(/\*/g, '').trim();
+    const parts = clean.split(/\s+/);
+    let day = '';
+    let monthAbbr = '';
+    
+    if (parts.length >= 2) {
+      const dayPart = parts[0];
+      day = dayPart.includes('–') ? dayPart.split('–')[0] : dayPart;
+      monthAbbr = parts[1];
+    } else if (parts.length === 1) {
+      return parts[0];
+    }
+
+    const months: Record<string, string> = {
+      'Jan': 'Enero', 'Feb': 'Febrero', 'Mar': 'Marzo', 'Apr': 'Abril',
+      'May': 'Mayo', 'Jun': 'Junio', 'Jul': 'Julio', 'Aug': 'Agosto',
+      'Sep': 'Septiembre', 'Oct': 'Octubre', 'Nov': 'Noviembre', 'Dec': 'Diciembre'
+    };
+
+    const monthFull = months[monthAbbr] || monthAbbr;
+    return day && monthFull ? `${day} ${monthFull}` : clean;
+  },
+
   async getSFCalendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     try {
@@ -4351,7 +4375,8 @@ export const dataService = {
         const dateCell = mainRow.querySelectorAll('.ms-schedule-table__cell')[1];
         
         const race = nameCell?.textContent?.trim() || 'TBA';
-        const dates = dateCell?.textContent?.trim() || '';
+        const rawDate = dateCell?.textContent?.trim() || '';
+        const dates = this.formatSFDate(rawDate);
         
         let status: CalendarRace['status'] = 'Upcoming';
         if (body.classList.contains('ms-schedule-table__item--complete')) status = 'Finished';
@@ -4362,7 +4387,7 @@ export const dataService = {
           race,
           dates,
           status,
-          winner: '' // Winner is usually on another page
+          winner: ''
         });
       });
     } catch (e) { console.error('[DataService] SF calendar error:', e); }
@@ -4428,6 +4453,7 @@ export const dataService = {
               summary: '',
               link: link.startsWith('http') ? link : `https://es.motorsport.com${link}`,
               source: 'Motorsport.com',
+              category: 'Super Formula',
               imageUrl: img || undefined
             });
           }
@@ -4451,6 +4477,7 @@ export const dataService = {
               summary: '',
               link: link.startsWith('http') ? link : `https://www.autosport.com${link}`,
               source: 'Autosport',
+              category: 'Super Formula',
               imageUrl: img || undefined
             });
           }
