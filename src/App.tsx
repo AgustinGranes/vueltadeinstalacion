@@ -905,18 +905,6 @@ const App = () => {
           <span className="cat-label">PROCAR4000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card procar-card" onClick={() => handleCategoryClick('PROCAR4000')}>
-          <div className="cat-card-glow" />
-          <img 
-            src={PROCAR_LOGO} 
-            alt="PROCAR4000" 
-            className="cat-logo procar-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">PROCAR4000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
       </div>
     </motion.div>
   );
@@ -1860,14 +1848,6 @@ const App = () => {
                 </div>
               ) : isPROCAR4000 ? (
                 <div className="procar-calendar-list">
-                  <div className="procar-results-buttons">
-                    <button className="procar-res-btn clase-a" onClick={() => window.open('https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados', '_blank')}>
-                      <FileText size={16} /> Resultados Clase A
-                    </button>
-                    <button className="procar-res-btn clase-b" onClick={() => window.open('https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-07-00-49/resultados', '_blank')}>
-                      <FileText size={16} /> Resultados Clase B
-                    </button>
-                  </div>
                   {procarCalendar.length > 0 ? procarCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
