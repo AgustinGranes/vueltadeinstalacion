@@ -67,7 +67,15 @@ const App = () => {
   const [btccNews, setBtccNews] = useState<NewsItem[]>([]);
   const [btccCalendar, setBtccCalendar] = useState<CalendarRace[]>([]);
   const [btccStandingsType, setBtccStandingsType] = useState<string>('drivers');
-  const [btccStandings, setBtccStandings] = useState<TCStandingRow[]>([]);
+  const [btccStandings, setBtccStandings] = useState<Record<string, TCStandingRow[]>>({
+    'drivers': [],
+    'manufacturers': [],
+    'teams': [],
+    'independent-drivers': [],
+    'independent-teams': [],
+    'jack-sears-trophy': [],
+    'goodyear-wingfoot-award': []
+  });
   const [supercarsCalendar, setSupercarsCalendar] = useState<CalendarRace[]>([]);
   const [gtwcCalendar, setGtwcCalendar] = useState<CalendarRace[]>([]);
   const [dtmCalendar, setDtmCalendar] = useState<CalendarRace[]>([]);
@@ -216,10 +224,9 @@ const App = () => {
   }, []);
 
   const fetchCategoryStandings = useCallback(async (cat: CategoryType) => {
-    const key = cat === 'BTCC' ? `${cat}-standings-${btccStandingsType}` : `${cat}-standings`;
+    const key = cat === 'BTCC' ? `${cat}-standings-batch` : `${cat}-standings`;
     if (loadedDataRef.current.has(key)) return;
     setIsCatStandLoading(true);
-    if (cat === 'BTCC') setBtccStandings([]); // Clear while loading new type
     try {
       if (cat === 'F1') {
         const res = await dataService.getF1StandingsFull();
@@ -271,7 +278,18 @@ const App = () => {
       } else if (cat === 'GTWC') {
         setGtwcStandings(await dataService.getGTWCStandings());
       } else if (cat === 'BTCC') {
-        setBtccStandings(await dataService.getBTCCStandings(btccStandingsType));
+        const types = ['drivers', 'manufacturers', 'teams', 'independent-drivers', 'independent-teams', 'jack-sears-trophy', 'goodyear-wingfoot-award'];
+        const results = await Promise.allSettled(types.map(t => dataService.getBTCCStandings(t)));
+        
+        setBtccStandings(prev => {
+          const updated = { ...prev };
+          types.forEach((t, i) => {
+            if (results[i].status === 'fulfilled') {
+              updated[t] = (results[i] as any).value;
+            }
+          });
+          return updated;
+        });
       } else if (cat === 'DTM') {
         const [drivers, teams, constructors] = await Promise.all([
           dataService.getDTMStandings('Driver'),
@@ -291,7 +309,7 @@ const App = () => {
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
     finally { setIsCatStandLoading(false); }
-  }, [btccStandingsType]);
+  }, []);
 
   const fetchCategoryNews = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-news`;
@@ -2039,7 +2057,7 @@ const App = () => {
                     <button className={`nascar-tab-btn ${btccStandingsType === 'goodyear-wingfoot-award' ? 'active' : ''}`} onClick={() => { setBtccStandingsType('goodyear-wingfoot-award'); }}>Goodyear Wingfoot</button>
                   </div>
                   <div className="standings-list f1-standings">
-                    {btccStandings.map((row: any, idx: number) => (
+                    {(btccStandings[btccStandingsType] || []).map((row: any, idx: number) => (
                       <div key={idx} className={`stand-row f1-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
                         <span className="stand-pos">{row.pos}</span>
                         <div className="stand-info">
@@ -2051,7 +2069,7 @@ const App = () => {
                     ))}
                     {isCatStandLoading ? (
                       <p className="empty-msg">Cargando posiciones...</p>
-                    ) : btccStandings.length === 0 && (
+                    ) : (btccStandings[btccStandingsType] || []).length === 0 && (
                       <p className="empty-msg">No hay posiciones disponibles en este momento.</p>
                     )}
                   </div>
