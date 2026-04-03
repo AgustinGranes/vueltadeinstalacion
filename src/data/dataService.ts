@@ -4530,10 +4530,11 @@ export const dataService = {
           const dateText = item.textContent?.trim().match(/\d+\s+[A-Z]{3}/i)?.[0] || 'TBD';
           
           races.push({
-            round: (idx + 1).toString(),
+            round: idx + 1,
             race: name,
             dates: dateText,
-            status: 'Upcoming'
+            status: 'Upcoming',
+            winner: ''
           });
         });
       }
