@@ -313,12 +313,18 @@ const App = () => {
         setSfTeams(t);
       } else if (cat === 'ELMS') {
         const types = [0, 1, 2, 3, 4, 5, 6, 7];
+        const classNames = [
+          'LMP2 Drivers', 'LMP2 Teams',
+          'LMP2 P/A Drivers', 'LMP2 P/A Teams',
+          'LMP3 Drivers', 'LMP3 Teams',
+          'LMGT3 Drivers', 'LMGT3 Teams'
+        ];
         const results = await Promise.allSettled(types.map(t => dataService.getELMSStandings(t)));
         setElmsStandings(prev => {
           const updated = { ...prev };
-          types.forEach((t, i) => {
+          classNames.forEach((name, i) => {
             if (results[i].status === 'fulfilled') {
-              updated[t] = (results[i] as any).value;
+              updated[name] = (results[i] as any).value;
             }
           });
           return updated;
@@ -1437,9 +1443,9 @@ const App = () => {
             <motion.div key="cat-cal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
               {isCatCalLoading ? renderLoadingCircle() : (
                 <>
-                {(isF1 || isF2 || isF3 || isFE || isF1A || isSUPERCARS || isSF) ? (
-                <div className="f1-calendar-list">
-                  {(isF1 ? f1Calendar : isF2 ? f2Calendar : isF3 ? f3Calendar : isF1A ? f1aCalendar : isSUPERCARS ? supercarsCalendar : isSF ? sfCalendar : feCalendar).map((race, idx) => (
+                {(isF1 || isF2 || isF3 || isFE || isF1A || isSUPERCARS || isSF || isELMS) ? (
+                  <div className="f1-calendar-list">
+                    {(isF1 ? f1Calendar : isF2 ? f2Calendar : isF3 ? f3Calendar : isF1A ? f1aCalendar : isSUPERCARS ? supercarsCalendar : isSF ? sfCalendar : isELMS ? elmsCalendar : feCalendar).map((race, idx) => (
                     <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${race.status.toLowerCase()}`}>{race.round}</div>
                       <div className="race-info-block">
