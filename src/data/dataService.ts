@@ -59,6 +59,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'SF': '#1a1a1a',
   'PROCAR4000': '#e8002d',
   'ELMS': '#0288d1',
+  'WORLD SBK': '#e8002d',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -205,6 +206,10 @@ export const DTM_NEWS_URLS = [
 ];
 export const DTM_CALENDAR_URL = 'https://www.autosport.com/dtm/schedule/2026/?all_event_types=0';
 export const DTM_STANDINGS_URL = 'https://www.autosport.com/dtm/standings/';
+
+export const WORLDSBK_CALENDAR_URL = 'https://www.worldsbk.com/en/calendar';
+export const WORLDSBK_RESULTS_URL = 'https://www.worldsbk.com/en/results%20statistics';
+export const WORLDSBK_NEWS_URL = 'https://www.worldsbk.com/es/noticias';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -4726,5 +4731,119 @@ export const dataService = {
     } catch (e) { console.error('[DataService] Procar Campeones News error:', e); }
 
     return allNews.slice(0, 20);
+  },
+
+  // === WORLD SBK NEWS ===
+  async getWorldSBKNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(WORLDSBK_NEWS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        // The structure often uses .news-item or similar based on research
+        const items = doc.querySelectorAll('.news-item, article.news-article, .news-list-item');
+        items.forEach(item => {
+          const titleElem = item.querySelector('h2, h3, .title, a:not(.image)');
+          const title = titleElem?.textContent?.trim();
+          const link = titleElem?.tagName === 'A' ? (titleElem as HTMLAnchorElement).getAttribute('href') : item.querySelector('a')?.getAttribute('href');
+          const img = item.querySelector('img')?.getAttribute('src') || item.querySelector('img')?.getAttribute('data-src');
+          
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://www.worldsbk.com${link}`,
+              source: 'WorldSBK.com',
+              category: 'WORLD SBK',
+              imageUrl: img ? (img.startsWith('http') ? img : `https://www.worldsbk.com${img}`) : undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] World SBK News error:', e); }
+    return allNews.slice(0, 15);
+  },
+
+  // === WORLD SBK CALENDAR ===
+  async getWorldSBKCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(WORLDSBK_CALENDAR_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const cards = doc.querySelectorAll('a.track-link');
+        
+        cards.forEach((card, idx) => {
+          const roundText = card.querySelector('.round')?.textContent?.trim() || `R${idx + 1}`;
+          const raceName = card.querySelector('h2')?.textContent?.trim() || 'TBA';
+          const dateText = card.querySelector('.date')?.textContent?.trim() || '';
+          
+          // Status check: if it has "Results" button, it's Finished. 
+          // If it has "Buy tickets" or "More info" and date is future, it's Upcoming.
+          const buttons = card.parentElement?.querySelectorAll('.btn-extra, button');
+          let isFinished = false;
+          buttons?.forEach(btn => {
+            if (btn.textContent?.toLowerCase().includes('results')) isFinished = true;
+          });
+
+          // Date based status fallback
+          let status: CalendarRace['status'] = isFinished ? 'Finished' : 'Upcoming';
+          
+          calendar.push({
+            round: parseInt(roundText.replace(/[^0-9]/g, '')) || idx + 1,
+            race: raceName,
+            dates: dateText,
+            status,
+            winner: isFinished ? '✅ Finalizado' : ''
+          });
+        });
+
+        // Set 'Next' status
+        let foundNext = false;
+        calendar.forEach(r => {
+          if (!foundNext && r.status === 'Upcoming') {
+            r.status = 'Next';
+            foundNext = true;
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] World SBK Calendar error:', e); }
+    return calendar;
+  },
+
+  // === WORLD SBK STANDINGS ===
+  async getWorldSBKStandings(): Promise<{ drivers: TCStandingRow[], manufacturers: TCStandingRow[] }> {
+    const standings = { drivers: [] as TCStandingRow[], manufacturers: [] as TCStandingRow[] };
+    try {
+      const html = await this.fetchWithProxy(WORLDSBK_RESULTS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        
+        // Drivers (Default)
+        const driverRows = doc.querySelectorAll('#champ-standing-sbk li');
+        driverRows.forEach(row => {
+          const pos = row.querySelector('.name')?.previousElementSibling?.textContent?.trim() || '';
+          const name = row.querySelector('.name')?.textContent?.trim() || '';
+          const points = row.querySelector('.points, span:last-child')?.textContent?.trim() || '0';
+          
+          if (name && !isNaN(parseInt(pos || '1'))) {
+            standings.drivers.push({ pos: pos || (standings.drivers.length + 1).toString(), driver: name, points });
+          }
+        });
+
+        // Manufacturers
+        const manufacturerRows = doc.querySelectorAll('#champ-manufacturer-standing-sbk li');
+        manufacturerRows.forEach(row => {
+          const name = row.querySelector('.builder-name')?.textContent?.trim() || '';
+          const points = row.querySelector('.builder-points')?.textContent?.trim() || '0';
+          const pos = (standings.manufacturers.length + 1).toString();
+          
+          if (name) {
+            standings.manufacturers.push({ pos, driver: name, points });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] World SBK Standings error:', e); }
+    return standings;
   }
 };

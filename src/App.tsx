@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -36,8 +36,9 @@ const DTM_LOGO = '/DTM.png';
 const SF_LOGO = '/SF.png';
 const ELMS_LOGO = '/ELMS.png';
 const PROCAR_LOGO = '/PROCAR.png';
+const WORLDSBK_LOGO = '/WORLDSBK.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'WORLD SBK', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -174,6 +175,10 @@ const App = () => {
   const [procarStandings, setProcarStandings] = useState<Record<string, TCStandingRow[]>>({ 'Clase A': [], 'Clase B': [] });
   const [procarStandingsTab, setProcarStandingsTab] = useState<string>('Clase A');
   const [procarNews, setProcarNews] = useState<NewsItem[]>([]);
+  const [worldSBKCalendar, setWorldSBKCalendar] = useState<CalendarRace[]>([]);
+  const [worldSBKStandings, setWorldSBKStandings] = useState<{ drivers: TCStandingRow[], manufacturers: TCStandingRow[] }>({ drivers: [], manufacturers: [] });
+  const [worldSBKNews, setWorldSBKNews] = useState<NewsItem[]>([]);
+  const [worldSBKStandingsTab, setWorldSBKStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -230,6 +235,7 @@ const App = () => {
       else if (cat === 'SF') setSfCalendar(await dataService.getSFCalendar());
       else if (cat === 'ELMS') setElmsCalendar(await dataService.getELMSCalendar());
       else if (cat === 'PROCAR4000') setProcarCalendar(await dataService.getProcarCalendar());
+      else if (cat === 'WORLD SBK') setWorldSBKCalendar(await dataService.getWorldSBKCalendar());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -344,6 +350,9 @@ const App = () => {
           'Clase A': claseA,
           'Clase B': claseB
         });
+      } else if (cat === 'WORLD SBK') {
+        const res = await dataService.getWorldSBKStandings();
+        setWorldSBKStandings(res);
       }
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -384,6 +393,7 @@ const App = () => {
       else if (cat === 'SF') setSfNews(await dataService.getSFNews());
       else if (cat === 'ELMS') setElmsNews(await dataService.getELMSNews());
       else if (cat === 'PROCAR4000') setProcarNews(await dataService.getProcarNews());
+      else if (cat === 'WORLD SBK') setWorldSBKNews(await dataService.getWorldSBKNews());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -415,6 +425,7 @@ const App = () => {
         dataService.getDTMNews(),
         dataService.getSFNews(),
         dataService.getELMSNews(),
+        dataService.getWorldSBKNews(),
       ]);
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
@@ -438,6 +449,7 @@ const App = () => {
       if (results[18].status === 'fulfilled') setDtmNews(results[18].value as NewsItem[]);
       if (results[19].status === 'fulfilled') setSfNews(results[19].value as NewsItem[]);
       if (results[20].status === 'fulfilled') setElmsNews(results[20].value as NewsItem[]);
+      if (results[21]?.status === 'fulfilled') setWorldSBKNews((results[21] as any).value);
 
       loadedDataRef.current.add('globalNews');
     } catch (e) {
@@ -905,6 +917,18 @@ const App = () => {
           <span className="cat-label">PROCAR4000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WORLDSBK_LOGO} 
+            alt="WORLD SBK" 
+            className="cat-logo worldsbk-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">WORLD SBK</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -1316,6 +1340,7 @@ const App = () => {
     const isSF = selectedCategory === 'SF';
     const isELMS = selectedCategory === 'ELMS';
     const isPROCAR4000 = selectedCategory === 'PROCAR4000';
+    const isWORLDSBK = selectedCategory === 'WORLD SBK';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1347,6 +1372,7 @@ const App = () => {
     if (isSF) logo = SF_LOGO;
     if (isELMS) logo = ELMS_LOGO;
     if (isPROCAR4000) logo = PROCAR_LOGO;
+    if (isWORLDSBK) logo = WORLDSBK_LOGO;
 
     let catTitle = '';
     if (isF1) catTitle = 'Formula 1';
@@ -1379,6 +1405,7 @@ const App = () => {
     if (isSF) catTitle = 'Super Formula';
     if (isELMS) catTitle = 'European Le Mans Series';
     if (isPROCAR4000) catTitle = 'PROCAR4000';
+    if (isWORLDSBK) catTitle = 'WORLD SBK';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1410,6 +1437,43 @@ const App = () => {
     if (isSF) news = sfNews;
     if (isELMS) news = elmsNews;
     if (isPROCAR4000) news = procarNews;
+    if (isWORLDSBK) news = worldSBKNews;
+
+    let calendar: CalendarRace[] = [];
+    switch (selectedCategory) {
+      case 'F1': calendar = f1Calendar; break;
+      case 'WRC': calendar = wrcCalendar; break;
+      case 'WRC2': calendar = wrc2Calendar; break;
+      case 'TC': calendar = tcCalendar; break;
+      case 'TCP': calendar = tcpCalendar; break;
+      case 'TCM': calendar = tcmCalendar; break;
+      case 'TCPM': calendar = tcpmCalendar; break;
+      case 'TCPK': calendar = tcpkCalendar; break;
+      case 'TCPPK': calendar = tcppkCalendar; break;
+      case 'TC2000': calendar = tc2000Calendar; break;
+      case 'INDYCAR': calendar = indyCalendar; break;
+      case 'NASCAR': calendar = nascarCalendar; break;
+      case 'WEC': calendar = wecCalendar; break;
+      case 'IMSA': calendar = imsaCalendar; break;
+      case 'NASCAR O': calendar = nascarOCalendar; break;
+      case 'NASCAR T': calendar = nascarTCalendar; break;
+      case 'TN C3': calendar = tnc3Calendar; break;
+      case 'TN C2': calendar = tnc3Calendar; break;
+      case 'F2': calendar = f2Calendar; break;
+      case 'F3': calendar = f3Calendar; break;
+      case 'FE': calendar = feCalendar; break;
+      case 'F1A': calendar = f1aCalendar; break;
+      case 'SUPERCARS': calendar = supercarsCalendar; break;
+      case 'GTWC': calendar = gtwcCalendar; break;
+      case 'BTCC': calendar = btccCalendar; break;
+      case 'MOTOGP': calendar = motoGPCalendar; break;
+      case 'DTM': calendar = dtmCalendar; break;
+      case 'SF': calendar = sfCalendar; break;
+      case 'ELMS': calendar = elmsCalendar; break;
+      case 'PROCAR4000': calendar = procarCalendar; break;
+      case 'WORLD SBK': calendar = worldSBKCalendar; break;
+      default: calendar = [];
+    }
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
@@ -1438,6 +1502,7 @@ const App = () => {
     if (isSF) resultsUrl = 'https://es.motorsport.com/super-formula/results/2026';
     if (isELMS) resultsUrl = 'https://lat.motorsport.com/elms/results/2026';
     if (isPROCAR4000) resultsUrl = 'https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados';
+    if (isWORLDSBK) resultsUrl = 'https://www.worldsbk.com/en/results%20statistics';
 
 
     return (
@@ -1478,7 +1543,7 @@ const App = () => {
                 <>
                 {(isF1 || isF2 || isF3 || isFE || isF1A || isSUPERCARS || isSF || isELMS) ? (
                   <div className="f1-calendar-list">
-                    {(isF1 ? f1Calendar : isF2 ? f2Calendar : isF3 ? f3Calendar : isF1A ? f1aCalendar : isSUPERCARS ? supercarsCalendar : isSF ? sfCalendar : isELMS ? elmsCalendar : feCalendar).map((race, idx) => (
+                    {(isF1 ? f1Calendar : isF2 ? f2Calendar : isF3 ? f3Calendar : isF1A ? f1aCalendar : isSUPERCARS ? supercarsCalendar : isSF ? sfCalendar : isELMS ? elmsCalendar : isPROCAR4000 ? procarCalendar : isWORLDSBK ? worldSBKCalendar : feCalendar).map((race, idx) => (
                     <div key={idx} className={`race-row ${race.status === 'Live' ? 'live' : ''}`}>
                       <div className={`race-round-num ${race.status.toLowerCase()}`}>{race.round}</div>
                       <div className="race-info-block">
@@ -1499,6 +1564,9 @@ const App = () => {
                       (isFE && feCalendar.length === 0) ||
                       (isF1A && f1aCalendar.length === 0) ||
                       (isSF && sfCalendar.length === 0) ||
+                      (isELMS && elmsCalendar.length === 0) ||
+                      (isPROCAR4000 && procarCalendar.length === 0) ||
+                      (isWORLDSBK && worldSBKCalendar.length === 0) ||
                       (isSUPERCARS && supercarsCalendar.length === 0)) && !isLoading && !isCatCalLoading && (
                     <p className="empty-msg">No hay eventos programados.</p>
                   )}
@@ -2550,6 +2618,27 @@ const App = () => {
                         (wecStandingsTab === 'h-drivers' && wecStandings.hypercarDrivers.length === 0) ||
                         (wecStandingsTab === 'gt3-drivers' && wecStandings.lmgt3Drivers.length === 0)) && !isLoading && 
                         <p className="empty-msg">No se encontraron posiciones WEC.</p>}
+                    </div>
+                  </>
+                ) : isWORLDSBK ? (
+                  <>
+                    <div className="f1-tabs nascar-tabs">
+                      <button className={`nascar-tab-btn ${worldSBKStandingsTab === 'drivers' ? 'active' : ''}`} onClick={() => setWorldSBKStandingsTab('drivers')}>Pilotos</button>
+                      <button className={`nascar-tab-btn ${worldSBKStandingsTab === 'manufacturers' ? 'active' : ''}`} onClick={() => setWorldSBKStandingsTab('manufacturers')}>Constructores</button>
+                    </div>
+                    <div className="standings-list worldsbk-standings">
+                      {(worldSBKStandingsTab === 'drivers' ? worldSBKStandings.drivers : worldSBKStandings.manufacturers).map((d: any, idx: number) => (
+                        <div key={idx} className={`stand-row worldsbk-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                          <span className="stand-pos">{d.pos}</span>
+                          <div className="stand-info">
+                            <span className="stand-name">{d.driver || d.team}</span>
+                          </div>
+                          <span className="stand-pts">{d.points} pts</span>
+                        </div>
+                      ))}
+                      {((worldSBKStandingsTab === 'drivers' && worldSBKStandings.drivers.length === 0) || 
+                        (worldSBKStandingsTab === 'manufacturers' && worldSBKStandings.manufacturers.length === 0)) && !isLoading && 
+                        <p className="empty-msg">No se encontraron posiciones World SBK.</p>}
                     </div>
                   </>
                 ) : isGTWC ? (
