@@ -224,14 +224,19 @@
 }
 
 .motogp-card {
-  background: #BE0026 !important;
+  background: #e10600 !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.motogp-logo {
+.worldsbk-card {
+  background: #e10600 !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.motogp-logo, .worldsbk-logo {
   height: 40px !important;
   max-width: 85%;
-  filter: drop-shadow(0 0 8px rgba(0,0,0,0.3));
+  filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(0,0,0,0.3)) !important;
 }
 
 
@@ -734,8 +739,9 @@
 .cat-content { display: flex; flex-direction: column; gap: 12px; }
 
 /* =============== F1 CALENDAR =============== */
-.f1-calendar-list, /* === Standings Unified Layout === */
-.standings-list {
+.f1-calendar-list, .motogp-calendar-list, .worldsbk-calendar-list,
+/* === Standings Unified Layout === */
+.standings-list, .worldsbk-standings {
   display: flex;
   flex-direction: column;
   gap: 10px;

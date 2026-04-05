@@ -31,7 +31,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   'WRC2': '#f57c00',
   'IndyCar': '#0057B8',
   'NASCAR': '#FFD659',
-  'MotoGP': '#BE0026',
   'WEC': '#0288d1',
   'TN': '#1c7c3b',
   'TC': '#005BAC',
@@ -59,7 +58,8 @@ const CATEGORY_COLORS: Record<string, string> = {
   'SF': '#1a1a1a',
   'PROCAR4000': '#e8002d',
   'ELMS': '#0288d1',
-  'WORLD SBK': '#e8002d',
+  'MotoGP': '#e10600',
+  'WORLD SBK': '#e10600',
 };
 
 export function getCategoryColor(cat: string): string {

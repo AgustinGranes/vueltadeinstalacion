@@ -562,7 +562,7 @@ const App = () => {
   const renderHome = () => (
     <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="home-view">
       <div className="categories-grid">
-        <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')}>
+        <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')} style={{ background: '#e10600' }}>
           <div className="cat-card-glow" />
           <img 
             src={F1_LOGO} 
@@ -572,6 +572,30 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">Formula 1</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')} style={{ background: '#e10600' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={MotoGP_LOGO} 
+            alt="MotoGP" 
+            className="cat-logo motogp-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">MotoGP</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')} style={{ background: '#e10600' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WORLDSBK_LOGO} 
+            alt="WORLD SBK" 
+            className="cat-logo worldsbk-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">WORLD SBK</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card f2-card" onClick={() => handleCategoryClick('F2')}>
@@ -656,18 +680,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">GT World Challenge</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')}>
-          <div className="cat-card-glow" />
-          <img 
-            src={MotoGP_LOGO} 
-            alt="MotoGP" 
-            className="cat-logo motogp-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">MotoGP</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card btcc-card" onClick={() => handleCategoryClick('BTCC')}>
@@ -915,18 +927,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">PROCAR4000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')}>
-          <div className="cat-card-glow" />
-          <img 
-            src={WORLDSBK_LOGO} 
-            alt="WORLD SBK" 
-            className="cat-logo worldsbk-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">WORLD SBK</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
@@ -1216,7 +1216,8 @@ const App = () => {
     const sourceArrays = [
       f1News, f2News, f3News, f1aNews, btccNews, supercarsNews, gtwcNews, motoGPNews, sfNews,
       wrcNews, wrc2News, wecNews, imsaNews, nascarNews, nascarONews, nascarTNews, indyNews,
-      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News, feNews
+      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News, feNews,
+      worldSBKNews, elmsNews
     ];
 
     let allNewsList: NewsItem[] = [];
@@ -1738,6 +1739,24 @@ const App = () => {
               ) : isMotoGP ? (
                 <div className="motogp-calendar-list">
                   {motoGPCalendar.length > 0 ? motoGPCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
+                </div>
+              ) : isWORLDSBK ? (
+                <div className="worldsbk-calendar-list">
+                  {worldSBKCalendar.length > 0 ? worldSBKCalendar.map((ev, idx) => (
                     <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
                       <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
                       <div className="race-info-block">
