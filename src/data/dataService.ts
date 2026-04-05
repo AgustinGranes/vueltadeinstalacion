@@ -207,7 +207,7 @@ export const DTM_NEWS_URLS = [
 export const DTM_CALENDAR_URL = 'https://www.autosport.com/dtm/schedule/2026/?all_event_types=0';
 export const DTM_STANDINGS_URL = 'https://www.autosport.com/dtm/standings/';
 
-export const WORLDSBK_CALENDAR_URL = 'https://www.worldsbk.com/en/calendar';
+export const WORLDSBK_CALENDAR_URL = 'https://campeones.com.ar/calendario-superbike-2022/';
 export const WORLDSBK_RESULTS_URL = 'https://www.worldsbk.com/en/results%20statistics';
 export const WORLDSBK_NEWS_URL = 'https://www.worldsbk.com/es/noticias';
 
@@ -4764,38 +4764,35 @@ export const dataService = {
     return allNews.slice(0, 15);
   },
 
-  // === WORLD SBK CALENDAR ===
   async getWorldSBKCalendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     try {
       const html = await this.fetchWithProxy(WORLDSBK_CALENDAR_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const cards = doc.querySelectorAll('a.track-link');
+        const rows = doc.querySelectorAll('table tr');
         
-        cards.forEach((card, idx) => {
-          const roundText = card.querySelector('.round')?.textContent?.trim() || `R${idx + 1}`;
-          const raceName = card.querySelector('h2')?.textContent?.trim() || 'TBA';
-          const dateText = card.querySelector('.date')?.textContent?.trim() || '';
-          
-          // Status check: if it has "Results" button, it's Finished. 
-          // If it has "Buy tickets" or "More info" and date is future, it's Upcoming.
-          const buttons = card.parentElement?.querySelectorAll('.btn-extra, button');
-          let isFinished = false;
-          buttons?.forEach(btn => {
-            if (btn.textContent?.toLowerCase().includes('results')) isFinished = true;
-          });
-
-          // Date based status fallback
-          let status: CalendarRace['status'] = isFinished ? 'Finished' : 'Upcoming';
-          
-          calendar.push({
-            round: parseInt(roundText.replace(/[^0-9]/g, '')) || idx + 1,
-            race: raceName,
-            dates: dateText,
-            status,
-            winner: isFinished ? '✅ Finalizado' : ''
-          });
+        rows.forEach((row, idx) => {
+          if (idx === 0) return; // Skip header
+          const cols = row.querySelectorAll('td');
+          if (cols.length >= 4) {
+            const roundText = cols[0].textContent?.trim() || `${idx}`;
+            const dateText = cols[1].textContent?.trim() || '';
+            const circuit = cols[2].textContent?.trim() || '';
+            const country = cols[3].textContent?.trim() || '';
+            
+            // Status check: check for <del> in the first column
+            const isFinished = cols[0].querySelector('del') !== null;
+            let status: CalendarRace['status'] = isFinished ? 'Finished' : 'Upcoming';
+            
+            calendar.push({
+              round: parseInt(roundText.replace(/[^0-9]/g, '')) || idx,
+              race: `${circuit} (${country})`,
+              dates: dateText,
+              status,
+              winner: isFinished ? '✅ Finalizado' : ''
+            });
+          }
         });
 
         // Set 'Next' status
