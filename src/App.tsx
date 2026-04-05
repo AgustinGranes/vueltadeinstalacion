@@ -574,30 +574,6 @@ const App = () => {
           <span className="cat-label">Formula 1</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')} style={{ background: '#e10600' }}>
-          <div className="cat-card-glow" />
-          <img 
-            src={MotoGP_LOGO} 
-            alt="MotoGP" 
-            className="cat-logo motogp-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">MotoGP</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')} style={{ background: '#e10600' }}>
-          <div className="cat-card-glow" />
-          <img 
-            src={WORLDSBK_LOGO} 
-            alt="WORLD SBK" 
-            className="cat-logo worldsbk-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">WORLD SBK</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
         <button className="cat-card f2-card" onClick={() => handleCategoryClick('F2')}>
           <div className="cat-card-glow" />
           <img 
@@ -807,6 +783,30 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">NASCAR Truck</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')} style={{ background: '#e10600' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={MotoGP_LOGO} 
+            alt="MotoGP" 
+            className="cat-logo motogp-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">MotoGP</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
+        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')} style={{ background: '#e10600' }}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WORLDSBK_LOGO} 
+            alt="WORLD SBK" 
+            className="cat-logo worldsbk-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">WORLD SBK</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
         <button className="cat-card tc-card" onClick={() => handleCategoryClick('TC')}>
