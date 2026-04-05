@@ -562,7 +562,7 @@ const App = () => {
   const renderHome = () => (
     <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="home-view">
       <div className="categories-grid">
-        <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')} style={{ background: '#e10600' }}>
+        <button className="cat-card f1-card" onClick={() => handleCategoryClick('F1')}>
           <div className="cat-card-glow" />
           <img 
             src={F1_LOGO} 
@@ -646,7 +646,7 @@ const App = () => {
           <span className="cat-label">Supercars</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card gtwc-card" onClick={() => handleCategoryClick('GTWC')} style={{ background: '#E30613' }}>
+        <button className="cat-card gtwc-card" onClick={() => handleCategoryClick('GTWC')}>
           <div className="cat-card-glow" />
           <img 
             src={GTWC_LOGO} 
@@ -785,7 +785,7 @@ const App = () => {
           <span className="cat-label">NASCAR Truck</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')} style={{ background: '#e10600' }}>
+        <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')}>
           <div className="cat-card-glow" />
           <img 
             src={MotoGP_LOGO} 
@@ -797,7 +797,7 @@ const App = () => {
           <span className="cat-label">MotoGP</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
-        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')} style={{ background: '#e10600' }}>
+        <button className="cat-card worldsbk-card" onClick={() => handleCategoryClick('WORLD SBK')}>
           <div className="cat-card-glow" />
           <img 
             src={WORLDSBK_LOGO} 

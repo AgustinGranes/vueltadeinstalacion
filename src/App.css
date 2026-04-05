@@ -124,113 +124,133 @@
 }
 
 .f1-card {
-  background: #ff0000;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wrc-card {
-  background: #f57c00;
+  background: var(--racing-orange);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wrc2-card {
-  background: #f57c00;
+  background: var(--racing-orange);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tc-card {
-  background: #e02020;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tnc3-card {
-  background: #e02020;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tnc2-card {
-  background: #0288d1 !important;
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .tcp-card {
-  background: #388e3c;
+  background: var(--racing-green);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcm-card {
-  background: #f57c00;
+  background: var(--racing-orange);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcpm-card {
-  background: #0288d1;
+  background: var(--racing-blue);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tcpk-card {
-  background: #ffd659;
+  background: var(--racing-yellow);
   border-color: rgba(0, 0, 0, 0.1);
 }
 
 .tcppk-card {
-  background: #7b1fa2;
+  background: var(--racing-purple);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .indycar-card {
-  background: #ff0000;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .nascar-card {
-  background: #ffd659;
+  background: var(--racing-yellow);
   border-color: rgba(0, 0, 0, 0.1);
 }
 
 .nascaro-card {
-  background: #388e3c;
+  background: var(--racing-green);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .tc2000-card {
-  background: #ff0000;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .nascart-card {
-  background: #ff0000;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .imsa-card {
-  background: #ff0000;
+  background: var(--racing-red);
   border-color: rgba(255, 255, 255, 0.2);
 }
 
 .wec-card {
-  background: #0288d1 !important;
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .elms-card {
-  background: #0288d1 !important;
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .procar-card {
-  background: #e10600 !important;
+  background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .motogp-card {
-  background: #e10600 !important;
+  background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .worldsbk-card {
-  background: #e10600 !important;
+  background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.gtwc-card {
+  background: var(--racing-red);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btcc-card {
+  background: var(--racing-yellow);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.dtm-card {
+  background: var(--racing-yellow);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.sf-card {
+  background: var(--racing-red);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .motogp-logo, .worldsbk-logo {
@@ -245,7 +265,7 @@
 }
 
 .f2-card {
-  background: #0288d1 !important;
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -254,7 +274,7 @@
 }
 
 .f3-card {
-  background: #ff0000 !important;
+  background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -263,17 +283,17 @@
 }
 
 .fe-card {
-  background: #0288d1 !important;
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .f1a-card {
-  background: #9c27b0 !important;
+  background: var(--racing-purple) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .supercars-card {
-  background: #e10600 !important;
+  background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
