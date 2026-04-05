@@ -1439,41 +1439,6 @@ const App = () => {
     if (isPROCAR4000) news = procarNews;
     if (isWORLDSBK) news = worldSBKNews;
 
-    let calendar: CalendarRace[] = [];
-    switch (selectedCategory) {
-      case 'F1': calendar = f1Calendar; break;
-      case 'WRC': calendar = wrcCalendar; break;
-      case 'WRC2': calendar = wrc2Calendar; break;
-      case 'TC': calendar = tcCalendar; break;
-      case 'TCP': calendar = tcpCalendar; break;
-      case 'TCM': calendar = tcmCalendar; break;
-      case 'TCPM': calendar = tcpmCalendar; break;
-      case 'TCPK': calendar = tcpkCalendar; break;
-      case 'TCPPK': calendar = tcppkCalendar; break;
-      case 'TC2000': calendar = tc2000Calendar; break;
-      case 'INDYCAR': calendar = indyCalendar; break;
-      case 'NASCAR': calendar = nascarCalendar; break;
-      case 'WEC': calendar = wecCalendar; break;
-      case 'IMSA': calendar = imsaCalendar; break;
-      case 'NASCAR O': calendar = nascarOCalendar; break;
-      case 'NASCAR T': calendar = nascarTCalendar; break;
-      case 'TN C3': calendar = tnc3Calendar; break;
-      case 'TN C2': calendar = tnc3Calendar; break;
-      case 'F2': calendar = f2Calendar; break;
-      case 'F3': calendar = f3Calendar; break;
-      case 'FE': calendar = feCalendar; break;
-      case 'F1A': calendar = f1aCalendar; break;
-      case 'SUPERCARS': calendar = supercarsCalendar; break;
-      case 'GTWC': calendar = gtwcCalendar; break;
-      case 'BTCC': calendar = btccCalendar; break;
-      case 'MOTOGP': calendar = motoGPCalendar; break;
-      case 'DTM': calendar = dtmCalendar; break;
-      case 'SF': calendar = sfCalendar; break;
-      case 'ELMS': calendar = elmsCalendar; break;
-      case 'PROCAR4000': calendar = procarCalendar; break;
-      case 'WORLD SBK': calendar = worldSBKCalendar; break;
-      default: calendar = [];
-    }
 
     let resultsUrl = '';
     if (isF1) resultsUrl = 'https://www.formula1.com/en/results.html/2024/races.html';
