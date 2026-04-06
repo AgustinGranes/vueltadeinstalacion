@@ -183,7 +183,7 @@
 
 
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo, .indycar-logo, .tnc3-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
@@ -259,7 +259,7 @@
   display: block;
 }
 
-.tc2000-logo, .wec-logo, .f1-logo, .f2-logo, .f3-logo, .elms-logo, .indycar-logo, .tnc3-logo {
+.tc2000-logo, .wec-logo, .f1-logo, .f2-logo, .f3-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
@@ -1519,9 +1519,9 @@
 
 
 .indycar-logo {
-  height: 60px !important;
-  max-width: 85%;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+  height: 120px !important;
+  max-width: 95% !important;
+  object-fit: contain;
 }
 
 .wrc-logo {
