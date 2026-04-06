@@ -441,6 +441,8 @@ const App = () => {
         dataService.getSFNews(),
         dataService.getELMSNews(),
         dataService.getWorldSBKNews(),
+        dataService.getWTCRNews(),
+        dataService.getTCRSANews(),
       ]);
       
       if (results[0].status === 'fulfilled') setF1News(results[0].value);
@@ -465,6 +467,8 @@ const App = () => {
       if (results[19].status === 'fulfilled') setSfNews(results[19].value as NewsItem[]);
       if (results[20].status === 'fulfilled') setElmsNews(results[20].value as NewsItem[]);
       if (results[21]?.status === 'fulfilled') setWorldSBKNews((results[21] as any).value);
+      if (results[22]?.status === 'fulfilled') setWtcrNews((results[22] as any).value);
+      if (results[23]?.status === 'fulfilled') setTcrsaNews((results[23] as any).value);
 
       loadedDataRef.current.add('globalNews');
     } catch (e) {
@@ -1984,6 +1988,24 @@ const App = () => {
                     <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
+              ) : isTCRSA ? (
+                <div className="tcrsa-calendar-list">
+                  {tcrsaCalendar.length > 0 ? tcrsaCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados TCR South America.</p>
+                  )}
+                </div>
               ) : null}
               </>
               )}
@@ -2719,6 +2741,20 @@ const App = () => {
                       </div>
                     ))}
                     {gtwcStandings.length === 0 && !isLoading && <p className="empty-msg">No se encontraron posiciones GT World Challenge.</p>}
+                  </div>
+                ) : isTCRSA ? (
+                  <div className="standings-list wtcr-standings">
+                    {tcrsaStandings.map((d, idx) => (
+                      <div key={idx} className={`stand-row wtcr-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                        <span className="stand-pos">{d.pos}</span>
+                        <div className="stand-info">
+                          <span className="stand-name">{d.driver}</span>
+                          {d.team && <span className="stand-sub">{d.team}</span>}
+                        </div>
+                        <span className="stand-pts">{d.totalPts} pts</span>
+                      </div>
+                    ))}
+                    {tcrsaStandings.length === 0 && <p className="empty-msg">Cargando posiciones TCRSA...</p>}
                   </div>
                 ) : null}
               </>
