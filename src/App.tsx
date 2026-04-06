@@ -5,7 +5,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import './App.css';
 
-type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK';
+type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK' | 'WTCR';
 type MainTab = 'home' | 'calendario' | 'noticias';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
@@ -37,8 +37,9 @@ const SF_LOGO = '/SF.png';
 const ELMS_LOGO = '/ELMS.png';
 const PROCAR_LOGO = '/PROCAR.png';
 const WORLDSBK_LOGO = '/WORLDSBK.png';
+const WTCR_LOGO = 'https://www.fiatcrworldtour.com/images/FIA_TCR-WT_Logotype_Pack_N.png';
 
-const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'WORLD SBK', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
+const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'WORLD SBK', 'WTCR', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
 
 
@@ -179,6 +180,9 @@ const App = () => {
   const [worldSBKStandings, setWorldSBKStandings] = useState<{ drivers: TCStandingRow[], manufacturers: TCStandingRow[] }>({ drivers: [], manufacturers: [] });
   const [worldSBKNews, setWorldSBKNews] = useState<NewsItem[]>([]);
   const [worldSBKStandingsTab, setWorldSBKStandingsTab] = useState<'drivers' | 'manufacturers'>('drivers');
+  const [wtcrCalendar, setWtcrCalendar] = useState<CalendarRace[]>([]);
+  const [wtcrStandings, setWtcrStandings] = useState<TCStandingRow[]>([]);
+  const [wtcrNews, setWtcrNews] = useState<NewsItem[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
@@ -236,6 +240,7 @@ const App = () => {
       else if (cat === 'ELMS') setElmsCalendar(await dataService.getELMSCalendar());
       else if (cat === 'PROCAR4000') setProcarCalendar(await dataService.getProcarCalendar());
       else if (cat === 'WORLD SBK') setWorldSBKCalendar(await dataService.getWorldSBKCalendar());
+      else if (cat === 'WTCR') setWtcrCalendar(await dataService.getWTCRCalendar());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Calendar fetch error for ${cat}:`, e); }
     finally { setIsCatCalLoading(false); }
@@ -353,6 +358,9 @@ const App = () => {
       } else if (cat === 'WORLD SBK') {
         const res = await dataService.getWorldSBKStandings();
         setWorldSBKStandings(res);
+      } else if (cat === 'WTCR') {
+        const res = await dataService.getWTCRStandings();
+        setWtcrStandings(res);
       }
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`Standings fetch error for ${cat}:`, e); }
@@ -394,6 +402,7 @@ const App = () => {
       else if (cat === 'ELMS') setElmsNews(await dataService.getELMSNews());
       else if (cat === 'PROCAR4000') setProcarNews(await dataService.getProcarNews());
       else if (cat === 'WORLD SBK') setWorldSBKNews(await dataService.getWorldSBKNews());
+      else if (cat === 'WTCR') setWtcrNews(await dataService.getWTCRNews());
       loadedDataRef.current.add(key);
     } catch (e) { console.error(`News fetch error for ${cat}:`, e); }
     finally { setIsCatNewsLoading(false); }
@@ -929,6 +938,18 @@ const App = () => {
           <span className="cat-label">PROCAR4000</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card wtcr-card" onClick={() => handleCategoryClick('WTCR')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WTCR_LOGO} 
+            alt="WTCR" 
+            className="cat-logo wtcr-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">World TCR</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
       </div>
     </motion.div>
   );
@@ -959,6 +980,7 @@ const App = () => {
     if (c === 'TC' || c.includes('TURISMO CARRETERA')) return TC_LOGO;
     if (c.includes('SF') || c.includes('SUPER FORMULA')) return SF_LOGO;
     if (c.includes('ELMS') || c.includes('EUROPEAN LE MANS')) return ELMS_LOGO;
+    if (c.includes('WTCR') || c.includes('TCR WORLD')) return WTCR_LOGO;
     return null;
   };
 
@@ -1217,7 +1239,7 @@ const App = () => {
       f1News, f2News, f3News, f1aNews, btccNews, supercarsNews, gtwcNews, motoGPNews, sfNews,
       wrcNews, wrc2News, wecNews, imsaNews, nascarNews, nascarONews, nascarTNews, indyNews,
       tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News, feNews,
-      worldSBKNews, elmsNews
+      worldSBKNews, elmsNews, wtcrNews
     ];
 
     let allNewsList: NewsItem[] = [];
@@ -1342,6 +1364,7 @@ const App = () => {
     const isELMS = selectedCategory === 'ELMS';
     const isPROCAR4000 = selectedCategory === 'PROCAR4000';
     const isWORLDSBK = selectedCategory === 'WORLD SBK';
+    const isWTCR = selectedCategory === 'WTCR';
     
     let logo = F1_LOGO;
     if (isWRC) logo = WRC_LOGO;
@@ -1374,6 +1397,7 @@ const App = () => {
     if (isELMS) logo = ELMS_LOGO;
     if (isPROCAR4000) logo = PROCAR_LOGO;
     if (isWORLDSBK) logo = WORLDSBK_LOGO;
+    if (isWTCR) logo = WTCR_LOGO;
 
     let catTitle = '';
     if (isF1) catTitle = 'Formula 1';
@@ -1407,6 +1431,7 @@ const App = () => {
     if (isELMS) catTitle = 'European Le Mans Series';
     if (isPROCAR4000) catTitle = 'PROCAR4000';
     if (isWORLDSBK) catTitle = 'WORLD SBK';
+    if (isWTCR) catTitle = 'FIA TCR World Tour';
 
     let news = f1News;
     if (isWRC) news = wrcNews;
@@ -1439,6 +1464,7 @@ const App = () => {
     if (isELMS) news = elmsNews;
     if (isPROCAR4000) news = procarNews;
     if (isWORLDSBK) news = worldSBKNews;
+    if (isWTCR) news = wtcrNews;
 
 
     let resultsUrl = '';
@@ -1469,6 +1495,7 @@ const App = () => {
     if (isELMS) resultsUrl = 'https://lat.motorsport.com/elms/results/2026';
     if (isPROCAR4000) resultsUrl = 'https://www.procar4000.com.ar/procar_4000/index.php/2013-01-31-06-54-32/resultados';
     if (isWORLDSBK) resultsUrl = 'https://www.worldsbk.com/en/results%20statistics';
+    if (isWTCR) resultsUrl = 'https://www.fiatcrworldtour.com/STANDINGS';
 
 
     return (
@@ -1480,7 +1507,7 @@ const App = () => {
           <img 
             src={logo} 
             alt={catTitle} 
-            className={`cat-header-logo ${isSUPERCARS ? 'supercars-logo' : ''} ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''} ${isGTWC ? 'gtwc-logo' : ''} ${isDTM ? 'dtm-logo' : ''} ${isSF ? 'sf-logo' : ''}`} 
+            className={`cat-header-logo ${isSUPERCARS ? 'supercars-logo' : ''} ${isTNC3 ? 'tnc3-logo' : ''} ${isTC2000 ? 'tc2000-logo' : ''} ${isWEC ? 'wec-logo' : ''} ${isWRC || isWRC2 ? 'wrc-logo' : ''} ${isNascar || isNASCART ? 'nascar-logo' : ''} ${isIndy ? 'indycar-logo' : ''} ${isIMSA ? 'imsa-logo' : ''} ${isF3 ? 'f3-logo' : ''} ${isFE ? 'fe-logo' : ''} ${isF1A ? 'f1a-logo' : ''} ${isGTWC ? 'gtwc-logo' : ''} ${isDTM ? 'dtm-logo' : ''} ${isSF ? 'sf-logo' : ''} ${isWTCR ? 'wtcr-logo' : ''}`} 
             referrerPolicy="no-referrer"
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
@@ -1916,6 +1943,24 @@ const App = () => {
                     <p className="empty-msg">No hay eventos programados.</p>
                   )}
                 </div>
+              ) : isWTCR ? (
+                <div className="wtcr-calendar-list">
+                  {wtcrCalendar.length > 0 ? wtcrCalendar.map((ev, idx) => (
+                    <div key={idx} className={`race-row ${ev.status.toLowerCase()}`}>
+                      <div className={`race-round-num ${ev.status.toLowerCase()}`}>{ev.round}</div>
+                      <div className="race-info-block">
+                        <span className="race-name-label">{ev.race}</span>
+                        <span className="race-date-label">{ev.dates}</span>
+                      </div>
+                      <div className={`race-status-badge ${ev.status.toLowerCase()}`}>
+                        {ev.status === 'Finished' ? 'FINALIZADO' : 
+                         ev.status === 'Live' ? 'EN CURSO' : 'PRÓXIMO'}
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="empty-msg">No hay eventos programados.</p>
+                  )}
+                </div>
               ) : null}
               </>
               )}
@@ -1990,6 +2035,20 @@ const App = () => {
                     {((f2StandingsTab === 'drivers' && f2Drivers.length === 0) || (f2StandingsTab === 'teams' && f2Teams.length === 0)) && <p className="empty-msg">Cargando posiciones...</p>}
                   </div>
                 </>
+              ) : isWTCR ? (
+                <div className="standings-list wtcr-standings">
+                  {wtcrStandings.map((d, idx) => (
+                    <div key={idx} className={`stand-row wtcr-stand-row ${idx < 3 ? `top-${idx + 1}` : ''}`}>
+                      <span className="stand-pos">{d.pos}</span>
+                      <div className="stand-info">
+                        <span className="stand-name">{d.driver}</span>
+                        {d.team && <span className="stand-sub">{d.team}</span>}
+                      </div>
+                      <span className="stand-pts">{d.totalPts} pts</span>
+                    </div>
+                  ))}
+                  {wtcrStandings.length === 0 && <p className="empty-msg">Cargando posiciones...</p>}
+                </div>
               ) : isF3 ? (
                 <>
                   <div className="f1-tabs nascar-tabs">

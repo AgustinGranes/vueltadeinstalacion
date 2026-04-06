@@ -60,6 +60,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'ELMS': '#0288d1',
   'MotoGP': '#e10600',
   'WORLD SBK': '#e10600',
+  'WTCR': '#e10600',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -210,6 +211,10 @@ export const DTM_STANDINGS_URL = 'https://www.autosport.com/dtm/standings/';
 export const WORLDSBK_CALENDAR_URL = 'https://campeones.com.ar/calendario-superbike-2022/';
 export const WORLDSBK_RESULTS_URL = 'https://www.worldsbk.com/en/results%20statistics';
 export const WORLDSBK_NEWS_URL = 'https://www.worldsbk.com/es/noticias';
+
+export const WTCR_EVENTS_URL = 'https://www.fiatcrworldtour.com/events';
+export const WTCR_NEWS_URL = 'https://www.fiatcrworldtour.com/news';
+export const WTCR_STANDINGS_URL = 'https://www.fiatcrworldtour.com/STANDINGS';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -4842,5 +4847,86 @@ export const dataService = {
       }
     } catch (e) { console.error('[DataService] World SBK Standings error:', e); }
     return standings;
+  },
+
+  // === WORLD TCR (WTCR) ===
+  async getWTCRNews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(WTCR_NEWS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        // Scraper based on: a.zx (link/image) and sibling link for title
+        const items = doc.querySelectorAll('a.zx');
+        items.forEach(linkArt => {
+          const titleLink = linkArt.parentElement?.querySelector('a:not(.zx)');
+          const title = titleLink?.textContent?.trim();
+          const link = titleLink?.getAttribute('href') || linkArt.getAttribute('href');
+          const img = linkArt.querySelector('img')?.getAttribute('src');
+          
+          if (title && link) {
+            allNews.push({
+              title,
+              summary: '',
+              link: link.startsWith('http') ? link : `https://www.fiatcrworldtour.com${link}`,
+              source: 'TCR World Tour',
+              category: 'WTCR',
+              imageUrl: img ? (img.startsWith('http') ? img : `https://www.fiatcrworldtour.com${img}`) : undefined
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] WTCR News error:', e); }
+    return allNews.slice(0, 15);
+  },
+
+  async getWTCRCalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(WTCR_EVENTS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const eventBlocks = doc.querySelectorAll('.indi'); // Usually "Rounds X & Y"
+        
+        eventBlocks.forEach((block, idx) => {
+          const parent = block.parentElement;
+          if (parent) {
+            const roundText = block.textContent?.trim() || '';
+            const dateText = parent.querySelector('.wtthedate')?.textContent?.trim() || '';
+            const circuit = parent.querySelector('.wtcircuit')?.textContent?.trim() || '';
+            
+            if (roundText || circuit) {
+              calendar.push({
+                round: idx + 1,
+                race: `${roundText} - ${circuit}`,
+                dates: dateText,
+                status: 'Upcoming',
+                winner: ''
+              });
+            }
+          }
+        });
+
+        // Set 'Next' status for the first one
+        if (calendar.length > 0) calendar[0].status = 'Next';
+      }
+    } catch (e) { console.error('[DataService] WTCR Calendar error:', e); }
+    return calendar;
+  },
+
+  async getWTCRStandings(): Promise<TCStandingRow[]> {
+    // Extracted from PDF (2025 Final) as requested by user
+    return [
+      {"pos": "1", "driver": "Yann Ehrlacher", "team": "Lynk & Co 03 FL TCR", "points": "484"},
+      {"pos": "2", "driver": "Thed Björk", "team": "Lynk & Co 03 FL TCR", "points": "460"},
+      {"pos": "3", "driver": "Esteban Guerrieri", "team": "Honda Civic Type R FL5 TCR", "points": "385"},
+      {"pos": "4", "driver": "Santiago Urrutia", "team": "Lynk & Co 03 FL TCR", "points": "334"},
+      {"pos": "5", "driver": "Ma Qing Hua", "team": "Lynk & Co 03 FL TCR", "points": "304"},
+      {"pos": "6", "driver": "Néstor Girolami", "team": "Hyundai Elantra N TCR", "points": "299"},
+      {"pos": "7", "driver": "Aurélien Comte", "team": "CUPRA Leon VZ TCR", "points": "294"},
+      {"pos": "8", "driver": "Norbert Michelisz", "team": "Hyundai Elantra N TCR", "points": "290"},
+      {"pos": "9", "driver": "Mikel Azcona", "team": "Hyundai Elantra N TCR", "points": "273"},
+      {"pos": "10", "driver": "Ignacio Montenegro", "team": "Honda Civic Type R FL5 TCR", "points": "253"}
+    ];
   }
 };
