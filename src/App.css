@@ -239,8 +239,8 @@
 }
 
 .btcc-card {
-  background: var(--racing-yellow);
-  border-color: rgba(0, 0, 0, 0.1);
+  background: var(--racing-purple);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .dtm-card {
