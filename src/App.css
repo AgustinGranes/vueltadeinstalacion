@@ -133,7 +133,7 @@
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.tc-card, .tnc3-card, .indycar-card, .tc2000-card, .nascart-card, .imsa-card, .procar-card, .motogp-card, .worldsbk-card, .gtwc-card, .sf-card, .f3-card, .supercars-card, .wtcr-card {
+.tc-card, .tnc3-card, .indycar-card, .tc2000-card, .nascart-card, .imsa-card, .procar-card, .motogp-card, .worldsbk-card, .gtwc-card, .sf-card, .f3-card, .supercars-card, .wtcr-card, .tcrsa-card {
   background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
@@ -183,7 +183,7 @@
 
 
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo, .tcrsa-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
@@ -725,6 +725,7 @@
 .f3-stand-row { border-left-color: #ff0000; }
 .elms-stand-row { border-left-color: #004C97; }
 .wtcr-stand-row { border-left-color: var(--racing-red); }
+.tcrsa-stand-row { border-left-color: var(--racing-red); }
 
 /* Podium Highlights */
 .stand-row.top-1 { background: rgba(255, 215, 0, 0.05); border-left-width: 5px; }
