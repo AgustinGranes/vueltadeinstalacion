@@ -61,6 +61,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'MotoGP': '#e10600',
   'WORLD SBK': '#e10600',
   'WTCR': '#e10600',
+  'TCRSA': '#0288d1',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -208,13 +209,17 @@ export const DTM_NEWS_URLS = [
 export const DTM_CALENDAR_URL = 'https://www.autosport.com/dtm/schedule/2026/?all_event_types=0';
 export const DTM_STANDINGS_URL = 'https://www.autosport.com/dtm/standings/';
 
-export const WORLDSBK_CALENDAR_URL = 'https://campeones.com.ar/calendario-superbike-2022/';
+export const WORLDSBK_CALENDAR_URL = 'https://www.worldsbk.com/en/calendar';
 export const WORLDSBK_RESULTS_URL = 'https://www.worldsbk.com/en/results%20statistics';
 export const WORLDSBK_NEWS_URL = 'https://www.worldsbk.com/es/noticias';
 
 export const WTCR_EVENTS_URL = 'https://www.fiatcrworldtour.com/events';
 export const WTCR_NEWS_URL = 'https://www.fiatcrworldtour.com/news';
 export const WTCR_STANDINGS_URL = 'https://www.fiatcrworldtour.com/STANDINGS';
+
+const TCRSA_NEWS_URL = 'https://southamerica.tcr-series.com/noticias?page=1';
+const TCRSA_CALENDAR_URL = 'https://southamerica.tcr-series.com/calendario';
+const TCRSA_STANDINGS_URL = 'https://southamerica.tcr-series.com/campeonato/drivers';
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
@@ -3478,7 +3483,7 @@ export const dataService = {
         // MUST include Referer and User-Agent to bypass upstream validation (F-1738884619)
         const res = await fetch(`${proxyPath}${proxyPath.includes('?') ? '&' : '?'}${cacheBuster}`, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/134.0.0.0',
             'Accept': 'application/json, text/plain, */*',
             'Referer': 'https://vueltarapida.com/',
             'Origin': 'https://vueltadeinstalacion.vercel.app'
@@ -4962,5 +4967,95 @@ export const dataService = {
       {"pos": "9", "driver": "Mikel Azcona", "team": "Hyundai Elantra N TCR", "points": "273"},
       {"pos": "10", "driver": "Ignacio Montenegro", "team": "Honda Civic Type R FL5 TCR", "points": "253"}
     ];
+  },
+
+  async getTCRSANews(): Promise<NewsItem[]> {
+    const allNews: NewsItem[] = [];
+    try {
+      const html = await this.fetchWithProxy(TCRSA_NEWS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const articles = doc.querySelectorAll('article[class*="_container_"]');
+        articles.forEach(article => {
+          const title = article.querySelector('h3')?.textContent?.trim() || '';
+          const date = article.querySelector('span[class*="_date_"]')?.textContent?.trim() || '';
+          const linkRel = article.querySelector('a[class*="_header_"]')?.getAttribute('href') || '';
+          const img = article.querySelector('img[class*="_cover_"]')?.getAttribute('src') || '';
+          
+          if (title) {
+            allNews.push({
+              title,
+              summary: date,
+              link: linkRel.startsWith('http') ? linkRel : `https://southamerica.tcr-series.com${linkRel}`,
+              source: 'TCR South America',
+              imageUrl: img
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] TCRSA News error:', e); }
+    return allNews.slice(0, 15);
+  },
+
+  async getTCRSACalendar(): Promise<CalendarRace[]> {
+    const calendar: CalendarRace[] = [];
+    try {
+      const html = await this.fetchWithProxy(TCRSA_CALENDAR_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const items = doc.querySelectorAll('li');
+        items.forEach((li, idx) => {
+          const pTags = li.querySelectorAll('p');
+          let dateStr = '';
+          let locationStr = '';
+          
+          pTags.forEach(p => {
+            if (p.querySelector('span')) {
+              dateStr = p.textContent?.trim() || '';
+            } else if (p.textContent?.trim()) {
+              locationStr = p.textContent?.trim() || '';
+            }
+          });
+
+          if (dateStr || locationStr) {
+            calendar.push({
+              round: idx + 1,
+              race: `Round ${idx + 1}${locationStr ? ' - ' + locationStr : ''}`,
+              dates: dateStr,
+              status: 'Upcoming',
+              winner: ''
+            });
+          }
+        });
+        if (calendar.length > 0) calendar[0].status = 'Next';
+      }
+    } catch (e) { console.error('[DataService] TCRSA Calendar error:', e); }
+    return calendar;
+  },
+
+  async getTCRSAStandings(): Promise<TCStandingRow[]> {
+    const standings: TCStandingRow[] = [];
+    try {
+      const html = await this.fetchWithProxy(TCRSA_STANDINGS_URL);
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('article[class*="_container_"]');
+        rows.forEach(row => {
+          const pos = row.querySelector('p[class*="_position_"]')?.textContent?.trim() || '';
+          const name = row.querySelector('p[class*="_name_"]')?.textContent?.trim() || '';
+          const points = row.querySelector('p[class*="_total_"]')?.textContent?.trim() || '';
+          
+          if (name) {
+            standings.push({
+              pos,
+              driver: name,
+              team: '', 
+              points
+            });
+          }
+        });
+      }
+    } catch (e) { console.error('[DataService] TCRSA Standings error:', e); }
+    return standings;
   }
 };
