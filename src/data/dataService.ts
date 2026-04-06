@@ -4856,18 +4856,19 @@ export const dataService = {
       const html = await this.fetchWithProxy(WTCR_NEWS_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        // Scraper based on: a.zx (link/image) and sibling link for title
-        const items = doc.querySelectorAll('a.zx');
-        items.forEach(linkArt => {
-          const titleLink = linkArt.parentElement?.querySelector('a:not(.zx)');
-          const title = titleLink?.textContent?.trim();
-          const link = titleLink?.getAttribute('href') || linkArt.getAttribute('href');
-          const img = linkArt.querySelector('img')?.getAttribute('src');
+        // Corrected selectors from browser research: .teaser-item, .titolonewsteaser a, .datanews
+        const items = doc.querySelectorAll('.teaser-item');
+        items.forEach(item => {
+          const titleEl = item.querySelector('.titolonewsteaser a');
+          const title = titleEl?.textContent?.trim();
+          const link = titleEl?.getAttribute('href') || item.querySelector('a.zx')?.getAttribute('href');
+          const date = item.querySelector('.datanews')?.textContent?.trim() || '';
+          const img = item.querySelector('.element-image img')?.getAttribute('src');
           
           if (title && link) {
             allNews.push({
               title,
-              summary: '',
+              summary: date,
               link: link.startsWith('http') ? link : `https://www.fiatcrworldtour.com${link}`,
               source: 'TCR World Tour',
               category: 'WTCR',
@@ -4886,26 +4887,63 @@ export const dataService = {
       const html = await this.fetchWithProxy(WTCR_EVENTS_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const eventBlocks = doc.querySelectorAll('.indi'); // Usually "Rounds X & Y"
+        const eventBlocks = doc.querySelectorAll('.teaser-item.event');
         
         eventBlocks.forEach((block, idx) => {
-          const parent = block.parentElement;
-          if (parent) {
-            const roundText = block.textContent?.trim() || '';
-            const dateText = parent.querySelector('.wtthedate')?.textContent?.trim() || '';
-            const circuit = parent.querySelector('.wtcircuit')?.textContent?.trim() || '';
-            
-            if (roundText || circuit) {
-              calendar.push({
-                round: idx + 1,
-                race: `${roundText} - ${circuit}`,
-                dates: dateText,
-                status: 'Upcoming',
-                winner: ''
-              });
-            }
+          const roundText = block.querySelector('.indi')?.textContent?.trim() || '';
+          const dateText = block.querySelector('.wtthedate')?.textContent?.trim() || '';
+          const circuit = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
+          
+          // Detect regional series from logos
+          let series = 'TCR World Tour';
+          const logos = block.querySelectorAll('img');
+          logos.forEach(img => {
+            const src = img.getAttribute('src') || '';
+            if (src.includes('TCR_Asia_POS')) series = 'TCR Asia';
+            else if (src.includes('TCR_Mexico_P')) series = 'TCR South America';
+            else if (src.includes('tcraustralia')) series = 'TCR Australia';
+          });
+
+          if (roundText || circuit) {
+            calendar.push({
+              round: idx + 1,
+              race: `${roundText} - ${circuit} (${series})`,
+              dates: dateText,
+              status: 'Upcoming',
+              winner: ''
+            });
           }
         });
+
+        if (calendar.length === 0) {
+          // Fallback if .teaser-item.event fails but .indi exists
+          const legacyBlocks = doc.querySelectorAll('.indi');
+          legacyBlocks.forEach((block, idx) => {
+             const parent = block.closest('.teaser-item') || block.parentElement;
+             if (parent) {
+                const roundText = block.textContent?.trim() || '';
+                const dateText = parent.querySelector('.wtthedate')?.textContent?.trim() || '';
+                const circuit = parent.querySelector('.wtcircuit')?.textContent?.trim() || '';
+                
+                let series = 'TCR World Tour';
+                const logos = parent.querySelectorAll('img');
+                logos.forEach(img => {
+                  const src = img.getAttribute('src') || '';
+                  if (src.includes('TCR_Asia_POS')) series = 'TCR Asia';
+                  else if (src.includes('TCR_Mexico_P')) series = 'TCR South America';
+                  else if (src.includes('tcraustralia')) series = 'TCR Australia';
+                });
+
+                calendar.push({
+                  round: idx + 1,
+                  race: `${roundText} - ${circuit} (${series})`,
+                  dates: dateText,
+                  status: 'Upcoming',
+                  winner: ''
+                });
+             }
+          });
+        }
 
         // Set 'Next' status for the first one
         if (calendar.length > 0) calendar[0].status = 'Next';

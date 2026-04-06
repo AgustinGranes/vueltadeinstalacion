@@ -183,7 +183,7 @@
 
 
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo, .wtcr-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
 
@@ -265,7 +265,7 @@
   display: block;
 }
 
-.tc2000-logo, .wec-logo, .f1-logo, .f2-logo, .f3-logo, .elms-logo, .wtcr-logo {
+.tc2000-logo, .wec-logo, .f1-logo, .f2-logo, .f3-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
