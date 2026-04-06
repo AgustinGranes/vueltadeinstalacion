@@ -124,133 +124,38 @@
 }
 
 .f1-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.wrc-card {
-  background: var(--racing-orange);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.wrc2-card {
-  background: var(--racing-orange);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tc-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tnc3-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tnc2-card {
-  background: var(--racing-blue) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.tcp-card {
-  background: var(--racing-green);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tcm-card {
-  background: var(--racing-orange);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tcpm-card {
-  background: var(--racing-blue);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tcpk-card {
-  background: var(--racing-yellow);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.tcppk-card {
-  background: var(--racing-purple);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.indycar-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.nascar-card {
-  background: var(--racing-yellow);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.nascaro-card {
-  background: var(--racing-green);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.tc2000-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.nascart-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.imsa-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.wec-card {
-  background: var(--racing-blue) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.elms-card {
-  background: var(--racing-blue) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.procar-card {
   background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.motogp-card {
+.wrc-card, .wrc2-card, .tcm-card {
+  background: var(--racing-orange) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.tc-card, .tnc3-card, .indycar-card, .tc2000-card, .nascart-card, .imsa-card, .procar-card, .motogp-card, .worldsbk-card, .gtwc-card, .sf-card, .f3-card, .supercars-card {
   background: var(--racing-red) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.worldsbk-card {
-  background: var(--racing-red) !important;
+.tnc2-card, .tcpm-card, .wec-card, .elms-card, .f2-card, .fe-card {
+  background: var(--racing-blue) !important;
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.gtwc-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
+.tcp-card, .nascaro-card {
+  background: var(--racing-green) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.btcc-card {
-  background: var(--racing-purple);
-  border-color: rgba(255, 255, 255, 0.2);
+.tcpk-card, .nascar-card, .dtm-card {
+  background: var(--racing-yellow) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-.dtm-card {
-  background: var(--racing-yellow);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.sf-card {
-  background: var(--racing-red);
-  border-color: rgba(255, 255, 255, 0.2);
+.tcppk-card, .btcc-card, .f1a-card {
+  background: var(--racing-purple) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .motogp-logo, .worldsbk-logo {
@@ -264,38 +169,19 @@
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)); /* Forced white + glow */
 }
 
-.f2-card {
-  background: var(--racing-blue) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
+
 
 .f2-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
-.f3-card {
-  background: var(--racing-red) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
+
 
 .f3-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 
-.fe-card {
-  background: var(--racing-blue) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
 
-.f1a-card {
-  background: var(--racing-purple) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-.supercars-card {
-  background: var(--racing-red) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
 
 .imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
@@ -1528,10 +1414,7 @@
 }
 
 /* =============== TC SPECIFIC =============== */
-.tc-card {
-  background: #ff0000 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
+
 
 .tc-logo {
   height: 55px !important;
@@ -1608,10 +1491,7 @@
 }
 
 /* =============== TCPK SPECIFIC =============== */
-.tcpk-card {
-  background: #ffcc00 !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
+
 
 .tcpk-logo {
   height: 45px !important;
@@ -1636,10 +1516,7 @@
 }
 
 /* =============== INDYCAR SPECIFIC =============== */
-.indycar-card {
-  background: #ff0000 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
+
 
 .indycar-logo {
   height: 60px !important;
@@ -1669,16 +1546,10 @@
 }
 
 /* =============== NASCAR SPECIFIC =============== */
-.nascar-card {
-  background: #FFCC00 !important;
-  border-color: rgba(0, 0, 0, 0.3) !important;
-}
-
-.nascar-card .cat-label {
-  color: #000 !important;
-}
-
-.nascar-card .cat-arrow {
+/* NASCAR label & arrow specific contrast if yellow */
+.nascar-card .cat-label, .tcpk-card .cat-label, .dtm-card .cat-label,
+.nascar-card .cat-arrow, .tcpk-card .cat-arrow, .dtm-card .cat-arrow,
+.btcc-card .cat-label, .btcc-card .cat-arrow {
   color: #000 !important;
 }
 
@@ -2070,31 +1941,7 @@
 /* BTCC Styles */
 .btcc-logo { width: 140px; height: auto; transition: transform 0.3s ease; }
 .btcc-logo:hover { transform: scale(1.05); }
-.f1a-card, .btcc-card, .tcppk-card { 
-  background: #4B0082 !important; 
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-.btcc-tabs { display: flex; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; gap: 8px; padding: 4px 0 12px; margin-bottom: 8px; }
-.btcc-tabs::-webkit-scrollbar { display: none; }
-.btcc-tabs .nascar-tab-btn { flex: 0 0 auto; white-space: nowrap; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid transparent; transition: all 0.2s ease; }
-.btcc-tabs .nascar-tab-btn.active { background: #4B0082; color: #fff; border-color: rgba(255, 255, 255, 0.2); box-shadow: 0 4px 12px rgba(75, 0, 130, 0.3); }
 
-
-/* Unified Yellow Theme Overrides */
-.nascar-card, .tcpk-card, .dtm-card {
-  background: #FFCC00 !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
-.nascar-card .cat-label, .tcpk-card .cat-label, .dtm-card .cat-label,
-.nascar-card .cat-arrow, .tcpk-card .cat-arrow, .dtm-card .cat-arrow {
-  color: #000 !important;
-}
-
-/* Unified Violet Theme Overrides */
-.f1a-card, .btcc-card, .tcppk-card {
-  background: #4B0082 !important;
-  border-bottom: none !important;
-}
 
 /* Logo Size Overrides for Headers */
 .cat-header-logo.gtwc-logo,
@@ -2107,14 +1954,7 @@
 }
 
 /* Super Formula (SF) Specific Styles */
-.sf-card {
-  background: #FFFFFF !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
 
-.sf-card .cat-label, .sf-card .cat-arrow {
-  color: #000000 !important;
-}
 
 .sf-stand-row {
   border-left-color: #1a1a1a;
@@ -2129,11 +1969,4 @@
 }
 
 /* IndyCar Specific Styles */
-.indycar-card {
-  background: #FFFFFF !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-}
 
-.indycar-card .cat-label, .indycar-card .cat-arrow {
-  color: #000000 !important;
-}
