@@ -4887,27 +4887,32 @@ export const dataService = {
       const html = await this.fetchWithProxy(WTCR_EVENTS_URL);
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const eventBlocks = doc.querySelectorAll('.teaser-item.event');
+        // Final selectors based on visual and subagent research: .wt-event
+        const eventBlocks = doc.querySelectorAll('.wt-event');
         
         eventBlocks.forEach((block, idx) => {
-          const roundText = block.querySelector('.indi')?.textContent?.trim() || '';
+          const roundTextRaw = block.querySelector('.indi')?.textContent?.trim() || '';
           const dateText = block.querySelector('.wtthedate')?.textContent?.trim() || '';
           const circuit = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
           
+          // Formatting per user request: "Round X and Y - Location"
+          let roundText = roundTextRaw.replace(/Rounds?/i, 'Round').replace('&', 'and');
+          
           // Detect regional series from logos
-          let series = 'TCR World Tour';
+          let seriesSuffix = '';
           const logos = block.querySelectorAll('img');
           logos.forEach(img => {
             const src = img.getAttribute('src') || '';
-            if (src.includes('TCR_Asia_POS')) series = 'TCR Asia';
-            else if (src.includes('TCR_Mexico_P')) series = 'TCR South America';
-            else if (src.includes('tcraustralia')) series = 'TCR Australia';
+            const alt = img.getAttribute('alt') || '';
+            if (src.includes('TCR_Asia_POS') || alt.includes('Asia')) seriesSuffix = ' (TCR Asia)';
+            else if (src.includes('TCR_Mexico_P') || alt.includes('Mexico')) seriesSuffix = ' (TCR South America)';
+            else if (src.includes('tcraustralia') || alt.includes('Australia')) seriesSuffix = ' (TCR Australia)';
           });
 
           if (roundText || circuit) {
             calendar.push({
               round: idx + 1,
-              race: `${roundText} - ${circuit} (${series})`,
+              race: `${roundText}${circuit ? ' - ' + circuit : ''}${seriesSuffix}`,
               dates: dateText,
               status: 'Upcoming',
               winner: ''
@@ -4915,37 +4920,24 @@ export const dataService = {
           }
         });
 
+        // Fallback for different HTML versions if needed
         if (calendar.length === 0) {
-          // Fallback if .teaser-item.event fails but .indi exists
-          const legacyBlocks = doc.querySelectorAll('.indi');
-          legacyBlocks.forEach((block, idx) => {
-             const parent = block.closest('.teaser-item') || block.parentElement;
-             if (parent) {
-                const roundText = block.textContent?.trim() || '';
-                const dateText = parent.querySelector('.wtthedate')?.textContent?.trim() || '';
-                const circuit = parent.querySelector('.wtcircuit')?.textContent?.trim() || '';
-                
-                let series = 'TCR World Tour';
-                const logos = parent.querySelectorAll('img');
-                logos.forEach(img => {
-                  const src = img.getAttribute('src') || '';
-                  if (src.includes('TCR_Asia_POS')) series = 'TCR Asia';
-                  else if (src.includes('TCR_Mexico_P')) series = 'TCR South America';
-                  else if (src.includes('tcraustralia')) series = 'TCR Australia';
-                });
-
-                calendar.push({
-                  round: idx + 1,
-                  race: `${roundText} - ${circuit} (${series})`,
-                  dates: dateText,
-                  status: 'Upcoming',
-                  winner: ''
-                });
-             }
+          const legacyItems = doc.querySelectorAll('.teaser-item.event');
+          legacyItems.forEach((block, idx) => {
+            const roundTextRaw = block.querySelector('.indi')?.textContent?.trim() || '';
+            const dateText = block.querySelector('.wtthedate')?.textContent?.trim() || '';
+            const circuit = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
+            let roundText = roundTextRaw.replace('Rounds', 'Round').replace('&', 'and');
+            calendar.push({
+              round: idx + 1,
+              race: `${roundText} - ${circuit}`,
+              dates: dateText,
+              status: 'Upcoming',
+              winner: ''
+            });
           });
         }
 
-        // Set 'Next' status for the first one
         if (calendar.length > 0) calendar[0].status = 'Next';
       }
     } catch (e) { console.error('[DataService] WTCR Calendar error:', e); }
