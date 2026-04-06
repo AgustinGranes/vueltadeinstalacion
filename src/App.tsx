@@ -794,6 +794,18 @@ const App = () => {
           <span className="cat-label">NASCAR Truck</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
+        <button className="cat-card wtcr-card" onClick={() => handleCategoryClick('WTCR')}>
+          <div className="cat-card-glow" />
+          <img 
+            src={WTCR_LOGO} 
+            alt="WTCR" 
+            className="cat-logo wtcr-logo" 
+            referrerPolicy="no-referrer"
+            onError={(e) => (e.currentTarget.style.display = 'none')}
+          />
+          <span className="cat-label">World TCR</span>
+          <ChevronRight size={18} className="cat-arrow" />
+        </button>
         <button className="cat-card motogp-card" onClick={() => handleCategoryClick('MotoGP')}>
           <div className="cat-card-glow" />
           <img 
@@ -936,18 +948,6 @@ const App = () => {
             onError={(e) => (e.currentTarget.style.display = 'none')}
           />
           <span className="cat-label">PROCAR4000</span>
-          <ChevronRight size={18} className="cat-arrow" />
-        </button>
-        <button className="cat-card wtcr-card" onClick={() => handleCategoryClick('WTCR')}>
-          <div className="cat-card-glow" />
-          <img 
-            src={WTCR_LOGO} 
-            alt="WTCR" 
-            className="cat-logo wtcr-logo" 
-            referrerPolicy="no-referrer"
-            onError={(e) => (e.currentTarget.style.display = 'none')}
-          />
-          <span className="cat-label">World TCR</span>
           <ChevronRight size={18} className="cat-arrow" />
         </button>
       </div>
