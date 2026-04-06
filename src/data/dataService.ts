@@ -4895,8 +4895,11 @@ export const dataService = {
           const dateText = block.querySelector('.wtthedate')?.textContent?.trim() || '';
           const circuit = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
           
-          // Formatting per user request: "Round X and Y - Location"
-          let roundText = roundTextRaw.replace(/Rounds?/i, 'Round').replace('&', 'and');
+          // Formatting per user request: "Round X y Y - Location"
+          let roundText = roundTextRaw.replace(/Rounds?/i, 'Round').replace('&', 'y');
+          
+          // Clean up circuit name from newlines/extra spaces
+          const cleanCircuit = circuit.replace(/\s+/g, ' ').trim();
           
           // Detect regional series from logos
           let seriesSuffix = '';
@@ -4909,10 +4912,10 @@ export const dataService = {
             else if (src.includes('tcraustralia') || alt.includes('Australia')) seriesSuffix = ' (TCR Australia)';
           });
 
-          if (roundText || circuit) {
+          if (roundText || cleanCircuit) {
             calendar.push({
               round: idx + 1,
-              race: `${roundText}${circuit ? ' - ' + circuit : ''}${seriesSuffix}`,
+              race: `${roundText}${cleanCircuit ? ' - ' + cleanCircuit : ''}${seriesSuffix}`,
               dates: dateText,
               status: 'Upcoming',
               winner: ''
@@ -4926,11 +4929,12 @@ export const dataService = {
           legacyItems.forEach((block, idx) => {
             const roundTextRaw = block.querySelector('.indi')?.textContent?.trim() || '';
             const dateText = block.querySelector('.wtthedate')?.textContent?.trim() || '';
-            const circuit = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
-            let roundText = roundTextRaw.replace('Rounds', 'Round').replace('&', 'and');
+            const circuitRaw = block.querySelector('.wtcircuit')?.textContent?.trim() || '';
+            const circuit = circuitRaw.replace(/\s+/g, ' ').trim();
+            let roundText = roundTextRaw.replace(/Rounds?/i, 'Round').replace('&', 'y');
             calendar.push({
               round: idx + 1,
-              race: `${roundText} - ${circuit}`,
+              race: `${roundText}${circuit ? ' - ' + circuit : ''}`,
               dates: dateText,
               status: 'Upcoming',
               winner: ''
