@@ -590,18 +590,10 @@ const App = () => {
       setTimeout(() => setCopySuccess(false), 3000);
     }).catch(err => console.error('Error copying to clipboard:', err));
 
-    // 2. Invisible iframe to trigger the download/subscription cleanly via HTTPS without reloading the PWA
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = httpsUrl;
-    document.body.appendChild(iframe);
-    
-    // Clean up the iframe after triggering the event
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
-        document.body.removeChild(iframe);
-      }
-    }, 3000);
+    // 2. Open native calendar app natively
+    // We add a nocache parameter to force Apple Calendar to discard the old URL profile which was cached as 'Insecure' or 500
+    const webcalUrl = `webcal://${window.location.host}/api/webcal?nocache=${Math.random().toString(36).substring(7)}`;
+    window.location.assign(webcalUrl);
   };
 
   // ==================== RENDER: HOME ====================

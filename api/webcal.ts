@@ -23,7 +23,8 @@ export default async function handler(req: any, res: any) {
     let icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Vuelta de Instalacion//Calendario Dinamico//ES"
+      "PRODID:-//Vuelta de Instalacion//Calendario Dinamico//ES",
+      "METHOD:PUBLISH"
     ];
 
     const generateICSDatetime = (timestamp: number) => {
