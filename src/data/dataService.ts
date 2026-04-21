@@ -3407,13 +3407,31 @@ export const dataService = {
       } catch (e) { return ''; }
     }
 
+    const isServer = typeof window === 'undefined';
     const cleanUrl = targetUrl.includes('?') ? `${targetUrl}&${cacheBuster}` : `${targetUrl}?${cacheBuster}`;
 
-    // 2. PRIMARY: Our Serverless Proxy (bypass CORS & 403)
+    // 2. PRIMARY: Server-side Direct Fetch or Serverless Proxy
     try {
-      const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
-      const res = await fetch(serverlessUrl);
-      if (res.ok) {
+      if (isServer) {
+        // In Node.js / Vercel API, we must use absolute URLs and we don't have CORS issues,
+        // but we need to mimic a browser to avoid 403 Forbidden.
+        const urlObj = new URL(targetUrl);
+        const domain = urlObj.origin;
+
+        const res = await fetch(cleanUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Referer': domain + '/',
+            'Origin': domain,
+          }
+        });
+        if (res.ok) return await res.text();
+      } else {
+        // In Browser, use our relative proxy endpoint
+        const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
+        const res = await fetch(serverlessUrl);
+        if (res.ok) {
         const text = await res.text();
         // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
         if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {

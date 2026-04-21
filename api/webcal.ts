@@ -97,10 +97,11 @@ export default async function handler(req: any, res: any) {
     icsContent.push("END:VCALENDAR");
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400'); // Cache for 6 hours
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200'); // Cache for 1 hour for debugging
     res.status(200).send(icsContent.join('\r\n'));
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({ error: 'Fallo al generar el calendario' });
+    res.status(500).json({ error: 'Fallo al generar el calendario', details: (error as any).message });
   }
 }
