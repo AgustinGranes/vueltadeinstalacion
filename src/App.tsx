@@ -581,20 +581,22 @@ const App = () => {
   const handleSubscribeCalendar = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Use webcal:// to prompt native calendar apps properly
-    const protocol = 'webcal';
-    
+    // We use standard HTTPS instead of webcal:// to avoid iOS complaining about Unsecure connections
     const httpsUrl = `https://${window.location.host}/api/webcal`;
-    const webcalUrl = `${protocol}://${window.location.host}/api/webcal`;
     
-    // 1. Copy to clipboard (https is standard for manual copy)
+    // 1. Copy to clipboard
     navigator.clipboard.writeText(httpsUrl).then(() => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 3000);
     }).catch(err => console.error('Error copying to clipboard:', err));
 
-    // 2. Open native calendar app
-    window.location.href = webcalUrl;
+    // 2. Invisible anchor tag forcing iOS to intercept the .ics attachment as a Calendar Subscription smoothly
+    const a = document.createElement('a');
+    a.href = httpsUrl;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   // ==================== RENDER: HOME ====================
