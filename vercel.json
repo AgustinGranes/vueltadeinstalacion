@@ -101,6 +101,10 @@
       "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
+      "source": "/api/webcal",
+      "destination": "/api/webcal"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

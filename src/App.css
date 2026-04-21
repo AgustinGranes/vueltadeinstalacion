@@ -2042,3 +2042,66 @@
 .category-webcal-card svg {
   color: black !important;
 }
+
+/* =============== CALENDAR SUBSCRIPTION MODAL =============== */
+.calendar-modal {
+  padding: 36px 28px !important;
+}
+
+.calendar-modal p {
+  margin-bottom: 24px !important;
+  font-size: 15px !important;
+}
+
+.calendar-modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cal-option-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.cal-option-btn:active {
+  transform: scale(0.97);
+}
+
+.google-cal-btn {
+  background: #fff;
+  color: #1a1a1a;
+}
+
+.google-cal-btn:active {
+  background: #f0f0f0;
+}
+
+.apple-cal-btn {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.apple-cal-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.copy-cal-btn {
+  background: rgba(10, 132, 255, 0.12);
+  color: #0A84FF;
+  border-color: rgba(10, 132, 255, 0.2);
+}
+
+.copy-cal-btn:hover {
+  background: rgba(10, 132, 255, 0.2);
+}
