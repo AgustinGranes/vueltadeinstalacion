@@ -580,7 +580,6 @@ const App = () => {
 
   const handleSubscribeCalendar = (e: React.MouseEvent) => {
     e.preventDefault();
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     // Use webcal:// to prompt native calendar apps properly
     const protocol = 'webcal';
