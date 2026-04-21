@@ -1007,54 +1007,6 @@ const App = () => {
   };
 
   const renderCalendario = () => {
-    const handleDownloadICS = () => {
-      const flatSchedules = weeklyRaces.flatMap(race =>
-        race.schedules.map(s => ({
-          ...s,
-          category: race.category,
-        }))
-      );
-      if (flatSchedules.length === 0) {
-        alert("No hay eventos semanales disponibles para generar el calendario.");
-        return;
-      }
-
-      let icsContent = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//Vuelta de Instalacion//Calendario//ES"
-      ];
-
-      const generateICSDatetime = (timestamp: number) => {
-        const d = new Date(timestamp);
-        return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-      };
-
-      flatSchedules.forEach(sched => {
-        const startStr = generateICSDatetime(sched.startAt);
-        const endAt = (sched as any).endAt;
-        const endStr = generateICSDatetime(endAt ? endAt : sched.startAt + 3600000);
-        const summary = `${sched.category}: ${sched.name}`;
-        icsContent.push(
-          "BEGIN:VEVENT",
-          `UID:${sched.startAt}-${sched.category.replace(/\\s+/g,'')}@vueltadeinstalacion`,
-          `DTSTAMP:${generateICSDatetime(Date.now())}`,
-          `DTSTART:${startStr}`,
-          `DTEND:${endStr}`,
-          `SUMMARY:${summary}`,
-          "END:VEVENT"
-        );
-      });
-
-      icsContent.push("END:VCALENDAR");
-
-      const bloblink = document.createElement('a');
-      bloblink.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent.join('\r\n'));
-      bloblink.download = 'suscribir.ics';
-      document.body.appendChild(bloblink);
-      bloblink.click();
-      document.body.removeChild(bloblink);
-    };
 
     const flatSchedules = weeklyRaces.flatMap(race =>
       race.schedules.map(s => ({
@@ -1127,7 +1079,7 @@ const App = () => {
                                 />
                               )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time}</span>
+                              <span className="weekly-sched-time-right">{item.time.includes('--:--') ? item.time.replace('--:--', 'Todo el día') : item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
@@ -1195,7 +1147,7 @@ const App = () => {
                                 />
                               )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time}</span>
+                              <span className="weekly-sched-time-right">{item.time.includes('--:--') ? item.time.replace('--:--', 'Todo el día') : item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
@@ -1220,10 +1172,10 @@ const App = () => {
                 </AnimatePresence>
               </div>
             )}
-            <button className="inline-calendar-subscribe" onClick={handleDownloadICS}>
+            <a href={`webcal://${window.location.host}/api/webcal`} className="inline-calendar-subscribe">
               <Calendar size={22} />
               <span>Suscribirse al calendario ICS</span>
-            </button>
+            </a>
           </div>
         ) : (
           <div className="category-calendar-list">
@@ -1295,17 +1247,17 @@ const App = () => {
                     {race.schedules.map((s, si) => (
                       <div key={si} className="schedule-row-mini">
                         <span className="sched-name">{s.name}</span>
-                        <span className="sched-time">{s.time}</span>
+                        <span className="sched-time">{s.time.includes('--:--') ? s.time.replace('--:--', 'Todo el día') : s.time}</span>
                       </div>
                     ))}
                   </div>
                 ))}
               </div>
             ))}
-            <button className="inline-calendar-subscribe" onClick={handleDownloadICS}>
-              <Calendar size={22} />
+            <a href={`webcal://${window.location.host}/api/webcal`} className="category-webcal-card" style={{ textDecoration: 'none' }}>
+              <Calendar size={32} />
               <span>Suscribirse al calendario ICS</span>
-            </button>
+            </a>
           </div>
         )}
       </motion.div>

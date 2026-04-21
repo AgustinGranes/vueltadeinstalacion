@@ -336,7 +336,7 @@
 .calendario-view {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .view-toggle {
@@ -424,7 +424,7 @@
 }
 
 .weekly-details-footer {
-  margin-top: 4px;
+  margin-top: -8px;
 }
 
 .weekly-schedules {
@@ -848,7 +848,7 @@
 .weekly-list { 
   display: flex; 
   flex-direction: column; 
-  gap: 20px; 
+  gap: 12px; 
   padding-bottom: 24px;
 }
 
@@ -1810,7 +1810,7 @@
 @media (min-width: 768px) {
   .categories-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
+    gap: 12px;
   }
 
   .news-feed {
@@ -1848,7 +1848,7 @@
   .category-calendar-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 20px;
+    gap: 12px;
   }
 
   .tab-bar {
@@ -1986,29 +1986,59 @@
 
 .inline-calendar-subscribe {
   width: 100%;
-  margin-top: 24px;
-  background: var(--red);
-  color: white;
+  margin-top: -8px; 
+  background: white !important;
+  color: black !important;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   border-radius: 12px;
   font-weight: 700;
   font-size: 15px;
-  box-shadow: 0 4px 12px rgba(232, 0, 45, 0.2);
-  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--separator);
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, background 0.2s;
+  text-decoration: none;
 }
 
 .inline-calendar-subscribe:active {
-  transform: scale(0.97);
-  background: var(--red-hover);
+  transform: scale(0.98);
+  background: #f0f0f0 !important;
 }
 
 .inline-calendar-subscribe svg {
-  color: white;
+  color: black !important;
 }
 
+.category-webcal-card {
+  background: white !important;
+  color: black !important;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  font-weight: 700;
+  font-size: 16px;
+  border: 1px solid var(--separator);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  height: 100%;
+  min-height: 180px; 
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+.category-webcal-card:active {
+  transform: scale(0.98);
+  background: #f0f0f0 !important;
+}
+
+.category-webcal-card svg {
+  color: black !important;
+}
