@@ -1220,6 +1220,10 @@ const App = () => {
                 </AnimatePresence>
               </div>
             )}
+            <button className="inline-calendar-subscribe" onClick={handleDownloadICS}>
+              <Calendar size={22} />
+              <span>Suscribirse al calendario ICS</span>
+            </button>
           </div>
         ) : (
           <div className="category-calendar-list">
@@ -1298,17 +1302,11 @@ const App = () => {
                 ))}
               </div>
             ))}
+            <button className="inline-calendar-subscribe" onClick={handleDownloadICS}>
+              <Calendar size={22} />
+              <span>Suscribirse al calendario ICS</span>
+            </button>
           </div>
-        )}
-
-        {calendarViewMode === 'semanal' && (
-          <button 
-            className="fab-calendar-subscribe"
-            onClick={handleDownloadICS}
-          >
-            <Calendar size={22} />
-            <span>Suscribirse al calendario</span>
-          </button>
         )}
       </motion.div>
     );
