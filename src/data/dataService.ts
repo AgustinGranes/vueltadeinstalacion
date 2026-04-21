@@ -217,9 +217,7 @@ export const WTCR_EVENTS_URL = 'https://www.fiatcrworldtour.com/events';
 export const WTCR_NEWS_URL = 'https://www.fiatcrworldtour.com/news';
 export const WTCR_STANDINGS_URL = 'https://www.fiatcrworldtour.com/STANDINGS';
 
-const TCRSA_NEWS_URL = 'https://southamerica.tcr-series.com/noticias?page=1';
-const TCRSA_CALENDAR_URL = 'https://southamerica.tcr-series.com/calendario';
-const TCRSA_STANDINGS_URL = 'https://southamerica.tcr-series.com/campeonato/drivers';
+
 
 export type TC2000Standings = {
   drivers: TCStandingRow[];
