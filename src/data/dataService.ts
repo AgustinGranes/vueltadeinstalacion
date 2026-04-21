@@ -5027,53 +5027,32 @@ export const dataService = {
   async getTCRSACalendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     try {
-      console.log('[DataService] Fetching TCRSA Calendar from API...');
-      const resJSON = await this.fetchWithProxy('https://apisa.tcr-series.com/races');
-      if (resJSON) {
-        const races = JSON.parse(resJSON);
-        const now = new Date();
-        now.setHours(0,0,0,0);
-        
-        let foundNext = false;
-        races.forEach((r: any, idx: number) => {
-          const sd = new Date(r.startDate);
-          sd.setHours(0,0,0,0);
-          const ed = r.endDate ? new Date(r.endDate) : new Date(sd);
-          ed.setHours(23,59,59,999);
-          
-          let status: CalendarRace['status'] = 'Upcoming';
-          if (now > ed) {
-            status = 'Finished';
-          } else if (now >= sd && now <= ed) {
-            status = 'Live';
+      console.log('[DataService] Fetching TCRSA Calendar from Campeones...');
+      const html = await this.fetchWithProxy('https://campeones.com.ar/calendario-2023-tcr-south-america/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('table tr');
+        rows.forEach((row, idx) => {
+          if (idx === 0) return; // Skip header
+          const tds = row.querySelectorAll('td');
+          if (tds.length >= 4) {
+            const dateText = tds[1].textContent?.trim() || '';
+            const circuit = tds[3].textContent?.trim() || '';
+            
+            const cleanDate = dateText.replace(/Fecha|Día/ig, '').trim();
+            const cleanCircuit = circuit.replace(/País|Circuito/ig, '').trim();
+            
+            if (cleanDate && cleanCircuit && !cleanDate.includes('Día')) {
+              calendar.push({
+                round: calendar.length + 1,
+                race: cleanCircuit,
+                dates: cleanDate,
+                status: 'Finished', // Al ser 2023, forzamos a finalizado
+                winner: ''
+              });
+            }
           }
-          
-          if (status === 'Upcoming' && !foundNext) {
-            status = 'Next';
-            foundNext = true;
-          }
-
-          const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-          const sdStr = `${sd.getDate()} ${shortMonths[sd.getMonth()]}`;
-          const dateStr = (sd.getTime() === ed.getTime() || r.endDate === null)
-             ? sdStr 
-             : `${sd.getDate()} ${shortMonths[sd.getMonth()]} - ${ed.getDate()} ${shortMonths[ed.getMonth()]}`;
-
-          let name = r.name || r.city || `Round ${idx + 1}`;
-          if (r.country && name.indexOf(r.country) === -1) {
-             name += ` (${r.country})`;
-          }
-
-          calendar.push({
-            round: r.order || r.stage || idx + 1,
-            race: name,
-            dates: dateStr,
-            status,
-            winner: '' 
-          });
         });
-        
-        calendar.sort((a,b) => a.round - b.round);
       }
     } catch (e) { console.error('[DataService] TCRSA Calendar error:', e); }
     return calendar;
@@ -5082,33 +5061,28 @@ export const dataService = {
   async getTCRSAStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      // Usamos la API oficial para pilotos
-      const resText = await this.fetchWithProxy('https://apisa.tcr-series.com/pilots');
-      if (resText) {
-        const data = JSON.parse(resText);
-        const pilots = Array.isArray(data) ? data : (data.data || []);
+      console.log('[DataService] Fetching TCRSA Standings from Campeones...');
+      const html = await this.fetchWithProxy('https://campeones.com.ar/campeonato-2022-tcr-south-america/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('table.adc-table tbody tr');
         
-        const mappedPilots = pilots.map((p: any) => {
-          // Sumamos los puntos de cada carrera (array points)
-          const totalPoints = (p.points || []).reduce((sum: number, entry: any) => sum + (entry.points || 0) + (entry.bonusPoints || 0), 0);
-          return {
-            name: p.name || 'Sin nombre',
-            points: totalPoints,
-            team: p.team?.name || ''
-          };
-        });
-
-        // Ordenamos por puntos de mayor a menor
-        mappedPilots.sort((a: any, b: any) => b.points - a.points);
-
-        mappedPilots.forEach((p: any, idx: number) => {
-          if (p.points > 0) {
-            standings.push({
-              pos: (idx + 1).toString(),
-              driver: p.name,
-              team: p.team,
-              points: p.points.toString() 
-            });
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          if (cells.length >= 6) {
+            const pos = cells[0]?.textContent?.trim() || '';
+            const driver = cells[1]?.textContent?.trim() || '';
+            const team = cells[3]?.textContent?.trim() || '';
+            const points = cells[5]?.textContent?.trim() || '0';
+            
+            if (pos && driver && !isNaN(parseInt(pos))) {
+              standings.push({
+                pos,
+                driver,
+                team,
+                points
+              });
+            }
           }
         });
       }
