@@ -183,9 +183,15 @@
 
 
 
-.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo, .tcrsa-logo {
+.imsa-logo, .tc2000-logo, .tc-logo, .tcp-logo, .tcpk-logo, .f1a-logo, .supercars-logo, .gtwc-logo, .elms-logo {
   filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5)) !important;
 }
+
+.tcrsa-logo {
+  filter: none !important;
+  transform: scale(1.3);
+}
+
 
 .gtwc-logo {
   height: 85px !important;

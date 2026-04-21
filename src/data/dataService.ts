@@ -4970,49 +4970,28 @@ export const dataService = {
   async getTCRSANews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const resText = await this.fetchWithProxy('https://apisa.tcr-series.com/posts?isDraft=0&lang=es&page=1');
-      if (resText) {
-        const data = JSON.parse(resText);
-        const posts = Array.isArray(data) ? data : (data.data || []);
-        
-        posts.forEach((post: any) => {
-          if (post.title && post.id) {
-            allNews.push({
-              title: post.title,
-              summary: post.date ? new Date(post.date).toLocaleDateString('es-AR') : '',
-              link: `https://southamerica.tcr-series.com/noticias/${post.id}`,
-              source: 'TCR South America',
-              imageUrl: post.cover?.filename ? `https://apisa.tcr-series.com/${post.cover.filename}` : undefined
-            });
+      const html = await this.fetchWithProxy('https://campeones.com.ar/category/internacionales/tcr-south-america/');
+      if (html) {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const articles = doc.querySelectorAll('article, .post-item, .elementor-post');
+        articles.forEach(art => {
+          const t = art.querySelector('h1, h2, h3, .title, .entry-title')?.textContent?.trim();
+          const p = art.querySelector('p')?.textContent?.trim() || '';
+          const a = art.querySelector('a');
+          const href = a?.getAttribute('href');
+          
+          if (t && href && t.length > 10) {
+             allNews.push({
+               title: t,
+               summary: p,
+               link: href.startsWith('http') ? href : `https://campeones.com.ar${href}`,
+               source: 'Campeones',
+               category: 'TCR South America',
+             });
           }
         });
       }
-    } catch (e) {
-      console.log('[DataService] Fallback TCR South America News from Campeones...');
-      try {
-        const html = await this.fetchWithProxy('https://campeones.com.ar/category/internacionales/tcr-south-america/');
-        if (html) {
-          const doc = new DOMParser().parseFromString(html, 'text/html');
-          const articles = doc.querySelectorAll('article, .post-item, .elementor-post');
-          articles.forEach(art => {
-            const t = art.querySelector('h1, h2, h3, .title, .entry-title')?.textContent?.trim();
-            const p = art.querySelector('p')?.textContent?.trim() || '';
-            const a = art.querySelector('a');
-            const href = a?.getAttribute('href');
-            
-            if (t && href && t.length > 10) {
-               allNews.push({
-                 title: t,
-                 summary: p,
-                 link: href.startsWith('http') ? href : `https://campeones.com.ar${href}`,
-                 source: 'Campeones',
-                 category: 'TCR South America',
-               });
-            }
-          });
-        }
-      } catch (err) { console.error('[DataService] TCRSA News error:', err); }
-    }
+    } catch (err) { console.error('[DataService] TCRSA News error:', err); }
     
     // Filter distinct titles
     const seen = new Set<string>();
@@ -5043,14 +5022,40 @@ export const dataService = {
             const cleanCircuit = circuit.replace(/País|Circuito/ig, '').trim();
             
             if (cleanDate && cleanCircuit && !cleanDate.includes('Día')) {
+              let status: CalendarRace['status'] = 'Finished';
+              
+              const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+              const parts = cleanDate.toLowerCase().split(' de ');
+              if (parts.length >= 2) {
+                const monthIdx = months.findIndex(m => parts[1].includes(m));
+                const dayMatch = parts[0].match(/\d+/g);
+                if (monthIdx !== -1 && dayMatch) {
+                  const day = parseInt(dayMatch[dayMatch.length - 1]);
+                  const eventDate = new Date();
+                  eventDate.setMonth(monthIdx, day);
+                  eventDate.setHours(23, 59, 59, 999);
+                  if (new Date() < eventDate) {
+                    status = 'Upcoming';
+                  }
+                }
+              }
+
               calendar.push({
                 round: calendar.length + 1,
                 race: cleanCircuit,
                 dates: cleanDate,
-                status: 'Finished', // Al ser 2023, forzamos a finalizado
+                status,
                 winner: ''
               });
             }
+          }
+        });
+        
+        let foundNext = false;
+        calendar.forEach(c => {
+          if (c.status === 'Upcoming' && !foundNext) {
+            c.status = 'Next';
+            foundNext = true;
           }
         });
       }
@@ -5080,7 +5085,8 @@ export const dataService = {
                 pos,
                 driver,
                 team,
-                points
+                points,
+                totalPts: points
               });
             }
           }
