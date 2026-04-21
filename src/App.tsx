@@ -580,17 +580,23 @@ const App = () => {
 
   const handleSubscribeCalendar = (e: React.MouseEvent) => {
     e.preventDefault();
-    const url = `https://${window.location.host}/api/webcal`;
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    // 1. Copy to clipboard
-    navigator.clipboard.writeText(url).then(() => {
+    // Use webcals:// for production (https) to avoid "insecure connection" warnings
+    // Use webcal:// for local development (http)
+    const protocol = isDev ? 'webcal' : 'webcals';
+    
+    const httpsUrl = `https://${window.location.host}/api/webcal`;
+    const webcalUrl = `${protocol}://${window.location.host}/api/webcal`;
+    
+    // 1. Copy to clipboard (https is standard for manual copy)
+    navigator.clipboard.writeText(httpsUrl).then(() => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 3000);
     }).catch(err => console.error('Error copying to clipboard:', err));
 
-    // 2. Open native calendar app (using https to avoid insecure protocol warnings)
-    // Most mobile browsers/OS will prompt to subscribe if Content-Type is text/calendar
-    window.location.href = url;
+    // 2. Open native calendar app
+    window.location.href = webcalUrl;
   };
 
   // ==================== RENDER: HOME ====================

@@ -30,6 +30,10 @@ export default async function handler(req: any, res: any) {
       return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
+    const generateICSDateOnly = (d: Date) => {
+      return d.toISOString().split('T')[0].replace(/-/g, '');
+    };
+
     const escapeICS = (str: string) => {
       return str
         .replace(/\\/g, '\\\\')

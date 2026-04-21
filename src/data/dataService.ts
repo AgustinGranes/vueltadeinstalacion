@@ -3397,19 +3397,42 @@ export const dataService = {
 
   async fetchWithProxy(targetUrl: string, options: RequestInit = {}): Promise<string> {
     const cacheBuster = `t=${Date.now()}`;
+    const isServer = typeof window === 'undefined';
+
     // 1. Target URL processing
-    // 1. Local/Internal
     if (targetUrl.startsWith('/')) {
-      try {
-        const res = await fetch(targetUrl, options);
-        if (res.ok) return await res.text();
-        return '';
-      } catch (e) { return ''; }
+      if (isServer) {
+        // Resolve relative Vercel rewrites to their true destinations for Server-side execution
+        if (targetUrl.startsWith('/api/vueltarapida/races')) {
+            targetUrl = targetUrl.replace('/api/vueltarapida/races', 'https://api.vueltarapida.com/api/races');
+        } else if (targetUrl.startsWith('/api/vueltarapida/categories')) {
+            targetUrl = targetUrl.replace('/api/vueltarapida/categories', 'https://api.vueltarapida.com/api/categories');
+        } else if (targetUrl.startsWith('/api/vueltarapida/circuits')) {
+            targetUrl = targetUrl.replace('/api/vueltarapida/circuits', 'https://api.vueltarapida.com/api/circuits');
+        } else if (targetUrl.startsWith('/api/espn-json/')) {
+            targetUrl = targetUrl.replace('/api/espn-json/', 'https://site.api.espn.com/');
+        } else if (targetUrl.startsWith('/api/as/')) {
+            targetUrl = targetUrl.replace('/api/as/', 'https://as.com/');
+        } else if (targetUrl.startsWith('/api/motorsport/')) {
+            targetUrl = targetUrl.replace('/api/motorsport/', 'https://lat.motorsport.com/');
+        } else if (targetUrl.startsWith('/api/imsa/')) {
+            targetUrl = targetUrl.replace('/api/imsa/', 'https://www.imsa.com/');
+        } else if (targetUrl.startsWith('/api/actc/')) {
+            targetUrl = targetUrl.replace('/api/actc/', 'https://actc.org.ar/');
+        } else if (targetUrl.startsWith('/api/carburando/')) {
+            targetUrl = targetUrl.replace('/api/carburando/', 'https://carburando.com/');
+        }
+      } else {
+        // Local/Internal Client Side
+        try {
+          const res = await fetch(targetUrl, options);
+          if (res.ok) return await res.text();
+          return '';
+        } catch (e) { return ''; }
+      }
     }
 
-    const isServer = typeof window === 'undefined';
     const cleanUrl = targetUrl.includes('?') ? `${targetUrl}&${cacheBuster}` : `${targetUrl}?${cacheBuster}`;
-
     // 2. PRIMARY: Server-side Direct Fetch or Serverless Proxy
     try {
       if (isServer) {
