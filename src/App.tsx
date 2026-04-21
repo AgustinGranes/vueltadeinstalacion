@@ -198,6 +198,7 @@ const App = () => {
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>('upcoming');
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const loadedDataRef = useRef<Set<string>>(new Set());
 
@@ -575,6 +576,20 @@ const App = () => {
     setCategorySubTab('standings');
     setView('category');
     window.scrollTo({ top: 0, behavior: 'instant' as any });
+  };
+
+  const handleSubscribeCalendar = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const url = `https://${window.location.host}/api/webcal`;
+    
+    // 1. Copy to clipboard
+    navigator.clipboard.writeText(url).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    }).catch(err => console.error('Error copying to clipboard:', err));
+
+    // 2. Open native calendar app
+    window.location.href = url.replace('https:', 'webcal:');
   };
 
   // ==================== RENDER: HOME ====================
@@ -1172,10 +1187,13 @@ const App = () => {
                 </AnimatePresence>
               </div>
             )}
-            <a href={`https://${window.location.host}/api/webcal`} className="inline-calendar-subscribe">
+            <button 
+              onClick={handleSubscribeCalendar}
+              className="inline-calendar-subscribe"
+            >
               <Calendar size={22} />
-              <span>Suscribirse al calendario ICS</span>
-            </a>
+              <span>{copySuccess ? '¡Enlace Copiado!' : 'Suscribirse al calendario ICS'}</span>
+            </button>
           </div>
         ) : (
           <div className="category-calendar-list">
@@ -1254,10 +1272,14 @@ const App = () => {
                 ))}
               </div>
             ))}
-            <a href={`https://${window.location.host}/api/webcal`} className="category-webcal-card" style={{ textDecoration: 'none' }}>
+            <button 
+              onClick={handleSubscribeCalendar}
+              className="category-webcal-card" 
+              style={{ textDecoration: 'none', border: 'none', width: '100%' }}
+            >
               <Calendar size={32} />
-              <span>Suscribirse al calendario ICS</span>
-            </a>
+              <span>{copySuccess ? '¡Enlace Copiado!' : 'Suscribirse al calendario ICS'}</span>
+            </button>
           </div>
         )}
       </motion.div>
