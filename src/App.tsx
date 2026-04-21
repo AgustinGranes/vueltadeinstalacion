@@ -588,8 +588,9 @@ const App = () => {
       setTimeout(() => setCopySuccess(false), 3000);
     }).catch(err => console.error('Error copying to clipboard:', err));
 
-    // 2. Open native calendar app
-    window.location.href = url.replace('https:', 'webcal:');
+    // 2. Open native calendar app (using https to avoid insecure protocol warnings)
+    // Most mobile browsers/OS will prompt to subscribe if Content-Type is text/calendar
+    window.location.href = url;
   };
 
   // ==================== RENDER: HOME ====================

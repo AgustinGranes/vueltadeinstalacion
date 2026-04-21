@@ -30,12 +30,29 @@ export default async function handler(req: any, res: any) {
       return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
-    const generateICSDateOnly = (d: Date) => {
-      return d.toISOString().split('T')[0].replace(/-/g, '');
+    const escapeICS = (str: string) => {
+      return str
+        .replace(/\\/g, '\\\\')
+        .replace(/,/g, '\\,')
+        .replace(/;/g, '\\;')
+        .replace(/\n/g, '\\n');
     };
 
     const nowStamp = generateICSDatetime(Date.now());
     const allDayAddedCategories = new Set<string>();
+
+    if (flatSchedules.length === 0) {
+      // Add a placeholder event so the calendar isn't empty (avoids validation errors)
+      icsContent.push(
+        "BEGIN:VEVENT",
+        `UID:placeholder-${nowStamp}@vueltadeinstalacion`,
+        `DTSTAMP:${nowStamp}`,
+        `DTSTART:${nowStamp}`,
+        `DTEND:${generateICSDatetime(Date.now() + 3600000)}`,
+        `SUMMARY:${escapeICS("Vuelta de Instalación: Sin carreras esta semana")}`,
+        "END:VEVENT"
+      );
+    }
 
     flatSchedules.forEach((sched: any) => {
       const isAllDay = sched.time === '--:--' || !sched.time;
@@ -44,19 +61,14 @@ export default async function handler(req: any, res: any) {
       let endStr = '';
       
       if (isAllDay) {
-        // Prevent stacking multiple all-day blocks for the same category on the same weekend
         if (allDayAddedCategories.has(sched.category)) return;
         allDayAddedCategories.add(sched.category);
 
         const d = new Date(sched.startAt);
-        const day = d.getDay(); // 0 = Sunday, 5 = Friday
-        
+        const day = d.getDay();
         const friday = new Date(d);
-        if (day === 0) { 
-            friday.setDate(d.getDate() - 2); 
-        } else {
-            friday.setDate(d.getDate() - (day - 5));
-        }
+        if (day === 0) { friday.setDate(d.getDate() - 2); } 
+        else { friday.setDate(d.getDate() - (day - 5)); }
         
         const monday = new Date(friday);
         monday.setDate(friday.getDate() + 3);
@@ -65,16 +77,16 @@ export default async function handler(req: any, res: any) {
         endStr = generateICSDateOnly(monday); 
       } else {
         startStr = generateICSDatetime(sched.startAt);
-        const endAt = sched.endAt;
-        endStr = generateICSDatetime(endAt ? endAt : sched.startAt + 3600000);
+        endStr = generateICSDatetime(sched.endAt ? sched.endAt : sched.startAt + 3600000);
       }
 
       const summary = isAllDay ? `${sched.category} (Horarios TBD)` : `${sched.category}: ${sched.name}`;
-      const uniqueId = `${sched.startAt}-${sched.category}-${sched.name}`.replace(/\s+/g,'');
+      // Clean UID: alphanumeric only
+      const cleanUid = `${sched.startAt}-${sched.category}`.replace(/[^a-zA-Z0-9]/g, '');
       
       icsContent.push(
         "BEGIN:VEVENT",
-        `UID:${uniqueId}@vueltadeinstalacion`,
+        `UID:${cleanUid}-${Math.floor(Math.random()*1000)}@vueltadeinstalacion`,
         `DTSTAMP:${nowStamp}`
       );
       
@@ -91,7 +103,7 @@ export default async function handler(req: any, res: any) {
       }
       
       icsContent.push(
-        `SUMMARY:${summary}`,
+        `SUMMARY:${escapeICS(summary)}`,
         "END:VEVENT"
       );
     });
@@ -103,7 +115,7 @@ export default async function handler(req: any, res: any) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600'); 
     
-    // Join with CRLF (\r\n) as required by RFC 5545
+    // Join with CRLF (\r\n)
     res.status(200).send(icsContent.join('\r\n'));
   } catch (error) {
     console.error('WebCal API Error:', error);
