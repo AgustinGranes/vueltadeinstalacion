@@ -24,6 +24,8 @@ export default async function handler(req: any, res: any) {
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
       "PRODID:-//Vuelta de Instalacion//Calendario Dinamico//ES",
+      "X-PUBLISHED-TTL:PT1H",
+      "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
       "METHOD:PUBLISH"
     ];
 
@@ -51,7 +53,7 @@ export default async function handler(req: any, res: any) {
       // Add a placeholder event so the calendar isn't empty (avoids validation errors)
       icsContent.push(
         "BEGIN:VEVENT",
-        `UID:placeholder-${nowStamp}@vueltadeinstalacion`,
+        `UID:placeholder-no-races@vueltadeinstalacion`,
         `DTSTAMP:${nowStamp}`,
         `DTSTART:${nowStamp}`,
         `DTEND:${generateICSDatetime(Date.now() + 3600000)}`,
@@ -88,12 +90,12 @@ export default async function handler(req: any, res: any) {
 
       const summary = isAllDay ? `${sched.category} (horario no definido)` : `${sched.category}: ${sched.name}`;
       
-      // Clean UID: alphanumeric only
-      const cleanUid = `${sched.startAt}-${sched.category}`.replace(/[^a-zA-Z0-9]/g, '');
+      // Clean UID: alphanumeric only, use id if available for total stability
+      const eventUid = sched.id ? `event-${sched.id}`.replace(/[^a-zA-Z0-9-]/g, '') : `${sched.startAt}-${sched.category}`.replace(/[^a-zA-Z0-9]/g, '');
       
       icsContent.push(
         "BEGIN:VEVENT",
-        `UID:${cleanUid}-${Math.floor(Math.random()*1000)}@vueltadeinstalacion`,
+        `UID:${eventUid}@vueltadeinstalacion`,
         `DTSTAMP:${nowStamp}`
       );
       
@@ -118,7 +120,7 @@ export default async function handler(req: any, res: any) {
     icsContent.push("END:VCALENDAR");
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="CalendarioDinamico.ics"');
+    res.setHeader('Content-Disposition', 'inline; filename="CalendarioDinamico.ics"');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600'); 

@@ -591,8 +591,8 @@ const App = () => {
     }).catch(err => console.error('Error copying to clipboard:', err));
 
     // 2. Open native calendar app natively
-    // We add a nocache parameter to force Apple Calendar to discard the old URL profile which was cached as 'Insecure' or 500
-    const webcalUrl = `webcal://${window.location.host}/api/webcal?nocache=${Math.random().toString(36).substring(7)}`;
+    // We use webcals:// instead of webcal:// to force a secure connection and avoid 'Not Secure' warnings
+    const webcalUrl = `webcals://${window.location.host}/api/webcal?nocache=${Math.random().toString(36).substring(7)}`;
     window.location.assign(webcalUrl);
   };
 
