@@ -582,9 +582,7 @@ const App = () => {
     e.preventDefault();
     
     // We use standard HTTPS instead of webcal:// to avoid iOS complaining about Unsecure connections
-    const protocol = 'webcal';
     const httpsUrl = `https://${window.location.host}/api/webcal`;
-    const webcalUrl = `${protocol}://${window.location.host}/api/webcal`;
     
     // 1. Copy to clipboard
     navigator.clipboard.writeText(httpsUrl).then(() => {
