@@ -582,9 +582,8 @@ const App = () => {
     e.preventDefault();
     const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    // Use webcals:// for production (https) to avoid "insecure connection" warnings
-    // Use webcal:// for local development (http)
-    const protocol = isDev ? 'webcal' : 'webcals';
+    // Use webcal:// to prompt native calendar apps properly
+    const protocol = 'webcal';
     
     const httpsUrl = `https://${window.location.host}/api/webcal`;
     const webcalUrl = `${protocol}://${window.location.host}/api/webcal`;

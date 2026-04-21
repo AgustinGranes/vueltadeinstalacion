@@ -3440,13 +3440,20 @@ export const dataService = {
         // but we need to mimic a browser to avoid 403 Forbidden.
         const urlObj = new URL(targetUrl);
         const domain = urlObj.origin;
+        
+        let referer = domain + '/';
+        let origin = domain;
+        if (targetUrl.includes('vueltarapida.com')) {
+          referer = 'https://vueltarapida.com/';
+          origin = 'https://vueltarapida.com';
+        }
 
         const res = await fetch(cleanUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Referer': domain + '/',
-            'Origin': domain,
+            'Referer': referer,
+            'Origin': origin,
           }
         });
         if (res.ok) return await res.text();
@@ -3455,9 +3462,9 @@ export const dataService = {
         const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;
         const res = await fetch(serverlessUrl);
         if (res.ok) {
-        const text = await res.text();
-        // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
-        if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {
+          const text = await res.text();
+          // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
+          if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {
             return text;
           }
         }
@@ -3467,39 +3474,41 @@ export const dataService = {
       console.warn(`[DataService] Serverless proxy exception:`, e);
     }
 
-    // 3. FALLBACK: Public CORS Proxies
-    const publicProxies = [
-      (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}&t=${Date.now()}`,
-      (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
-      (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-    ];
+    // 3. FALLBACK: Public CORS Proxies (Only in browser)
+    if (!isServer) {
+      const publicProxies = [
+        (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}&t=${Date.now()}`,
+        (url: string) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&t=${Date.now()}`,
+        (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+      ];
 
-    for (const proxyFn of publicProxies) {
-      try {
-        const proxyUrl = proxyFn(targetUrl);
-        const res = await fetch(proxyUrl); 
-        if (!res.ok) continue;
+      for (const proxyFn of publicProxies) {
+        try {
+          const proxyUrl = proxyFn(targetUrl);
+          const res = await fetch(proxyUrl); 
+          if (!res.ok) continue;
 
-        if (proxyUrl.includes('allorigins')) {
-          if (proxyUrl.includes('/raw')) {
-            const text = await res.text();
-            if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) return text;
-          } else {
-            const data = await res.json();
-            if (data && data.contents) {
-              const text = data.contents;
+          if (proxyUrl.includes('allorigins')) {
+            if (proxyUrl.includes('/raw')) {
+              const text = await res.text();
               if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) return text;
+            } else {
+              const data = await res.json();
+              if (data && data.contents) {
+                const text = data.contents;
+                if (text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) return text;
+              }
             }
+            continue;
           }
-          continue;
-        }
-        
-        const text = await res.text();
-        if (text && text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
-          return text;
-        }
-      } catch (e) {}
+          
+          const text = await res.text();
+          if (text && text.length > 20 && !text.includes('Forbidden') && !text.includes('<title>403')) {
+            return text;
+          }
+        } catch (e) {}
+      }
     }
 
     // 4. LAST STAND: Legacy Rewrites
