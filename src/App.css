@@ -1984,3 +1984,36 @@
 
 /* IndyCar Specific Styles */
 
+.fab-calendar-subscribe {
+  position: absolute; /* Using absolute inside the view so it doesn't overlap global UI unless desired, but user said floating above bottom nav. Assuming the wrapping div is relation, or fixed is better context. */
+  position: fixed;
+  bottom: 80px; /* 60px bottom nav + 20px margin */
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--red);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 6px 16px rgba(232, 0, 45, 0.4);
+  z-index: 1000;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.fab-calendar-subscribe:active {
+  transform: translateX(-50%) scale(0.95);
+  background: var(--red-hover);
+}
+
+.fab-calendar-subscribe svg {
+  color: white;
+}
+
+ 
+ 

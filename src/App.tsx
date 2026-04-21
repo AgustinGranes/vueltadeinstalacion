@@ -1007,6 +1007,54 @@ const App = () => {
   };
 
   const renderCalendario = () => {
+    const handleDownloadICS = () => {
+      const flatSchedules = weeklyRaces.flatMap(race =>
+        race.schedules.map(s => ({
+          ...s,
+          category: race.category,
+        }))
+      );
+      if (flatSchedules.length === 0) {
+        alert("No hay eventos semanales disponibles para generar el calendario.");
+        return;
+      }
+
+      let icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Vuelta de Instalacion//Calendario//ES"
+      ];
+
+      const generateICSDatetime = (timestamp: number) => {
+        const d = new Date(timestamp);
+        return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      };
+
+      flatSchedules.forEach(sched => {
+        const startStr = generateICSDatetime(sched.startAt);
+        const endStr = generateICSDatetime(sched.endAt ? sched.endAt : sched.startAt + 3600000);
+        const summary = `${sched.category}: ${sched.name}`;
+        icsContent.push(
+          "BEGIN:VEVENT",
+          `UID:${sched.startAt}-${sched.category.replace(/\\s+/g,'')}@vueltadeinstalacion`,
+          `DTSTAMP:${generateICSDatetime(Date.now())}`,
+          `DTSTART:${startStr}`,
+          `DTEND:${endStr}`,
+          `SUMMARY:${summary}`,
+          "END:VEVENT"
+        );
+      });
+
+      icsContent.push("END:VCALENDAR");
+
+      const bloblink = document.createElement('a');
+      bloblink.href = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent.join('\r\n'));
+      bloblink.download = 'suscribir.ics';
+      document.body.appendChild(bloblink);
+      bloblink.click();
+      document.body.removeChild(bloblink);
+    };
+
     const flatSchedules = weeklyRaces.flatMap(race =>
       race.schedules.map(s => ({
         ...s,
@@ -1250,6 +1298,16 @@ const App = () => {
               </div>
             ))}
           </div>
+        )}
+
+        {calendarViewMode === 'semanal' && (
+          <button 
+            className="fab-calendar-subscribe"
+            onClick={handleDownloadICS}
+          >
+            <Calendar size={22} />
+            <span>Suscribirse al calendario</span>
+          </button>
         )}
       </motion.div>
     );
