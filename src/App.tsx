@@ -1032,7 +1032,8 @@ const App = () => {
 
       flatSchedules.forEach(sched => {
         const startStr = generateICSDatetime(sched.startAt);
-        const endStr = generateICSDatetime(sched.endAt ? sched.endAt : sched.startAt + 3600000);
+        const endAt = (sched as any).endAt;
+        const endStr = generateICSDatetime(endAt ? endAt : sched.startAt + 3600000);
         const summary = `${sched.category}: ${sched.name}`;
         icsContent.push(
           "BEGIN:VEVENT",
