@@ -3435,7 +3435,8 @@ export const dataService = {
         const text = await res.text();
         // More lenient check for content: if it contains an opening tag or tr.ms-table_row it's likely valid HTML
         if (text && text.length > 20 && (text.includes('<') || text.includes('ms-table_row'))) {
-          return text;
+            return text;
+          }
         }
       }
       console.warn(`[DataService] Serverless proxy failed or returned 403 for ${targetUrl}`);
