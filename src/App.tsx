@@ -1172,7 +1172,7 @@ const App = () => {
                 </AnimatePresence>
               </div>
             )}
-            <a href={`webcal://${window.location.host}/api/webcal`} className="inline-calendar-subscribe">
+            <a href={`https://${window.location.host}/api/webcal`} className="inline-calendar-subscribe">
               <Calendar size={22} />
               <span>Suscribirse al calendario ICS</span>
             </a>
@@ -1254,7 +1254,7 @@ const App = () => {
                 ))}
               </div>
             ))}
-            <a href={`webcal://${window.location.host}/api/webcal`} className="category-webcal-card" style={{ textDecoration: 'none' }}>
+            <a href={`https://${window.location.host}/api/webcal`} className="category-webcal-card" style={{ textDecoration: 'none' }}>
               <Calendar size={32} />
               <span>Suscribirse al calendario ICS</span>
             </a>

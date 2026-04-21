@@ -34,6 +34,7 @@ export default async function handler(req: any, res: any) {
       return d.toISOString().split('T')[0].replace(/-/g, '');
     };
 
+    const nowStamp = generateICSDatetime(Date.now());
     const allDayAddedCategories = new Set<string>();
 
     flatSchedules.forEach((sched: any) => {
@@ -69,11 +70,12 @@ export default async function handler(req: any, res: any) {
       }
 
       const summary = isAllDay ? `${sched.category} (Horarios TBD)` : `${sched.category}: ${sched.name}`;
+      const uniqueId = `${sched.startAt}-${sched.category}-${sched.name}`.replace(/\s+/g,'');
       
       icsContent.push(
         "BEGIN:VEVENT",
-        `UID:${sched.startAt}-${sched.category.replace(/\s+/g,'')}@vueltadeinstalacion`,
-        `DTSTAMP:${generateICSDatetime(Date.now())}`
+        `UID:${uniqueId}@vueltadeinstalacion`,
+        `DTSTAMP:${nowStamp}`
       );
       
       if (isAllDay) {
@@ -98,10 +100,17 @@ export default async function handler(req: any, res: any) {
 
     res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=7200'); // Cache for 1 hour for debugging
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Cache-Control', 's-maxage=1800, stale-while-revalidate=3600'); 
+    
+    // Join with CRLF (\r\n) as required by RFC 5545
     res.status(200).send(icsContent.join('\r\n'));
   } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Fallo al generar el calendario', details: (error as any).message });
+    console.error('WebCal API Error:', error);
+    res.status(500).json({ 
+      error: 'Error al generar el calendario', 
+      message: (error as any).message,
+      stack: process.env.NODE_ENV === 'development' ? (error as any).stack : undefined
+    });
   }
 }
