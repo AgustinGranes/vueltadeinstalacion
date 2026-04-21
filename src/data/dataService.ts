@@ -61,7 +61,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'MotoGP': '#e10600',
   'WORLD SBK': '#e10600',
   'WTCR': '#e10600',
-  'TCRSA': '#0288d1',
+  'TCRSA': '#e8002d',
 };
 
 export function getCategoryColor(cat: string): string {
@@ -4972,62 +4972,90 @@ export const dataService = {
   async getTCRSANews(): Promise<NewsItem[]> {
     const allNews: NewsItem[] = [];
     try {
-      const html = await this.fetchWithProxy(TCRSA_NEWS_URL);
+      console.log('[DataService] Fetching TCR South America News from Campeones...');
+      const html = await this.fetchWithProxy('https://campeones.com.ar/category/internacionales/tcr-south-america/');
       if (html) {
         const doc = new DOMParser().parseFromString(html, 'text/html');
-        const articles = doc.querySelectorAll('article[class*="_container_"]');
-        articles.forEach(article => {
-          const title = article.querySelector('h3')?.textContent?.trim() || '';
-          const date = article.querySelector('span[class*="_date_"]')?.textContent?.trim() || '';
-          const linkRel = article.querySelector('a[class*="_header_"]')?.getAttribute('href') || '';
-          const img = article.querySelector('img[class*="_cover_"]')?.getAttribute('src') || '';
+        const articles = doc.querySelectorAll('article, .post-item, .elementor-post');
+        articles.forEach(art => {
+          const t = art.querySelector('h1, h2, h3, .title, .entry-title')?.textContent?.trim();
+          const p = art.querySelector('p')?.textContent?.trim() || '';
+          const a = art.querySelector('a');
+          const href = a?.getAttribute('href');
           
-          if (title) {
-            allNews.push({
-              title,
-              summary: date,
-              link: linkRel.startsWith('http') ? linkRel : `https://southamerica.tcr-series.com${linkRel}`,
-              source: 'TCR South America',
-              imageUrl: img
-            });
+          if (t && href && t.length > 10) {
+             allNews.push({
+               title: t,
+               summary: p,
+               link: href.startsWith('http') ? href : `https://campeones.com.ar${href}`,
+               source: 'Campeones',
+               category: 'TCR South America',
+             });
           }
         });
       }
     } catch (e) { console.error('[DataService] TCRSA News error:', e); }
-    return allNews.slice(0, 15);
+    
+    // Filter distinct titles
+    const seen = new Set<string>();
+    return allNews.filter(n => {
+      const key = n.title.toLowerCase().slice(0, 40);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 20);
   },
 
   async getTCRSACalendar(): Promise<CalendarRace[]> {
     const calendar: CalendarRace[] = [];
     try {
-      const html = await this.fetchWithProxy(TCRSA_CALENDAR_URL);
-      if (html) {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const items = doc.querySelectorAll('li');
-        items.forEach((li, idx) => {
-          const pTags = li.querySelectorAll('p');
-          let dateStr = '';
-          let locationStr = '';
+      console.log('[DataService] Fetching TCRSA Calendar from API...');
+      const resJSON = await this.fetchWithProxy('https://apisa.tcr-series.com/races');
+      if (resJSON) {
+        const races = JSON.parse(resJSON);
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        
+        let foundNext = false;
+        races.forEach((r: any, idx: number) => {
+          const sd = new Date(r.startDate);
+          sd.setHours(0,0,0,0);
+          const ed = r.endDate ? new Date(r.endDate) : new Date(sd);
+          ed.setHours(23,59,59,999);
           
-          pTags.forEach(p => {
-            if (p.querySelector('span')) {
-              dateStr = p.textContent?.trim() || '';
-            } else if (p.textContent?.trim()) {
-              locationStr = p.textContent?.trim() || '';
-            }
-          });
-
-          if (dateStr || locationStr) {
-            calendar.push({
-              round: idx + 1,
-              race: `Round ${idx + 1}${locationStr ? ' - ' + locationStr : ''}`,
-              dates: dateStr,
-              status: 'Upcoming',
-              winner: ''
-            });
+          let status: CalendarRace['status'] = 'Upcoming';
+          if (now > ed) {
+            status = 'Finished';
+          } else if (now >= sd && now <= ed) {
+            status = 'Live';
           }
+          
+          if (status === 'Upcoming' && !foundNext) {
+            status = 'Next';
+            foundNext = true;
+          }
+
+          const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+          const sdStr = `${sd.getDate()} ${shortMonths[sd.getMonth()]}`;
+          const dateStr = (sd.getTime() === ed.getTime() || r.endDate === null)
+             ? sdStr 
+             : `${sd.getDate()} ${shortMonths[sd.getMonth()]} - ${ed.getDate()} ${shortMonths[ed.getMonth()]}`;
+
+          let name = r.name || r.city || `Round ${idx + 1}`;
+          if (r.country && name.indexOf(r.country) === -1) {
+             name += ` (${r.country})`;
+          }
+
+          calendar.push({
+            round: r.order || idx + 1,
+            race: name,
+            dates: dateStr,
+            status,
+            winner: ''
+          });
         });
-        if (calendar.length > 0) calendar[0].status = 'Next';
+        
+        calendar.sort((a,b) => a.round - b.round);
       }
     } catch (e) { console.error('[DataService] TCRSA Calendar error:', e); }
     return calendar;
@@ -5036,24 +5064,44 @@ export const dataService = {
   async getTCRSAStandings(): Promise<TCStandingRow[]> {
     const standings: TCStandingRow[] = [];
     try {
-      const html = await this.fetchWithProxy(TCRSA_STANDINGS_URL);
-      if (html) {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const rows = doc.querySelectorAll('article[class*="_container_"]');
-        rows.forEach(row => {
-          const pos = row.querySelector('p[class*="_position_"]')?.textContent?.trim() || '';
-          const name = row.querySelector('p[class*="_name_"]')?.textContent?.trim() || '';
-          const points = row.querySelector('p[class*="_total_"]')?.textContent?.trim() || '';
-          
-          if (name) {
-            standings.push({
-              pos,
-              driver: name,
-              team: '', 
-              points
-            });
-          }
-        });
+      console.log('[DataService] Fetching TCRSA Standings from Points API...');
+      const pointsJSON = await this.fetchWithProxy('https://apisa.tcr-series.com/points');
+      
+      if (pointsJSON) {
+        let items = [];
+        try {
+          items = JSON.parse(pointsJSON);
+        } catch(e) {}
+
+        if (Array.isArray(items) && items.length > 0) {
+           const scores: Record<string, { driver: string, points: number, team: string }> = {};
+           
+           items.forEach((p: any) => {
+             const pt = parseFloat(p.points) || 0;
+             const bonus = parseFloat(p.bonusPoints) || 0;
+             
+             if (p.pilot) {
+               const pId = p.pilot.id;
+               if (!scores[pId]) {
+                 scores[pId] = { driver: p.pilot.name, points: 0, team: '' };
+               }
+               scores[pId].points += (pt + bonus);
+             }
+           });
+           
+           const sorted = Object.values(scores).sort((a,b) => b.points - a.points);
+           
+           sorted.forEach((row, idx) => {
+             if (row.points > 0) {
+               standings.push({
+                 pos: String(idx + 1),
+                 driver: row.driver,
+                 team: row.team,
+                 points: row.points.toString() 
+               });
+             }
+           });
+        }
       }
     } catch (e) { console.error('[DataService] TCRSA Standings error:', e); }
     return standings;
