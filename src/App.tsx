@@ -592,8 +592,18 @@ const App = () => {
       setTimeout(() => setCopySuccess(false), 3000);
     }).catch(err => console.error('Error copying to clipboard:', err));
 
-    // 2. Open native calendar app without crashing the PWA wrapper
-    window.location.href = webcalUrl;
+    // 2. Invisible iframe to trigger the download/subscription cleanly via HTTPS without reloading the PWA
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = httpsUrl;
+    document.body.appendChild(iframe);
+    
+    // Clean up the iframe after triggering the event
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    }, 3000);
   };
 
   // ==================== RENDER: HOME ====================
