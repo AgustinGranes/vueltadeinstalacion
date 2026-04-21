@@ -263,7 +263,7 @@ export interface NascarStandings {
 export const dataService = {
 
   // === WEEKLY CALENDAR (VueltaRapida API) ===
-  async getWeeklyCalendar(): Promise<Race[]> {
+  async getWeeklyCalendar(skipImages: boolean = false): Promise<Race[]> {
     try {
       const now = new Date();
       const day = now.getDay();
@@ -329,19 +329,21 @@ export const dataService = {
             }));
 
           let circuitImage = r.circuitImage || '';
-          const possibleIds = [r.circuit?._id, r.circuitId].filter(Boolean);
           
-          if (!circuitImage && possibleIds.length > 0) {
-            for (const cid of possibleIds) {                // Use unified proxy path
-                const circuitRes = await this.fetchWithProxy(`/api/vueltarapida/circuits/by-circuit-id/${cid}`);
-                if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
-                  const circuitData = JSON.parse(circuitRes);
-                  const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
-                  if (imgUrl) {
-                    circuitImage = imgUrl.startsWith('http') ? imgUrl : `https://vueltarapida.com${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
-                    break; 
+          if (!skipImages) {
+            const possibleIds = [r.circuit?._id, r.circuitId].filter(Boolean);
+            if (!circuitImage && possibleIds.length > 0) {
+              for (const cid of possibleIds) {                // Use unified proxy path
+                  const circuitRes = await this.fetchWithProxy(`/api/vueltarapida/circuits/by-circuit-id/${cid}`);
+                  if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
+                    const circuitData = JSON.parse(circuitRes);
+                    const imgUrl = circuitData.circuit?.image || circuitData.circuit?.layoutImage || circuitData.image;
+                    if (imgUrl) {
+                      circuitImage = imgUrl.startsWith('http') ? imgUrl : `https://vueltarapida.com${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+                      break; 
+                    }
                   }
-                }
+              }
             }
           }
 
@@ -3448,15 +3450,25 @@ export const dataService = {
           origin = 'https://vueltarapida.com';
         }
 
-        const res = await fetch(cleanUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Referer': referer,
-            'Origin': origin,
-          }
-        });
-        if (res.ok) return await res.text();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+        try {
+          const res = await fetch(cleanUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+              'Referer': referer,
+              'Origin': origin,
+            },
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (res.ok) return await res.text();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
       } else {
         // In Browser, use our relative proxy endpoint
         const serverlessUrl = `/api/proxy?url=${encodeURIComponent(cleanUrl)}`;

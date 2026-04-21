@@ -9,7 +9,7 @@ import { dataService } from '../src/data/dataService';
 
 export default async function handler(req: any, res: any) {
   try {
-    const weeklyRaces = await dataService.getWeeklyCalendar();
+    const weeklyRaces = await dataService.getWeeklyCalendar(true);
     
     // Normalize into flat schedules
     const flatSchedules = weeklyRaces.flatMap(race =>
