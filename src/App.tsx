@@ -1095,7 +1095,7 @@ const App = () => {
                                 />
                               )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time.includes('--:--') ? item.time.replace('--:--', 'Todo el día') : item.time}</span>
+                              <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
@@ -1163,7 +1163,7 @@ const App = () => {
                                 />
                               )}
                               <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time.includes('--:--') ? item.time.replace('--:--', 'Todo el día') : item.time}</span>
+                              <span className="weekly-sched-time-right">{item.time}</span>
                             </div>
                             <h3 className="weekly-event-name">{item.name}</h3>
                             <p className="weekly-circuit">{item.event} {item.circuit}</p>
@@ -1266,7 +1266,7 @@ const App = () => {
                     {race.schedules.map((s, si) => (
                       <div key={si} className="schedule-row-mini">
                         <span className="sched-name">{s.name}</span>
-                        <span className="sched-time">{s.time.includes('--:--') ? s.time.replace('--:--', 'Todo el día') : s.time}</span>
+                        <span className="sched-time">{s.time}</span>
                       </div>
                     ))}
                   </div>

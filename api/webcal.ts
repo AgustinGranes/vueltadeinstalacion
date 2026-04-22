@@ -81,6 +81,8 @@ export default async function handler(req: any, res: any) {
         if (!startTs) continue;
 
         const isConfirmed = sched.confirmed !== false && sched.time !== '--:--' && sched.time !== '';
+        if (!isConfirmed) continue;
+
         const schedName: string = sched.name || sched.title || 'Evento';
         const uid = `${startTs}-${(category + schedName).replace(/[^a-zA-Z0-9]/g, '')}@vueltadeinstalacion`;
 
@@ -88,18 +90,9 @@ export default async function handler(req: any, res: any) {
         lines.push(`UID:${uid}`);
         lines.push(`DTSTAMP:${nowStamp}`);
 
-        if (isConfirmed) {
-          const endTs = sched.endAt || (startTs + 3600000);
-          lines.push(`DTSTART:${toICSDatetime(startTs)}`);
-          lines.push(`DTEND:${toICSDatetime(endTs)}`);
-        } else {
-          // All-day event when time is not confirmed
-          const d = new Date(startTs);
-          const dayEnd = new Date(d);
-          dayEnd.setDate(d.getDate() + 1);
-          lines.push(`DTSTART;VALUE=DATE:${toICSDate(d)}`);
-          lines.push(`DTEND;VALUE=DATE:${toICSDate(dayEnd)}`);
-        }
+        const endTs = sched.endAt || (startTs + 3600000);
+        lines.push(`DTSTART:${toICSDatetime(startTs)}`);
+        lines.push(`DTEND:${toICSDatetime(endTs)}`);
 
         const summary = `${escapeICS(category)}: ${escapeICS(schedName)}`;
         lines.push(`SUMMARY:${summary}`);
