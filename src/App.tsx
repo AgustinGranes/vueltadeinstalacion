@@ -2863,7 +2863,7 @@ const App = () => {
                                   setF1ResultsList(d.races || []);
                                   setF1ResultsLoading(false);
                                 })
-                                .catch((e: Error) => {
+                                .catch(() => {
                                   setF1ResultsError('Timeout. Intenta de nuevo en unos segundos.');
                                   setF1ResultsLoading(false);
                                   f1ResultsFetchedRef.current = false;
