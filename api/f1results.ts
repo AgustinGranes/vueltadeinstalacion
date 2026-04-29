@@ -71,28 +71,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const data = await scrape(
-        'https://www.formula1.com/en/results/2026/races',
-        `Extract a list of all Formula 1 races from the results table on this page.
-For each race include:
-- round: the round number (e.g. "1", "2")
-- name: the Grand Prix name (e.g. "Australian Grand Prix")
-- circuit: the circuit/country name
-- date: the race date as shown
-- winner: the winning driver full name (if available)
-- winnerTeam: the winning constructor/team (if available)
-Return the result as a JSON object: { "races": [ {...}, {...} ] }`
+        'https://www.formula1.com/en/results.html/2026/races.html',
+        `Extract the main F1 race results table from this page.
+The table contains the list of Grand Prix held in the 2026 season.
+For each race row, extract:
+- round: the round number (from the first column)
+- name: the Grand Prix name (e.g. "Bahrain")
+- date: the race date
+- winner: the winning driver's name
+- car: the winning team/car
+- laps: number of laps
+- time: the winning time
+Return a JSON object with a "races" array.`
       );
+
+      // Robust extraction: find the first array in the response if races/results are missing
+      let rawRaces = data.races || data.results || data.data || [];
+      if (!Array.isArray(rawRaces)) {
+        const anyArray = Object.values(data).find(v => Array.isArray(v));
+        if (anyArray) rawRaces = anyArray;
+      }
 
       // Normalize
       const result = {
-        races: (data.races || data.results || []).map((r: any, i: number) => ({
+        races: (rawRaces as any[]).map((r: any, i: number) => ({
           round: r.round ?? String(i + 1),
-          name: r.name ?? r.grand_prix ?? r.race ?? '',
-          circuit: r.circuit ?? r.country ?? '',
+          name: r.name ?? r.grand_prix ?? r.race ?? r.gp ?? '',
+          circuit: r.circuit ?? r.location ?? r.country ?? '',
           date: r.date ?? '',
-          winner: r.winner ?? r.winning_driver ?? '',
-          winnerTeam: r.winnerTeam ?? r.winning_team ?? r.constructor ?? '',
-          resultsUrl: r.url ?? null,
+          winner: r.winner ?? r.driver ?? '',
+          winnerTeam: r.winnerTeam ?? r.car ?? r.team ?? r.constructor ?? '',
+          resultsUrl: r.resultsUrl ?? r.url ?? null,
         })),
       };
 
@@ -110,26 +119,32 @@ Return the result as a JSON object: { "races": [ {...}, {...} ] }`
 
       const data = await scrape(
         decodedUrl,
-        `Extract the race results table from this Formula 1 race result page.
-For each driver row include:
-- pos: finishing position (e.g. "1", "2", "DNF")
+        `Extract the full race results classification table from this F1 page.
+For each driver in the standings, include:
+- pos: position (1, 2, 3, etc.)
 - no: car number
-- driver: full driver name
-- team: constructor/team name
-- laps: number of laps completed
-- time: time or gap to leader (e.g. "+5.234s" or "1:30:12.456")
-- pts: championship points awarded
-Return as JSON: { "results": [ {...}, {...} ] }`
+- driver: full name
+- team: team/constructor
+- laps: laps completed
+- time: total time or gap
+- pts: points scored
+Return a JSON object with a "results" array.`
       );
 
+      let rawResults = data.results || data.races || data.data || [];
+      if (!Array.isArray(rawResults)) {
+        const anyArray = Object.values(data).find(v => Array.isArray(v));
+        if (anyArray) rawResults = anyArray;
+      }
+
       const result = {
-        results: (data.results || data.races || []).map((r: any) => ({
+        results: (rawResults as any[]).map((r: any) => ({
           pos: r.pos ?? r.position ?? '',
-          no: r.no ?? r.number ?? r.car ?? '',
-          driver: r.driver ?? r.name ?? '',
-          team: r.team ?? r.constructor ?? r.car_name ?? '',
+          no: r.no ?? r.number ?? r.car_no ?? '',
+          driver: r.driver ?? r.name ?? r.pilot ?? '',
+          team: r.team ?? r.constructor ?? r.car ?? '',
           laps: r.laps ?? '',
-          time: r.time ?? r.gap ?? r.time_gap ?? '',
+          time: r.time ?? r.gap ?? '',
           pts: r.pts ?? r.points ?? '',
         })),
       };
