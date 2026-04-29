@@ -2884,7 +2884,7 @@ const App = () => {
                               setF1RaceLoading(true);
                               const raceDetailUrl = race.resultsUrl ||
                                 `https://www.formula1.com/en/results/2026/races/${race.name.toLowerCase().replace(/\s+/g, '-')}/race-result`;
-                              fetch(`/api/f1results?type=race&raceUrl=${encodeURIComponent(raceDetailUrl)}`)
+                              fetch(`/api/f1results?type=race&name=${encodeURIComponent(race.name)}&raceUrl=${encodeURIComponent(raceDetailUrl)}`)
                                 .then(r => r.json())
                                 .then(d => { setF1RaceResults(d.results || []); setF1RaceLoading(false); })
                                 .catch(() => { setF1RaceLoading(false); });

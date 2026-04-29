@@ -1,162 +1,108 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const SGAI_APIKEY = process.env.SGAI_APIKEY || '';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
-// Cache in memory (lives as long as the serverless instance is warm)
+// Cache in memory
 const cache = new Map<string, { data: any; ts: number }>();
-const CACHE_TTL_MS = 1000 * 60 * 30; // 30 minutes
+const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour (Gemini data changes less often than a live scrape)
 
-interface RaceResult {
-  pos: string;
-  no: string;
-  driver: string;
-  team: string;
-  laps: string;
-  time: string;
-  pts: string;
-}
-
-interface RaceEntry {
-  round: string;
-  name: string;
-  circuit: string;
-  date: string;
-  winner?: string;
-  winnerTeam?: string;
-  results?: RaceResult[];
-}
-
-interface ScrapeResponse {
-  races?: RaceEntry[];
-  results?: RaceResult[];
-  [key: string]: any;
-}
-
-async function scrape(url: string, prompt: string): Promise<ScrapeResponse> {
-  const response = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
+async function callGemini(prompt: string) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+  
+  const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'SGAI-APIKEY': SGAI_APIKEY,
-    },
-    body: JSON.stringify({ url, prompt }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      // Enable grounding to get latest 2026 F1 data
+      tools: [{ google_search_retrieval: {} }],
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    }),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`ScrapeGraphAI error ${response.status}: ${errorText}`);
+    const err = await response.text();
+    throw new Error(`Gemini API error: ${err}`);
   }
 
   const json = await response.json();
-  // SGAI returns { result: {...} } or { data: {...} }
-  return (json.result ?? json.data ?? json) as ScrapeResponse;
+  const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No content returned from Gemini');
+  
+  return JSON.parse(text);
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { type, raceUrl } = req.query;
+  const { type, raceUrl, name } = req.query;
 
   try {
     if (type === 'list' || !type) {
-      // ---- Fetch season race list ----
-      const cacheKey = 'f1-results-list-2026';
+      const cacheKey = 'f1-list-gemini-2026';
       const cached = cache.get(cacheKey);
-      if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-        return res.status(200).json(cached.data);
-      }
+      if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return res.status(200).json(cached.data);
 
-      const data = await scrape(
-        'https://www.formula1.com/en/results.html/2026/races.html',
-        `Extract the main F1 race results table from this page.
-The table contains the list of Grand Prix held in the 2026 season.
-For each race row, extract:
-- round: the round number (from the first column)
-- name: the Grand Prix name (e.g. "Bahrain")
-- date: the race date
-- winner: the winning driver's name
-- car: the winning team/car
-- laps: number of laps
-- time: the winning time
-Return a JSON object with a "races" array.`
-      );
+      const prompt = `Actúa como un experto en Formula 1. Estamos en la temporada 2026. 
+Proporciona una lista detallada de todos los Grandes Premios de F1 que se han disputado hasta la fecha hoy (Abril 2026).
+Para cada carrera necesito:
+- round: número de ronda
+- name: nombre oficial del Gran Premio
+- circuit: nombre del circuito y país
+- date: fecha en que se corrió
+- winner: nombre completo del piloto ganador
+- winnerTeam: nombre de la escudería ganadora
+- resultsUrl: genera un link descriptivo a la página de resultados oficial (o usa uno real si lo conoces)
 
-      // Robust extraction: find the first array in the response if races/results are missing
-      let rawRaces = data.races || data.results || data.data || [];
-      if (!Array.isArray(rawRaces)) {
-        const anyArray = Object.values(data).find(v => Array.isArray(v));
-        if (anyArray) rawRaces = anyArray;
-      }
+IMPORTANTE: Devuelve la información exclusivamente en formato JSON con esta estructura:
+{
+  "races": [
+    { "round": "1", "name": "...", "circuit": "...", "date": "...", "winner": "...", "winnerTeam": "...", "resultsUrl": "..." },
+    ...
+  ]
+}`;
 
-      // Normalize
-      const result = {
-        races: (rawRaces as any[]).map((r: any, i: number) => ({
-          round: r.round ?? String(i + 1),
-          name: r.name ?? r.grand_prix ?? r.race ?? r.gp ?? '',
-          circuit: r.circuit ?? r.location ?? r.country ?? '',
-          date: r.date ?? '',
-          winner: r.winner ?? r.driver ?? '',
-          winnerTeam: r.winnerTeam ?? r.car ?? r.team ?? r.constructor ?? '',
-          resultsUrl: r.resultsUrl ?? r.url ?? null,
-        })),
-      };
+      const data = await callGemini(prompt);
+      cache.set(cacheKey, { data, ts: Date.now() });
+      return res.status(200).json(data);
 
-      cache.set(cacheKey, { data: result, ts: Date.now() });
-      return res.status(200).json(result);
-
-    } else if (type === 'race' && typeof raceUrl === 'string' && raceUrl) {
-      // ---- Fetch specific race result ----
-      const decodedUrl = decodeURIComponent(raceUrl);
-      const cacheKey = `f1-race-${decodedUrl}`;
+    } else if (type === 'race') {
+      const raceName = name || 'última carrera';
+      const cacheKey = `f1-race-gemini-${raceName}`;
       const cached = cache.get(cacheKey);
-      if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-        return res.status(200).json(cached.data);
-      }
+      if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return res.status(200).json(cached.data);
 
-      const data = await scrape(
-        decodedUrl,
-        `Extract the full race results classification table from this F1 page.
-For each driver in the standings, include:
-- pos: position (1, 2, 3, etc.)
-- no: car number
-- driver: full name
-- team: team/constructor
-- laps: laps completed
-- time: total time or gap
-- pts: points scored
-Return a JSON object with a "results" array.`
-      );
+      const prompt = `Proporciona la clasificación final completa y detallada del ${raceName} de Formula 1 de 2026.
+Necesito una lista extensa con absolutamente todos los parámetros y estadísticas disponibles para cada piloto que participó:
+- pos: posición final (1, 2, 3... o DNF/DNS)
+- no: número del monoplaza
+- driver: nombre completo del piloto
+- team: nombre de la escudería
+- laps: vueltas completadas
+- time: tiempo total o diferencia con el líder
+- pts: puntos obtenidos en este evento
+- extra: incluye si hizo la vuelta rápida o algún dato relevante (opcional)
 
-      let rawResults = data.results || data.races || data.data || [];
-      if (!Array.isArray(rawResults)) {
-        const anyArray = Object.values(data).find(v => Array.isArray(v));
-        if (anyArray) rawResults = anyArray;
-      }
+IMPORTANTE: Devuelve la información exclusivamente en formato JSON con esta estructura:
+{
+  "results": [
+    { "pos": "1", "no": "...", "driver": "...", "team": "...", "laps": "...", "time": "...", "pts": "..." },
+    ...
+  ]
+}`;
 
-      const result = {
-        results: (rawResults as any[]).map((r: any) => ({
-          pos: r.pos ?? r.position ?? '',
-          no: r.no ?? r.number ?? r.car_no ?? '',
-          driver: r.driver ?? r.name ?? r.pilot ?? '',
-          team: r.team ?? r.constructor ?? r.car ?? '',
-          laps: r.laps ?? '',
-          time: r.time ?? r.gap ?? '',
-          pts: r.pts ?? r.points ?? '',
-        })),
-      };
-
-      cache.set(cacheKey, { data: result, ts: Date.now() });
-      return res.status(200).json(result);
-
-    } else {
-      return res.status(400).json({ error: 'Invalid query parameters. Use ?type=list or ?type=race&raceUrl=...' });
+      const data = await callGemini(prompt);
+      cache.set(cacheKey, { data, ts: Date.now() });
+      return res.status(200).json(data);
     }
+
+    return res.status(400).json({ error: 'Invalid type' });
   } catch (err: any) {
-    console.error('[f1results]', err);
-    return res.status(500).json({ error: err.message ?? 'Internal error' });
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 }
