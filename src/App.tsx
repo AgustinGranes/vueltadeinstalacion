@@ -579,9 +579,13 @@ const App = () => {
     fetchGlobalNews();
   }, [fetchGlobalNews]);
 
-  // Load F1 results list when entering F1 results tab
+  // Ref to prevent double-fetching F1 results (avoids infinite loop from loading state deps)
+  const f1ResultsFetchedRef = useRef(false);
+
+  // Load F1 results list when entering F1 results tab — only fires once per session
   useEffect(() => {
-    if (selectedCategory === 'F1' && categorySubTab === 'results' && f1ResultsList.length === 0 && !f1ResultsLoading) {
+    if (selectedCategory === 'F1' && categorySubTab === 'results' && !f1ResultsFetchedRef.current) {
+      f1ResultsFetchedRef.current = true;
       setF1ResultsLoading(true);
       setF1ResultsError(null);
       fetch('/api/f1results?type=list')
@@ -593,9 +597,11 @@ const App = () => {
         .catch((e: Error) => {
           setF1ResultsError('No se pudieron cargar los resultados. ' + e.message);
           setF1ResultsLoading(false);
+          // Allow retry: reset the ref so the user can manually retry
+          f1ResultsFetchedRef.current = false;
         });
     }
-  }, [selectedCategory, categorySubTab, f1ResultsList.length, f1ResultsLoading]);
+  }, [selectedCategory, categorySubTab]);
 
   // Reset F1 race detail when changing category or tab
   useEffect(() => {
@@ -2843,15 +2849,26 @@ const App = () => {
                         )}
                         {f1ResultsError && !f1ResultsLoading && (
                           <div className="results-error">
-                            <p>{f1ResultsError}</p>
+                            <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>⚠️ No se pudieron cargar los resultados</p>
+                            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '260px', textAlign: 'center', lineHeight: 1.5 }}>
+                              El servidor tardó demasiado en responder. Tocá "Reintentar" para volver a intentarlo.
+                            </p>
                             <button className="tc-msg-btn" onClick={() => {
+                              f1ResultsFetchedRef.current = false;
                               setF1ResultsError(null);
                               setF1ResultsLoading(true);
                               fetch('/api/f1results?type=list')
                                 .then(r => r.json())
-                                .then(d => { setF1ResultsList(d.races || []); setF1ResultsLoading(false); })
-                                .catch(e => { setF1ResultsError('Error al cargar: ' + e.message); setF1ResultsLoading(false); });
-                            }}>Reintentar</button>
+                                .then(d => {
+                                  setF1ResultsList(d.races || []);
+                                  setF1ResultsLoading(false);
+                                })
+                                .catch((e: Error) => {
+                                  setF1ResultsError('Timeout. Intenta de nuevo en unos segundos.');
+                                  setF1ResultsLoading(false);
+                                  f1ResultsFetchedRef.current = false;
+                                });
+                            }}>🔄 Reintentar</button>
                           </div>
                         )}
                         {!f1ResultsLoading && !f1ResultsError && f1ResultsList.length === 0 && (
