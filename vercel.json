@@ -105,6 +105,10 @@
       "destination": "/api/webcal"
     },
     {
+      "source": "/api/f1results",
+      "destination": "/api/f1results"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

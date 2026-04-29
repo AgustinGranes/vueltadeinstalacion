@@ -188,6 +188,14 @@ const App = () => {
   const [tcrsaStandings, setTcrsaStandings] = useState<TCStandingRow[]>([]);
   const [tcrsaNews, setTcrsaNews] = useState<NewsItem[]>([]);
 
+  // F1 Native Results
+  const [f1ResultsList, setF1ResultsList] = useState<any[]>([]);
+  const [f1ResultsLoading, setF1ResultsLoading] = useState(false);
+  const [f1ResultsError, setF1ResultsError] = useState<string | null>(null);
+  const [f1SelectedRace, setF1SelectedRace] = useState<any | null>(null);
+  const [f1RaceResults, setF1RaceResults] = useState<any[]>([]);
+  const [f1RaceLoading, setF1RaceLoading] = useState(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isCatCalLoading, setIsCatCalLoading] = useState(false);
   const [isCatStandLoading, setIsCatStandLoading] = useState(false);
@@ -570,6 +578,30 @@ const App = () => {
     // Eagerly preload global news regardless of active tab
     fetchGlobalNews();
   }, [fetchGlobalNews]);
+
+  // Load F1 results list when entering F1 results tab
+  useEffect(() => {
+    if (selectedCategory === 'F1' && categorySubTab === 'results' && f1ResultsList.length === 0 && !f1ResultsLoading) {
+      setF1ResultsLoading(true);
+      setF1ResultsError(null);
+      fetch('/api/f1results?type=list')
+        .then(r => r.json())
+        .then(d => {
+          setF1ResultsList(d.races || []);
+          setF1ResultsLoading(false);
+        })
+        .catch((e: Error) => {
+          setF1ResultsError('No se pudieron cargar los resultados. ' + e.message);
+          setF1ResultsLoading(false);
+        });
+    }
+  }, [selectedCategory, categorySubTab, f1ResultsList.length, f1ResultsLoading]);
+
+  // Reset F1 race detail when changing category or tab
+  useEffect(() => {
+    setF1SelectedRace(null);
+    setF1RaceResults([]);
+  }, [selectedCategory, categorySubTab]);
 
   const handleCategoryClick = (cat: CategoryType) => {
     setSelectedCategory(cat);
@@ -2797,7 +2829,97 @@ const App = () => {
           {categorySubTab === 'results' && (
             <motion.div key="cat-results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="cat-content">
               <div className="results-container">
-                {isPROCAR4000 ? (
+                {isF1 ? (
+                  // ---- F1 NATIVE RESULTS (ScrapeGraphAI) ----
+                  <>
+                    {!f1SelectedRace ? (
+                      // Race list view
+                      <div className="f1-results-list">
+                        {f1ResultsLoading && (
+                          <div className="results-loading">
+                            <div className="results-spinner" />
+                            <p className="results-loading-text">Cargando resultados F1 2026...</p>
+                          </div>
+                        )}
+                        {f1ResultsError && !f1ResultsLoading && (
+                          <div className="results-error">
+                            <p>{f1ResultsError}</p>
+                            <button className="tc-msg-btn" onClick={() => {
+                              setF1ResultsError(null);
+                              setF1ResultsLoading(true);
+                              fetch('/api/f1results?type=list')
+                                .then(r => r.json())
+                                .then(d => { setF1ResultsList(d.races || []); setF1ResultsLoading(false); })
+                                .catch(e => { setF1ResultsError('Error al cargar: ' + e.message); setF1ResultsLoading(false); });
+                            }}>Reintentar</button>
+                          </div>
+                        )}
+                        {!f1ResultsLoading && !f1ResultsError && f1ResultsList.length === 0 && (
+                          <p className="empty-msg">No hay resultados disponibles aún.</p>
+                        )}
+                        {!f1ResultsLoading && f1ResultsList.map((race, idx) => (
+                          <div
+                            key={idx}
+                            className="f1-result-race-row"
+                            onClick={() => {
+                              setF1SelectedRace(race);
+                              setF1RaceResults([]);
+                              setF1RaceLoading(true);
+                              const raceDetailUrl = race.resultsUrl ||
+                                `https://www.formula1.com/en/results/2026/races/${race.name.toLowerCase().replace(/\s+/g, '-')}/race-result`;
+                              fetch(`/api/f1results?type=race&raceUrl=${encodeURIComponent(raceDetailUrl)}`)
+                                .then(r => r.json())
+                                .then(d => { setF1RaceResults(d.results || []); setF1RaceLoading(false); })
+                                .catch(() => { setF1RaceLoading(false); });
+                            }}
+                          >
+                            <div className="f1-result-round">R{race.round}</div>
+                            <div className="f1-result-info">
+                              <span className="f1-result-name">{race.name}</span>
+                              <span className="f1-result-meta">{race.circuit}{race.date ? ` · ${race.date}` : ''}</span>
+                              {race.winner && <span className="f1-result-winner">🏆 {race.winner}{race.winnerTeam ? ` · ${race.winnerTeam}` : ''}</span>}
+                            </div>
+                            <ChevronRight size={18} className="f1-result-arrow" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // Race detail view
+                      <div className="f1-race-detail">
+                        <button className="results-back-btn" onClick={() => { setF1SelectedRace(null); setF1RaceResults([]); }}>
+                          ← Volver
+                        </button>
+                        <h3 className="f1-race-detail-title">{f1SelectedRace.name}</h3>
+                        {f1RaceLoading && (
+                          <div className="results-loading">
+                            <div className="results-spinner" />
+                            <p className="results-loading-text">Cargando clasificación...</p>
+                          </div>
+                        )}
+                        {!f1RaceLoading && f1RaceResults.length === 0 && (
+                          <p className="empty-msg">No se encontraron resultados para esta carrera.</p>
+                        )}
+                        {!f1RaceLoading && f1RaceResults.length > 0 && (
+                          <div className="f1-classified-table">
+                            <div className="f1-classified-header">
+                              <span>POS</span><span>PILOTO</span><span>EQUIPO</span><span>VUELTAS</span><span>TIEMPO</span><span>PTS</span>
+                            </div>
+                            {f1RaceResults.map((r, idx) => (
+                              <div key={idx} className={`f1-classified-row ${idx < 3 ? `top-${idx + 1}` : ''} ${r.pos === 'DNF' || r.pos === 'DNS' ? 'dnf' : ''}`}>
+                                <span className="fcr-pos">{r.pos}</span>
+                                <span className="fcr-driver">{r.driver}</span>
+                                <span className="fcr-team">{r.team}</span>
+                                <span className="fcr-laps">{r.laps}</span>
+                                <span className="fcr-time">{r.time}</span>
+                                <span className="fcr-pts">{r.pts}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : isPROCAR4000 ? (
                   <div className="procar-results-grid">
                     <div className="tc-calendar-message results-box">
                       <p className="tc-msg-text">Consulta los resultados oficiales de la Clase A.</p>
