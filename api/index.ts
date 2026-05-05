@@ -22,19 +22,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // 1. Root /api
     if (!category || category === 'index') {
+      const categoriesSummary = Object.keys(CATEGORY_RESULTS_URLS).map(cat => ({
+        id: cat.toLowerCase(),
+        name: cat,
+        endpoints: {
+          all: `/api/${cat.toLowerCase()}`,
+          news: `/api/${cat.toLowerCase()}/news`,
+          calendar: `/api/${cat.toLowerCase()}/calendar`,
+          standings: `/api/${cat.toLowerCase()}/standings`
+        }
+      }));
+
       return res.status(200).json({
         status: 'online',
-        name: 'Motorsport Unified API v1',
-        description: 'Perfectly organized motorsport data for all categories.',
-        endpoints: {
-          discovery: '/api',
-          weekly_global_calendar: '/api/weekly',
-          categories_list: '/api/categories',
-          category_full_data: '/api/{category}',
-          category_specific_type: '/api/{category}/{news|calendar|standings}'
+        api_version: '1.0.0',
+        title: 'Vuelta de Instalación - Unified Motorsport API',
+        description: 'Comprehensive data for Formula 1, WRC, MotoGP, NASCAR, and more.',
+        global_endpoints: {
+          weekly_calendar: '/api/weekly',
+          categories: '/api/categories'
         },
-        available_categories: Object.keys(CATEGORY_RESULTS_URLS),
-        note: 'To access a specific category, use /api/{category}, for example /api/f1'
+        data: categoriesSummary
       });
     }
 

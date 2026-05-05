@@ -1,4 +1,5 @@
 {
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/proxy",
@@ -101,19 +102,23 @@
       "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
-      "source": "/api",
-      "destination": "/api/index"
-    },
-    {
-      "source": "/api/(?!proxy|vueltarapida|espn|as|motorsport|marca|wrc|actc|solotc|campeones|tc2000|carburando|reddit|tobychristie|nascar|wec|soymotor|webcal|index)(.*)",
-      "destination": "/api/index"
+      "source": "/api/imsa",
+      "destination": "/api/proxy?url=https://www.imsa.com"
     },
     {
       "source": "/api/webcal",
-      "destination": "/api/webcal"
+      "destination": "/api/webcal.ts"
     },
     {
-      "source": "/(.*)",
+      "source": "/api",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/((?!api|favicon.ico|manifest.json|assets|static).*)",
       "destination": "/index.html"
     }
   ]
