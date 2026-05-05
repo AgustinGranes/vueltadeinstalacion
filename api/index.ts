@@ -1,112 +1,248 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { dataFetcher, CATEGORY_RESULTS_URLS } from './lib/data-fetcher';
+
+const CATEGORY_RESULTS_URLS: Record<string, string> = {
+  'F1': 'https://www.formula1.com/en/results.html/2026/races.html',
+  'WRC': 'https://es.motorsport.com/wrc/results/2026',
+  'NASCAR': 'https://es.motorsport.com/nascar-cup/results/2026',
+  'WEC': 'https://es.motorsport.com/wec/results/2026/',
+  'IndyCar': 'https://es.motorsport.com/indycar/results/2026/',
+  'TC': 'https://tiempos.actc.org.ar/resultados',
+  'TCP': 'https://tiempos.actc.org.ar/resultados',
+  'TCM': 'https://tiempos.actc.org.ar/resultados',
+  'TC2000': 'https://tc2000.com.ar/carreras.php',
+  'IMSA': 'https://lat.motorsport.com/imsa/results/2026',
+  'MotoGP': 'https://as.com/resultados/motor/motogp/clasificacion/races/',
+  'TCRSA': 'https://southamerica.tcr-series.com/calendario-2026/',
+  'F2': 'https://lat.motorsport.com/fia-f2/results/2026',
+  'F3': 'https://lat.motorsport.com/fiaf3/results/2026',
+  'WRC2': 'https://es.motorsport.com/wrc/results/2026',
+  'GTWC': 'https://www.gt-world-challenge.com/results',
+  'BTCC': 'https://btcc.net/results',
+  'DTM': 'https://es.motorsport.com/dtm/results/2026',
+  'WorldSBK': 'https://www.worldsbk.com/en/results',
+  'SuperFormula': 'https://lat.motorsport.com/superf/results/2026',
+};
+
+const CATEGORY_NEWS_URLS: Record<string, { url: string; source: string }> = {
+  'F1': { url: 'https://as.com/motor/formula_1/', source: 'AS.com' },
+  'WRC': { url: 'https://lat.motorsport.com/wrc/news/', source: 'Motorsport.com' },
+  'NASCAR': { url: 'https://lat.motorsport.com/nascar-cup/news/', source: 'Motorsport.com' },
+  'WEC': { url: 'https://lat.motorsport.com/wec/news/', source: 'Motorsport.com' },
+  'IndyCar': { url: 'https://lat.motorsport.com/indycar/news/', source: 'Motorsport.com' },
+  'MotoGP': { url: 'https://as.com/noticias/moto-gp/', source: 'AS.com' },
+  'F2': { url: 'https://lat.motorsport.com/fia-f2/news/', source: 'Motorsport.com' },
+  'F3': { url: 'https://lat.motorsport.com/fiaf3/news/', source: 'Motorsport.com' },
+  'GTWC': { url: 'https://www.gt-world-challenge.com/news', source: 'GTWC Official' },
+  'BTCC': { url: 'https://btcc.net/news', source: 'BTCC Official' },
+  'DTM': { url: 'https://lat.motorsport.com/dtm/news/', source: 'Motorsport.com' },
+  'WorldSBK': { url: 'https://www.worldsbk.com/es/noticias', source: 'WorldSBK Official' },
+};
+
+const CATEGORY_STANDINGS_URLS: Record<string, string> = {
+  'F1': 'https://site.api.espn.com/apis/v2/sports/racing/f1/standings',
+  'WRC': 'https://lat.motorsport.com/wrc/standings/2026/',
+  'NASCAR': 'https://lat.motorsport.com/nascar-cup/standings/2026/',
+  'WEC': 'https://lat.motorsport.com/wec/standings/2025/',
+  'MotoGP': 'https://lat.motorsport.com/motogp/standings/2026/',
+  'F2': 'https://lat.motorsport.com/fia-f2/standings/2026/',
+  'F3': 'https://lat.motorsport.com/fiaf3/standings/2026/',
+};
+
+const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
+  'F1': 'https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard',
+  'MotoGP': 'https://lat.motorsport.com/motogp/schedule/2026/',
+  'WRC': 'https://lat.motorsport.com/wrc/schedule/2026/',
+  'WEC': 'https://lat.motorsport.com/wec/schedule/2026/',
+};
+
+// In-memory cache
+const cache = new Map<string, { data: any; ts: number }>();
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+function getCached(key: string) {
+  const c = cache.get(key);
+  if (c && Date.now() - c.ts < CACHE_TTL) return c.data;
+  return null;
+}
+
+function setCached(key: string, data: any) {
+  cache.set(key, { data, ts: Date.now() });
+}
+
+async function getF1Calendar() {
+  const cached = getCached('f1-calendar');
+  if (cached) return cached;
+  try {
+    const r = await fetch('https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard');
+    const d = await r.json();
+    const now = new Date();
+    const races = (d?.leagues?.[0]?.calendar || []).map((entry: any, i: number) => ({
+      round: i + 1,
+      race: entry.label,
+      startDate: entry.startDate,
+      endDate: entry.endDate,
+      status: now > new Date(entry.endDate) ? 'Finished' : now >= new Date(entry.startDate) ? 'Live' : 'Upcoming',
+    }));
+    setCached('f1-calendar', races);
+    return races;
+  } catch {
+    return [];
+  }
+}
+
+async function getF1Standings() {
+  const cached = getCached('f1-standings');
+  if (cached) return cached;
+  try {
+    const r = await fetch('https://site.api.espn.com/apis/v2/sports/racing/f1/standings');
+    const d = await r.json();
+    const drivers = (d?.children?.[0]?.standings?.entries || []).map((e: any) => ({
+      pos: e.stats?.find((s: any) => s.name === 'rank')?.displayValue || '',
+      driver: e.athlete?.displayName || '',
+      team: e.athlete?.team?.name || '',
+      points: e.stats?.find((s: any) => s.name === 'points')?.displayValue || '0',
+    }));
+    const constructors = (d?.children?.[1]?.standings?.entries || []).map((e: any) => ({
+      pos: e.stats?.find((s: any) => s.name === 'rank')?.displayValue || '',
+      team: e.team?.displayName || '',
+      points: e.stats?.find((s: any) => s.name === 'points')?.displayValue || '0',
+    }));
+    const result = { drivers, constructors };
+    setCached('f1-standings', result);
+    return result;
+  } catch {
+    return { drivers: [], constructors: [] };
+  }
+}
+
+async function getWeeklyCalendar() {
+  const cached = getCached('weekly');
+  if (cached) return cached;
+  try {
+    const now = new Date();
+    const day = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    const r = await fetch(
+      `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`,
+      { headers: { 'Referer': 'https://vueltarapida.com/', 'Origin': 'https://vueltarapida.com' } }
+    );
+    const data = await r.json();
+    const result = (Array.isArray(data) ? data : []).map((race: any) => ({
+      category: race.category || '',
+      event: race.name || race.completeName || '',
+      circuit: race.circuit || '',
+      startDate: race.startAt ? new Date(race.startAt).toISOString() : '',
+    }));
+    setCached('weekly', result);
+    return result;
+  } catch {
+    return [];
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const url = req.url || '/api';
-  const pathParts = url.split('?')[0].split('/').filter(Boolean);
-  
-  // pathParts[0] is 'api' (because of the rewrite or direct call)
-  // pathParts[1] would be the category (e.g., 'f1')
-  // pathParts[2] would be the type (e.g., 'news')
-
-  const category = pathParts[1]?.toLowerCase();
-  const type = pathParts[2]?.toLowerCase();
+  const rawPath = (req.url || '/api').split('?')[0];
+  const parts = rawPath.replace(/^\/+/, '').split('/').filter(Boolean);
+  // parts[0] = 'api', parts[1] = category, parts[2] = type
+  const category = (parts[1] || '').toLowerCase();
+  const type = (parts[2] || '').toLowerCase();
 
   try {
-    // 1. Root /api
-    if (!category || category === 'index') {
-      const categoriesSummary = Object.keys(CATEGORY_RESULTS_URLS).map(cat => ({
+    // ── ROOT /api ──────────────────────────────────────────────────────────────
+    if (!category) {
+      const categories = Object.keys(CATEGORY_RESULTS_URLS).map(cat => ({
         id: cat.toLowerCase(),
         name: cat,
         endpoints: {
           all: `/api/${cat.toLowerCase()}`,
           news: `/api/${cat.toLowerCase()}/news`,
           calendar: `/api/${cat.toLowerCase()}/calendar`,
-          standings: `/api/${cat.toLowerCase()}/standings`
-        }
+          standings: `/api/${cat.toLowerCase()}/standings`,
+          results_url: CATEGORY_RESULTS_URLS[cat],
+        },
       }));
-
       return res.status(200).json({
         status: 'online',
         api_version: '1.0.0',
-        title: 'Vuelta de Instalación - Unified Motorsport API',
-        description: 'Comprehensive data for Formula 1, WRC, MotoGP, NASCAR, and more.',
+        title: 'Vuelta de Instalación — Unified Motorsport API',
+        description: 'News, calendars, standings and result links for all motorsport categories.',
         global_endpoints: {
           weekly_calendar: '/api/weekly',
-          categories: '/api/categories'
+          categories_list: '/api/categories',
         },
-        data: categoriesSummary
+        categories,
       });
     }
 
-    // 2. Global Weekly Calendar /api/weekly
+    // ── /api/weekly ────────────────────────────────────────────────────────────
     if (category === 'weekly') {
-      const data = await dataFetcher.getWeeklyCalendar();
-      return res.status(200).json(data);
+      return res.status(200).json({ data: await getWeeklyCalendar() });
     }
 
-    // 3. Categories List /api/categories
+    // ── /api/categories ───────────────────────────────────────────────────────
     if (category === 'categories') {
       return res.status(200).json(Object.keys(CATEGORY_RESULTS_URLS));
     }
 
-    // 4. Specific Category Logic (e.g., /api/f1)
+    // ── /api/f1 ───────────────────────────────────────────────────────────────
     if (category === 'f1') {
-      if (!type) {
-        const [news, calendar, standings] = await Promise.all([
-          dataFetcher.getF1News(),
-          dataFetcher.getF1Calendar(),
-          dataFetcher.getF1Standings()
-        ]);
+      if (type === 'calendar') {
+        return res.status(200).json({ category: 'F1', data: await getF1Calendar() });
+      }
+      if (type === 'standings') {
+        return res.status(200).json({ category: 'F1', data: await getF1Standings() });
+      }
+      if (type === 'news') {
         return res.status(200).json({
-          category: 'Formula 1',
-          resultsUrl: CATEGORY_RESULTS_URLS['F1'],
-          news,
-          calendar,
-          standings
+          category: 'F1',
+          news_url: CATEGORY_NEWS_URLS['F1']?.url,
+          note: 'Use the news_url to fetch latest F1 news via your browser.',
         });
       }
-      if (type === 'news') return res.status(200).json(await dataFetcher.getF1News());
-      if (type === 'calendar') return res.status(200).json(await dataFetcher.getF1Calendar());
-      if (type === 'standings') return res.status(200).json(await dataFetcher.getF1Standings());
+      // Full F1 dump
+      const [calendar, standings] = await Promise.all([getF1Calendar(), getF1Standings()]);
+      return res.status(200).json({
+        category: 'Formula 1',
+        results_url: CATEGORY_RESULTS_URLS['F1'],
+        news_url: CATEGORY_NEWS_URLS['F1']?.url,
+        calendar,
+        standings,
+      });
     }
 
-    // 5. Generic Category Handling (WRC, MotoGP, NASCAR, etc.)
-    const catUpper = category.toUpperCase();
-    if (CATEGORY_RESULTS_URLS[catUpper]) {
-      const data: any = {
-        category: catUpper,
-        resultsUrl: CATEGORY_RESULTS_URLS[catUpper]
+    // ── /api/<other-category> ─────────────────────────────────────────────────
+    const catKey = Object.keys(CATEGORY_RESULTS_URLS).find(
+      k => k.toLowerCase() === category
+    );
+    if (catKey) {
+      const payload: Record<string, any> = {
+        category: catKey,
+        results_url: CATEGORY_RESULTS_URLS[catKey],
+        news_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
+        standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
+        calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
       };
-
-      if (!type || type === 'news') {
-        const newsUrl = catUpper === 'MOTOGP' ? 'https://as.com/noticias/moto-gp/' : `https://lat.motorsport.com/${category}/news/`;
-        data.news = await dataFetcher.getNews(category, newsUrl, catUpper === 'MOTOGP' ? 'AS.com' : 'Motorsport.com');
-      }
-
-      if (!type || type === 'standings') {
-        if (category === 'wrc') data.standings = await dataFetcher.getWRCStandings();
-        else data.standings = { note: 'Standings scraping for this category is under development.' };
-      }
-
-      if (!type || type === 'calendar') {
-        data.calendar = { note: 'Calendar scraping for this category is under development.' };
-      }
-
-      return res.status(200).json(type ? data[type] : data);
+      if (type === 'news') return res.status(200).json({ category: catKey, news_url: payload.news_url });
+      if (type === 'standings') return res.status(200).json({ category: catKey, standings_url: payload.standings_url });
+      if (type === 'calendar') return res.status(200).json({ category: catKey, calendar_source: payload.calendar_source });
+      if (type === 'results') return res.status(200).json({ category: catKey, results_url: payload.results_url });
+      return res.status(200).json(payload);
     }
 
-    return res.status(404).json({ error: 'Endpoint or category not found' });
+    return res.status(404).json({ error: 'Category not found', available: Object.keys(CATEGORY_RESULTS_URLS) });
 
-  } catch (error: any) {
-    console.error('API Error:', error);
-    return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Internal Server Error', message: err?.message || 'Unknown error' });
   }
 }
