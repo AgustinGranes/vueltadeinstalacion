@@ -102,11 +102,11 @@
     },
     {
       "source": "/api",
-      "destination": "/api/main"
+      "destination": "/api/index"
     },
     {
-      "source": "/api/:path*",
-      "destination": "/api/main"
+      "source": "/api/(?!proxy|vueltarapida|espn|as|motorsport|marca|wrc|actc|solotc|campeones|tc2000|carburando|reddit|tobychristie|nascar|wec|soymotor|webcal|index)(.*)",
+      "destination": "/api/index"
     },
     {
       "source": "/api/webcal",

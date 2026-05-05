@@ -21,18 +21,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // 1. Root /api
-    if (!category) {
+    if (!category || category === 'index') {
       return res.status(200).json({
-        message: 'Motorsport Unified API',
-        endpoints: [
-          '/api/f1',
-          '/api/f1/news',
-          '/api/f1/calendar',
-          '/api/f1/standings',
-          '/api/weekly',
-          '/api/categories'
-        ],
-        categories_supported: Object.keys(CATEGORY_RESULTS_URLS)
+        status: 'online',
+        name: 'Motorsport Unified API v1',
+        description: 'Perfectly organized motorsport data for all categories.',
+        endpoints: {
+          discovery: '/api',
+          weekly_global_calendar: '/api/weekly',
+          categories_list: '/api/categories',
+          category_full_data: '/api/{category}',
+          category_specific_type: '/api/{category}/{news|calendar|standings}'
+        },
+        available_categories: Object.keys(CATEGORY_RESULTS_URLS),
+        note: 'To access a specific category, use /api/{category}, for example /api/f1'
       });
     }
 
