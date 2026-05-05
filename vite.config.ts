@@ -7,6 +7,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api(\/.*)?$/],
+      },
       manifest: {
         name: 'Motorsport Hub',
         short_name: 'Motorsport',

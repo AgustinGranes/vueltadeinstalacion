@@ -1,5 +1,4 @@
 {
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/proxy",
@@ -102,23 +101,11 @@
       "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
-      "source": "/api/imsa",
-      "destination": "/api/proxy?url=https://www.imsa.com"
-    },
-    {
       "source": "/api/webcal",
-      "destination": "/api/webcal.ts"
+      "destination": "/api/webcal"
     },
     {
-      "source": "/api",
-      "destination": "/api/index.ts"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.ts"
-    },
-    {
-      "source": "/((?!api|favicon.ico|manifest.json|assets|static).*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]
