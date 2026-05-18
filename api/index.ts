@@ -1,4 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { parseHTML } from 'linkedom';
+
+// ─── Static Data Maps ────────────────────────────────────────────────────────
 
 const CATEGORY_RESULTS_URLS: Record<string, string> = {
   'F1': 'https://www.formula1.com/en/results.html/2026/races.html',
@@ -30,12 +33,20 @@ const CATEGORY_NEWS_URLS: Record<string, { url: string; source: string }> = {
   'WEC': { url: 'https://lat.motorsport.com/wec/news/', source: 'Motorsport.com' },
   'IndyCar': { url: 'https://lat.motorsport.com/indycar/news/', source: 'Motorsport.com' },
   'MotoGP': { url: 'https://as.com/noticias/moto-gp/', source: 'AS.com' },
+  'TC': { url: 'https://www.solotc.com.ar/', source: 'SoloTC' },
+  'TCP': { url: 'https://www.solotc.com.ar/', source: 'SoloTC' },
+  'TCM': { url: 'https://www.solotc.com.ar/', source: 'SoloTC' },
+  'TC2000': { url: 'https://tc2000.com.ar/noticias', source: 'TC2000' },
+  'IMSA': { url: 'https://lat.motorsport.com/imsa/news/', source: 'Motorsport.com' },
   'F2': { url: 'https://lat.motorsport.com/fia-f2/news/', source: 'Motorsport.com' },
   'F3': { url: 'https://lat.motorsport.com/fiaf3/news/', source: 'Motorsport.com' },
-  'GTWC': { url: 'https://www.gt-world-challenge.com/news', source: 'GTWC Official' },
-  'BTCC': { url: 'https://btcc.net/news', source: 'BTCC Official' },
+  'GTWC': { url: 'https://lat.motorsport.com/gt-world-challenge-europe/news/', source: 'Motorsport.com' },
+  'BTCC': { url: 'https://lat.motorsport.com/btcc/news/', source: 'Motorsport.com' },
   'DTM': { url: 'https://lat.motorsport.com/dtm/news/', source: 'Motorsport.com' },
-  'WorldSBK': { url: 'https://www.worldsbk.com/es/noticias', source: 'WorldSBK Official' },
+  'WorldSBK': { url: 'https://lat.motorsport.com/worldsbk/news/', source: 'Motorsport.com' },
+  'SuperFormula': { url: 'https://lat.motorsport.com/superf/news/', source: 'Motorsport.com' },
+  'WRC2': { url: 'https://lat.motorsport.com/wrc/news/', source: 'Motorsport.com' },
+  'TCRSA': { url: 'https://lat.motorsport.com/tcr/news/', source: 'Motorsport.com' },
 };
 
 const CATEGORY_STANDINGS_URLS: Record<string, string> = {
@@ -55,7 +66,8 @@ const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
   'WEC': 'https://lat.motorsport.com/wec/schedule/2026/',
 };
 
-// In-memory cache
+// ─── Cache ────────────────────────────────────────────────────────────────────
+
 const cache = new Map<string, { data: any; ts: number }>();
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
@@ -68,6 +80,89 @@ function getCached(key: string) {
 function setCached(key: string, data: any) {
   cache.set(key, { data, ts: Date.now() });
 }
+
+// ─── HTTP Helper ──────────────────────────────────────────────────────────────
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+async function fetchHtml(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', 'Accept-Language': 'es-AR,es;q=0.9,en;q=0.8' },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+// ─── News Scraper ─────────────────────────────────────────────────────────────
+
+async function scrapeNews(category: string): Promise<any[]> {
+  const cacheKey = `news-${category}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const info = CATEGORY_NEWS_URLS[category];
+  if (!info) return [];
+
+  const html = await fetchHtml(info.url);
+  if (!html) return [];
+
+  const { document } = parseHTML(html);
+  const news: any[] = [];
+
+  // Strategy 1: Motorsport.com articles
+  document.querySelectorAll('.ms-item, article.ms-item').forEach((el: any) => {
+    const titleEl = el.querySelector('.ms-item_title, h3, h2');
+    const linkEl = el.querySelector('a[href]');
+    const imgEl = el.querySelector('img[src], img[data-src]');
+    const t = titleEl?.textContent?.trim();
+    const l = linkEl?.getAttribute('href');
+    if (t && l && t.length > 10) {
+      news.push({
+        title: t,
+        link: l.startsWith('/') ? new URL(l, info.url).href : l,
+        image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
+        source: info.source,
+      });
+    }
+  });
+
+  // Strategy 2: Generic articles (AS.com, etc.)
+  if (news.length === 0) {
+    document.querySelectorAll('article').forEach((art: any) => {
+      const titleEl = art.querySelector('h2, h3, h4');
+      const linkEl = art.querySelector('a[href]');
+      const imgEl = art.querySelector('img[src], img[data-src]');
+      const t = titleEl?.textContent?.trim();
+      const l = linkEl?.getAttribute('href');
+      if (t && l && t.length > 10) {
+        news.push({
+          title: t,
+          link: l.startsWith('/') ? new URL(l, info.url).href : l,
+          image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
+          source: info.source,
+        });
+      }
+    });
+  }
+
+  // Deduplicate by title
+  const seen = new Set<string>();
+  const unique = news.filter(n => {
+    if (seen.has(n.title)) return false;
+    seen.add(n.title);
+    return true;
+  }).slice(0, 20);
+
+  setCached(cacheKey, unique);
+  return unique;
+}
+
+// ─── F1 Specific Fetchers ─────────────────────────────────────────────────────
 
 async function getF1Calendar() {
   const cached = getCached('f1-calendar');
@@ -145,6 +240,8 @@ async function getWeeklyCalendar() {
   }
 }
 
+// ─── Main Handler ─────────────────────────────────────────────────────────────
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -174,7 +271,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }));
       return res.status(200).json({
         status: 'online',
-        api_version: '1.0.0',
+        api_version: '2.0.0',
         title: 'Vuelta de Instalación — Unified Motorsport API',
         description: 'News, calendars, standings and result links for all motorsport categories.',
         global_endpoints: {
@@ -190,13 +287,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ data: await getWeeklyCalendar() });
     }
 
-    // ── /api/categories ───────────────────────────────────────────────────────
+    // ── /api/categories ────────────────────────────────────────────────────────
     if (category === 'categories') {
       return res.status(200).json(Object.keys(CATEGORY_RESULTS_URLS));
     }
 
-    // ── /api/f1 ───────────────────────────────────────────────────────────────
-    if (category === 'f1') {
+    // ── Find category key ──────────────────────────────────────────────────────
+    const catKey = Object.keys(CATEGORY_RESULTS_URLS).find(
+      k => k.toLowerCase() === category
+    );
+
+    if (!catKey) {
+      return res.status(404).json({ error: 'Category not found', available: Object.keys(CATEGORY_RESULTS_URLS) });
+    }
+
+    // ── /api/f1 special (uses ESPN APIs directly) ──────────────────────────────
+    if (catKey === 'F1') {
       if (type === 'calendar') {
         return res.status(200).json({ category: 'F1', data: await getF1Calendar() });
       }
@@ -204,43 +310,80 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ category: 'F1', data: await getF1Standings() });
       }
       if (type === 'news') {
+        const articles = await scrapeNews('F1');
         return res.status(200).json({
           category: 'F1',
-          news_url: CATEGORY_NEWS_URLS['F1']?.url,
-          note: 'Use the news_url to fetch latest F1 news via your browser.',
+          source: CATEGORY_NEWS_URLS['F1']?.source,
+          source_url: CATEGORY_NEWS_URLS['F1']?.url,
+          count: articles.length,
+          data: articles,
         });
       }
+      if (type === 'results') {
+        return res.status(200).json({ category: 'F1', results_url: CATEGORY_RESULTS_URLS['F1'] });
+      }
       // Full F1 dump
-      const [calendar, standings] = await Promise.all([getF1Calendar(), getF1Standings()]);
+      const [calendar, standings, news] = await Promise.all([
+        getF1Calendar(),
+        getF1Standings(),
+        scrapeNews('F1'),
+      ]);
       return res.status(200).json({
         category: 'Formula 1',
         results_url: CATEGORY_RESULTS_URLS['F1'],
-        news_url: CATEGORY_NEWS_URLS['F1']?.url,
+        news_source: CATEGORY_NEWS_URLS['F1']?.url,
         calendar,
         standings,
+        news: news.slice(0, 10),
       });
     }
 
-    // ── /api/<other-category> ─────────────────────────────────────────────────
-    const catKey = Object.keys(CATEGORY_RESULTS_URLS).find(
-      k => k.toLowerCase() === category
-    );
-    if (catKey) {
-      const payload: Record<string, any> = {
+    // ── /api/<category>/news ───────────────────────────────────────────────────
+    if (type === 'news') {
+      const articles = await scrapeNews(catKey);
+      return res.status(200).json({
         category: catKey,
-        results_url: CATEGORY_RESULTS_URLS[catKey],
-        news_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
-        standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
-        calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
-      };
-      if (type === 'news') return res.status(200).json({ category: catKey, news_url: payload.news_url });
-      if (type === 'standings') return res.status(200).json({ category: catKey, standings_url: payload.standings_url });
-      if (type === 'calendar') return res.status(200).json({ category: catKey, calendar_source: payload.calendar_source });
-      if (type === 'results') return res.status(200).json({ category: catKey, results_url: payload.results_url });
-      return res.status(200).json(payload);
+        source: CATEGORY_NEWS_URLS[catKey]?.source || null,
+        source_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
+        count: articles.length,
+        data: articles,
+      });
     }
 
-    return res.status(404).json({ error: 'Category not found', available: Object.keys(CATEGORY_RESULTS_URLS) });
+    // ── /api/<category>/standings ──────────────────────────────────────────────
+    if (type === 'standings') {
+      return res.status(200).json({
+        category: catKey,
+        standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
+      });
+    }
+
+    // ── /api/<category>/calendar ───────────────────────────────────────────────
+    if (type === 'calendar') {
+      return res.status(200).json({
+        category: catKey,
+        calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
+      });
+    }
+
+    // ── /api/<category>/results ────────────────────────────────────────────────
+    if (type === 'results') {
+      return res.status(200).json({
+        category: catKey,
+        results_url: CATEGORY_RESULTS_URLS[catKey],
+      });
+    }
+
+    // ── /api/<category> (full dump) ────────────────────────────────────────────
+    const news = await scrapeNews(catKey);
+    return res.status(200).json({
+      category: catKey,
+      results_url: CATEGORY_RESULTS_URLS[catKey],
+      news_source: CATEGORY_NEWS_URLS[catKey]?.url || null,
+      standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
+      calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
+      news: news.slice(0, 10),
+    });
 
   } catch (err: any) {
     return res.status(500).json({ error: 'Internal Server Error', message: err?.message || 'Unknown error' });

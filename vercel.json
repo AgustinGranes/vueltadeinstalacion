@@ -5,12 +5,16 @@
       "destination": "/api/proxy.js"
     },
     {
-      "source": "/api/vueltarapida/(.*)",
-      "destination": "/api/proxy?url=https://api.vueltarapida.com/api/$1"
+      "source": "/api/webcal",
+      "destination": "/api/webcal"
     },
     {
       "source": "/api/vueltarapida-html/(.*)",
       "destination": "/api/proxy?url=https://vueltarapida.com/$1"
+    },
+    {
+      "source": "/api/vueltarapida/(.*)",
+      "destination": "/api/proxy?url=https://api.vueltarapida.com/api/$1"
     },
     {
       "source": "/api/espn-json/(.*)",
@@ -29,20 +33,24 @@
       "destination": "/api/proxy?url=https://as.com/$1"
     },
     {
-      "source": "/api/motorsport/(.*)",
+      "source": "/api/motorsport-es/(.*)",
+      "destination": "/api/proxy?url=https://es.motorsport.com/$1"
+    },
+    {
+      "source": "/api/motorsport-results/(.*)",
       "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
-      "source": "/api/motorsport-es/(.*)",
-      "destination": "/api/proxy?url=https://es.motorsport.com/$1"
+      "source": "/api/motorsport/(.*)",
+      "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
     },
     {
       "source": "/api/marca/(.*)",
       "destination": "/api/proxy?url=https://www.marca.com/$1"
     },
     {
-      "source": "/api/wrc/(.*)",
-      "destination": "/api/proxy?url=https://www.wrc.com/$1"
+      "source": "/api/wrc-api/(.*)",
+      "destination": "/api/proxy?url=https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/$1"
     },
     {
       "source": "/api/actc-tiempos/(.*)",
@@ -61,16 +69,8 @@
       "destination": "/api/proxy?url=https://campeones.com.ar/$1"
     },
     {
-      "source": "/api/tc2000/(.*)",
-      "destination": "/api/proxy?url=https://tc2000.com.ar/$1"
-    },
-    {
       "source": "/api/carburando/(.*)",
       "destination": "/api/proxy?url=https://carburando.com/$1"
-    },
-    {
-      "source": "/api/wrc-api/(.*)",
-      "destination": "/api/proxy?url=https://p-p.redbull.com/rb-wrccom-lintegration-yv-prod/api/$1"
     },
     {
       "source": "/api/reddit/(.*)",
@@ -79,10 +79,6 @@
     {
       "source": "/api/tobychristie/(.*)",
       "destination": "/api/proxy?url=https://tobychristie.com/$1"
-    },
-    {
-      "source": "/api/nascar/(.*)",
-      "destination": "/api/proxy?url=https://www.nascar.com/$1"
     },
     {
       "source": "/api/nascar-latino/(.*)",
@@ -95,14 +91,6 @@
     {
       "source": "/api/soymotor/(.*)",
       "destination": "/api/proxy?url=https://soymotor.com/$1"
-    },
-    {
-      "source": "/api/motorsport-results/(.*)",
-      "destination": "/api/proxy?url=https://lat.motorsport.com/$1"
-    },
-    {
-      "source": "/api/webcal",
-      "destination": "/api/webcal"
     },
     {
       "source": "/api/:path*",
