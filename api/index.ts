@@ -137,41 +137,22 @@ async function scrapeNews(category: string): Promise<any[]> {
   const { document } = parseHTML(html);
   const news: any[] = [];
 
-  // Strategy 1: Motorsport.com articles
-  document.querySelectorAll('.ms-item, article.ms-item').forEach((el: any) => {
-    const titleEl = el.querySelector('.ms-item_title, h3, h2');
-    const linkEl = el.querySelector('a[href]');
-    const imgEl = el.querySelector('img[src], img[data-src]');
-    const t = titleEl?.textContent?.trim();
-    const l = linkEl?.getAttribute('href');
+  document.querySelectorAll('.ms-item, .ms-item_link, article, [class*="article"], [class*="news"]').forEach((art: any) => {
+    const anchor = art.tagName === 'A' ? art : art.querySelector('a');
+    const titleEl = art.querySelector('.ms-item_title, .ms-item__title, h2, h3, h4, [class*="title"]');
+    const t = titleEl?.textContent?.trim() || anchor?.textContent?.trim();
+    const l = anchor?.getAttribute('href');
+    const imgEl = art.querySelector('img[src], img[data-src]');
+    
     if (t && l && t.length > 10) {
       news.push({
-        title: t,
+        title: t.split('\n').map((s: string) => s.trim()).filter(Boolean).pop() || t,
         link: l.startsWith('/') ? new URL(l, info.url).href : l,
         image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
         source: info.source,
       });
     }
   });
-
-  // Strategy 2: Generic articles (AS.com, etc.)
-  if (news.length === 0) {
-    document.querySelectorAll('article').forEach((art: any) => {
-      const titleEl = art.querySelector('h2, h3, h4');
-      const linkEl = art.querySelector('a[href]');
-      const imgEl = art.querySelector('img[src], img[data-src]');
-      const t = titleEl?.textContent?.trim();
-      const l = linkEl?.getAttribute('href');
-      if (t && l && t.length > 10) {
-        news.push({
-          title: t,
-          link: l.startsWith('/') ? new URL(l, info.url).href : l,
-          image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
-          source: info.source,
-        });
-      }
-    });
-  }
 
   // Deduplicate by title
   const seen = new Set<string>();
@@ -433,12 +414,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // ── /api/<category>/logo ───────────────────────────────────────────────────
+    if (type === 'logo') {
+      return res.status(200).json({
+        category: catKey,
+        logo: CATEGORY_LOGOS[catKey] || null,
+      });
+    }
+
     // ── /api/<category>/news ───────────────────────────────────────────────────
     if (type === 'news') {
       const articles = await scrapeNews(catKey);
       return res.status(200).json({
         category: catKey,
-        logo: CATEGORY_LOGOS[catKey] || null,
         source: CATEGORY_NEWS_URLS[catKey]?.source || null,
         source_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
         count: articles.length,
@@ -451,7 +439,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const data = await scrapeStandings(catKey);
       return res.status(200).json({
         category: catKey,
-        logo: CATEGORY_LOGOS[catKey] || null,
         data: data.length > 0 ? data : null,
         source_url: CATEGORY_STANDINGS_URLS[catKey] || null,
       });
@@ -462,7 +449,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const data = await scrapeCalendar(catKey);
       return res.status(200).json({
         category: catKey,
-        logo: CATEGORY_LOGOS[catKey] || null,
         data: data.length > 0 ? data : null,
         source_url: CATEGORY_CALENDAR_SOURCES[catKey] || null,
       });
@@ -472,7 +458,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'results') {
       return res.status(200).json({
         category: catKey,
-        logo: CATEGORY_LOGOS[catKey] || null,
         results_url: CATEGORY_RESULTS_URLS[catKey],
       });
     }
