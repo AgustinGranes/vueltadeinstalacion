@@ -62,7 +62,7 @@ const CATEGORY_STANDINGS_URLS: Record<string, string> = {
 const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
   'F1': 'https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard',
   'MotoGP': 'https://lat.motorsport.com/motogp/schedule/2026/',
-  'WRC': 'https://lat.motorsport.com/wrc/schedule/2026/',
+  'WRC': 'https://www.marca.com/motor/rallies/calendario.html',
   'WEC': 'https://lat.motorsport.com/wec/schedule/2026/',
 };
 
@@ -229,6 +229,33 @@ async function scrapeCalendar(category: string): Promise<any[]> {
           dates: dateStr,
           status: 'Upcoming'
         });
+      }
+    });
+  } else if (url.includes('marca.com')) {
+    const tableRows = document.querySelectorAll('table.calendario.motor tbody tr');
+    tableRows.forEach((tr: any, i: number) => {
+      const dateStr = tr.querySelector('td.fecha-inicio')?.textContent?.trim() || '';
+      let raceName = tr.querySelector('td.evento')?.textContent?.trim() || '';
+      raceName = raceName.replace(/^WRC\s+/i, '').replace(/\s+\d{4}$/, '').trim();
+      const winner = tr.querySelector('td.primero')?.textContent?.trim() || '';
+      
+      if (dateStr && raceName) {
+        events.push({
+          round: i + 1,
+          race: raceName,
+          dates: dateStr,
+          status: winner ? 'Finished' : 'Upcoming',
+          winner: winner || undefined
+        });
+      }
+    });
+    
+    // Set first 'Upcoming' as 'Next'
+    let foundNext = false;
+    events.forEach(ev => {
+      if (ev.status === 'Upcoming' && !foundNext) {
+        ev.status = 'Next';
+        foundNext = true;
       }
     });
   }
