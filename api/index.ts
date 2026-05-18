@@ -66,6 +66,29 @@ const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
   'WEC': 'https://lat.motorsport.com/wec/schedule/2026/',
 };
 
+const CATEGORY_LOGOS: Record<string, string> = {
+  'F1': 'https://vueltadeinstalacion.vercel.app/F1.svg',
+  'WRC': 'https://vueltadeinstalacion.vercel.app/WRC.png',
+  'WRC2': 'https://vueltadeinstalacion.vercel.app/WRC2.png',
+  'NASCAR': 'https://vueltadeinstalacion.vercel.app/NASCAR.png',
+  'WEC': 'https://vueltadeinstalacion.vercel.app/WEC.png',
+  'IndyCar': 'https://vueltadeinstalacion.vercel.app/INDY.png',
+  'TC': 'https://vueltadeinstalacion.vercel.app/TC.png',
+  'TCP': 'https://vueltadeinstalacion.vercel.app/TCP.png',
+  'TCM': 'https://vueltadeinstalacion.vercel.app/TCM.png',
+  'TC2000': 'https://vueltadeinstalacion.vercel.app/TC2000.png',
+  'IMSA': 'https://vueltadeinstalacion.vercel.app/IMSA.png',
+  'MotoGP': 'https://vueltadeinstalacion.vercel.app/MOTOGP.png',
+  'F2': 'https://vueltadeinstalacion.vercel.app/F2.png',
+  'F3': 'https://vueltadeinstalacion.vercel.app/F3.png',
+  'GTWC': 'https://vueltadeinstalacion.vercel.app/GT.png',
+  'BTCC': 'https://vueltadeinstalacion.vercel.app/BTCC.png',
+  'DTM': 'https://vueltadeinstalacion.vercel.app/DTM.png',
+  'SuperFormula': 'https://vueltadeinstalacion.vercel.app/SF.png',
+  'TCRSA': 'https://vueltadeinstalacion.vercel.app/TCRSA.png',
+  'WorldSBK': 'https://vueltadeinstalacion.vercel.app/WORLDSBK.png',
+};
+
 // ─── Cache ────────────────────────────────────────────────────────────────────
 
 const cache = new Map<string, { data: any; ts: number }>();
@@ -160,6 +183,77 @@ async function scrapeNews(category: string): Promise<any[]> {
 
   setCached(cacheKey, unique);
   return unique;
+}
+
+// ─── Generic Standings & Calendar Scrapers ────────────────────────────────────
+
+async function scrapeStandings(category: string): Promise<any[]> {
+  const cacheKey = `standings-${category}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const url = CATEGORY_STANDINGS_URLS[category];
+  if (!url) return [];
+
+  const html = await fetchHtml(url);
+  if (!html) return [];
+
+  const { document } = parseHTML(html);
+  const rows: any[] = [];
+  
+  if (url.includes('motorsport.com')) {
+    document.querySelectorAll('tr.ms-table_row').forEach((tr: any) => {
+      const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim();
+      const points = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim();
+      
+      let driver = tr.querySelector('.ms-table_field--driver .name-short')?.textContent?.trim() ||
+                   tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() ||
+                   tr.querySelector('.ms-table_field--result_constructor')?.textContent?.trim() ||
+                   tr.querySelector('.name-short, .name')?.textContent?.trim() ||
+                   tr.querySelectorAll('td')[1]?.textContent?.trim() || '';
+
+      if (pos && driver && !isNaN(parseInt(pos))) {
+        rows.push({ pos, driver, points: points || '0' });
+      }
+    });
+  }
+
+  setCached(cacheKey, rows);
+  return rows;
+}
+
+async function scrapeCalendar(category: string): Promise<any[]> {
+  const cacheKey = `calendar-${category}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  const url = CATEGORY_CALENDAR_SOURCES[category];
+  if (!url) return [];
+
+  const html = await fetchHtml(url);
+  if (!html) return [];
+
+  const { document } = parseHTML(html);
+  const events: any[] = [];
+  
+  if (url.includes('motorsport.com')) {
+    const tableRows = document.querySelectorAll('tr.ms-table_row');
+    tableRows.forEach((tr: any, i: number) => {
+      const dateStr = tr.querySelector('.ms-table_field--date')?.textContent?.trim() || '';
+      const raceName = tr.querySelector('.ms-table_field--title a')?.textContent?.trim() || '';
+      if (dateStr && raceName) {
+        events.push({
+          round: i + 1,
+          race: raceName,
+          dates: dateStr,
+          status: 'Upcoming'
+        });
+      }
+    });
+  }
+
+  setCached(cacheKey, events);
+  return events;
 }
 
 // ─── F1 Specific Fetchers ─────────────────────────────────────────────────────
@@ -320,7 +414,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       if (type === 'results') {
-        return res.status(200).json({ category: 'F1', results_url: CATEGORY_RESULTS_URLS['F1'] });
+        return res.status(200).json({ category: 'F1', logo: CATEGORY_LOGOS['F1'] || null, results_url: CATEGORY_RESULTS_URLS['F1'] });
       }
       // Full F1 dump
       const [calendar, standings, news] = await Promise.all([
@@ -330,6 +424,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ]);
       return res.status(200).json({
         category: 'Formula 1',
+        logo: CATEGORY_LOGOS['F1'] || null,
         results_url: CATEGORY_RESULTS_URLS['F1'],
         news_source: CATEGORY_NEWS_URLS['F1']?.url,
         calendar,
@@ -343,6 +438,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const articles = await scrapeNews(catKey);
       return res.status(200).json({
         category: catKey,
+        logo: CATEGORY_LOGOS[catKey] || null,
         source: CATEGORY_NEWS_URLS[catKey]?.source || null,
         source_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
         count: articles.length,
@@ -352,17 +448,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── /api/<category>/standings ──────────────────────────────────────────────
     if (type === 'standings') {
+      const data = await scrapeStandings(catKey);
       return res.status(200).json({
         category: catKey,
-        standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
+        logo: CATEGORY_LOGOS[catKey] || null,
+        data: data.length > 0 ? data : null,
+        source_url: CATEGORY_STANDINGS_URLS[catKey] || null,
       });
     }
 
     // ── /api/<category>/calendar ───────────────────────────────────────────────
     if (type === 'calendar') {
+      const data = await scrapeCalendar(catKey);
       return res.status(200).json({
         category: catKey,
-        calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
+        logo: CATEGORY_LOGOS[catKey] || null,
+        data: data.length > 0 ? data : null,
+        source_url: CATEGORY_CALENDAR_SOURCES[catKey] || null,
       });
     }
 
@@ -370,19 +472,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type === 'results') {
       return res.status(200).json({
         category: catKey,
+        logo: CATEGORY_LOGOS[catKey] || null,
         results_url: CATEGORY_RESULTS_URLS[catKey],
       });
     }
 
     // ── /api/<category> (full dump) ────────────────────────────────────────────
-    const news = await scrapeNews(catKey);
+    const [news, standingsData, calendarData] = await Promise.all([
+      scrapeNews(catKey),
+      scrapeStandings(catKey),
+      scrapeCalendar(catKey)
+    ]);
+    
     return res.status(200).json({
       category: catKey,
+      logo: CATEGORY_LOGOS[catKey] || null,
       results_url: CATEGORY_RESULTS_URLS[catKey],
       news_source: CATEGORY_NEWS_URLS[catKey]?.url || null,
-      standings_url: CATEGORY_STANDINGS_URLS[catKey] || null,
-      calendar_source: CATEGORY_CALENDAR_SOURCES[catKey] || null,
       news: news.slice(0, 10),
+      calendar: calendarData.length > 0 ? calendarData : null,
+      standings: standingsData.length > 0 ? standingsData : null,
     });
 
   } catch (err: any) {
