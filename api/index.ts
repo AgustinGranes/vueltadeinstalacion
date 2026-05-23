@@ -570,15 +570,15 @@ async function getF1Standings() {
     const r = await fetch('https://site.api.espn.com/apis/v2/sports/racing/f1/standings');
     const d = await r.json();
     const drivers = (d?.children?.[0]?.standings?.entries || []).map((e: any) => ({
-      pos: e.stats?.find((s: any) => s.name === 'rank')?.displayValue || '',
-      driver: e.athlete?.displayName || '',
-      team: e.athlete?.team?.name || '',
-      points: e.stats?.find((s: any) => s.name === 'points')?.displayValue || '0',
+      pos: e.stats?.find((s: any) => s.type === 'rank' || s.name === 'rank')?.displayValue || '',
+      driver: e.athlete?.displayName || e.athlete?.shortName || '',
+      team: e.athlete?.team?.name || e.athlete?.team?.displayName || '',
+      points: e.stats?.find((s: any) => s.type === 'points' || s.name === 'points')?.displayValue || '0',
     }));
     const constructors = (d?.children?.[1]?.standings?.entries || []).map((e: any) => ({
-      pos: e.stats?.find((s: any) => s.name === 'rank')?.displayValue || '',
-      team: e.team?.displayName || '',
-      points: e.stats?.find((s: any) => s.name === 'points')?.displayValue || '0',
+      pos: e.stats?.find((s: any) => s.type === 'rank' || s.name === 'rank')?.displayValue || '',
+      team: e.team?.displayName || e.team?.name || '',
+      points: e.stats?.find((s: any) => s.type === 'points' || s.name === 'points')?.displayValue || '0',
     }));
     const result = { drivers, constructors };
     setCached('f1-standings', result);
