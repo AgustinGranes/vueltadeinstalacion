@@ -27,7 +27,7 @@ const CATEGORY_RESULTS_URLS: Record<string, string> = {
 };
 
 const CATEGORY_NEWS_URLS: Record<string, { url: string; source: string }> = {
-  'F1': { url: 'https://as.com/motor/formula_1/', source: 'AS.com' },
+  'F1': { url: 'https://lat.motorsport.com/f1/news/', source: 'Motorsport.com' },
   'WRC': { url: 'https://lat.motorsport.com/wrc/news/', source: 'Motorsport.com' },
   'NASCAR': { url: 'https://lat.motorsport.com/nascar-cup/news/', source: 'Motorsport.com' },
   'WEC': { url: 'https://lat.motorsport.com/wec/news/', source: 'Motorsport.com' },
@@ -57,6 +57,8 @@ const CATEGORY_STANDINGS_URLS: Record<string, string> = {
   'MotoGP': 'https://lat.motorsport.com/motogp/standings/2026/',
   'F2': 'https://lat.motorsport.com/fia-f2/standings/2026/',
   'F3': 'https://lat.motorsport.com/fiaf3/standings/2026/',
+  'IndyCar': 'https://es.motorsport.com/indycar/standings/2026/',
+  'TC': 'https://tiempos.actc.org.ar/campeonato-de-tc/campeonato',
 };
 
 const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
@@ -64,6 +66,9 @@ const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
   'MotoGP': 'https://lat.motorsport.com/motogp/schedule/2026/',
   'WRC': 'https://www.marca.com/motor/rallies/calendario.html',
   'WEC': 'https://lat.motorsport.com/wec/schedule/2026/',
+  'TC': 'https://actc.org.ar/tc/calendario.html',
+  'IndyCar': 'https://es.motorsport.com/indycar/schedule/2026/',
+  'NASCAR': 'https://lat.motorsport.com/nascar-cup/schedule/2026/?all_event_types=1',
 };
 
 const CATEGORY_LOGOS: Record<string, string> = {
@@ -109,9 +114,28 @@ function setCached(key: string, data: any) {
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 async function fetchHtml(url: string): Promise<string | null> {
+  // Disable strict TLS/SSL validation for regional sites with outdated certs
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
   try {
+    const urlObj = new URL(url);
+    const domain = urlObj.origin;
+
     const res = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', 'Accept-Language': 'es-AR,es;q=0.9,en;q=0.8' },
+      headers: {
+        'User-Agent': UA,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': domain + '/',
+        'Origin': domain,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'cross-site',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1'
+      },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
@@ -131,28 +155,76 @@ async function scrapeNews(category: string): Promise<any[]> {
   const info = CATEGORY_NEWS_URLS[category];
   if (!info) return [];
 
-  const html = await fetchHtml(info.url);
+  let html = await fetchHtml(info.url);
+  
+  // Resilient fallback for F1 (AS.com may block or return empty)
+  if (category === 'F1' && (!html || html.length < 200)) {
+    html = await fetchHtml('https://lat.motorsport.com/f1/news/');
+    if (html) {
+      info.source = 'Motorsport.com';
+      info.url = 'https://lat.motorsport.com/f1/news/';
+    }
+  }
+
   if (!html) return [];
 
   const { document } = parseHTML(html);
   const news: any[] = [];
 
-  document.querySelectorAll('.ms-item, .ms-item_link, article, [class*="article"], [class*="news"]').forEach((art: any) => {
-    const anchor = art.tagName === 'A' ? art : art.querySelector('a');
-    const titleEl = art.querySelector('.ms-item_title, .ms-item__title, h2, h3, h4, [class*="title"]');
-    const t = titleEl?.textContent?.trim() || anchor?.textContent?.trim();
-    const l = anchor?.getAttribute('href');
-    const imgEl = art.querySelector('img[src], img[data-src]');
-    
-    if (t && l && t.length > 10) {
-      news.push({
-        title: t.split('\n').map((s: string) => s.trim()).filter(Boolean).pop() || t,
-        link: l.startsWith('/') ? new URL(l, info.url).href : l,
-        image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
-        source: info.source,
-      });
-    }
-  });
+  if (category === 'TC' || category === 'TCP' || category === 'TCM') {
+    // Ultra-aggressive scraping for SoloTC
+    const allLinks = document.querySelectorAll('a');
+    allLinks.forEach((link: any) => {
+      const h = link.getAttribute('href');
+      const t = link.textContent?.trim();
+      if (h && t && t.length > 20 && h.length > 20 && 
+          !h.includes('/category/') && !h.includes('/author/') && !h.includes('/tag/') &&
+          !h.includes('facebook.com') && !h.includes('twitter.com') &&
+          t !== 'SoloTC | Turismo Carretera') {
+        
+        const fullLink = h.startsWith('http') ? h : `https://www.solotc.com.ar${h.startsWith('/') ? '' : '/'}${h}`;
+        news.push({
+          title: t,
+          link: fullLink,
+          image: null,
+          source: 'SoloTC',
+        });
+      }
+    });
+
+    document.querySelectorAll('h1, h2, h3').forEach((hd: any) => {
+      const link = hd.querySelector('a') || hd.closest('a');
+      const t = hd.textContent?.trim();
+      const l = link?.getAttribute('href');
+      if (t && l && t.length > 10 && t !== 'SoloTC | Turismo Carretera') {
+        const fullLink = l.startsWith('http') ? l : `https://www.solotc.com.ar${l.startsWith('/') ? '' : '/'}${l}`;
+        news.push({
+          title: t,
+          link: fullLink,
+          image: null,
+          source: 'SoloTC',
+        });
+      }
+    });
+  } else {
+    // Standard scraper
+    document.querySelectorAll('.ms-item, .ms-item_link, article, [class*="article"], [class*="news"]').forEach((art: any) => {
+      const anchor = art.tagName === 'A' ? art : art.querySelector('a');
+      const titleEl = art.querySelector('.ms-item_title, .ms-item__title, h2, h3, h4, [class*="title"]');
+      const t = titleEl?.textContent?.trim() || anchor?.textContent?.trim();
+      const l = anchor?.getAttribute('href');
+      const imgEl = art.querySelector('img[src], img[data-src]');
+      
+      if (t && l && t.length > 10) {
+        news.push({
+          title: t.split('\n').map((s: string) => s.trim()).filter(Boolean).pop() || t,
+          link: l.startsWith('/') ? new URL(l, info.url).href : l,
+          image: imgEl?.getAttribute('src') || imgEl?.getAttribute('data-src') || null,
+          source: info.source,
+        });
+      }
+    });
+  }
 
   // Deduplicate by title
   const seen = new Set<string>();
@@ -176,27 +248,106 @@ async function scrapeStandings(category: string): Promise<any[]> {
   const url = CATEGORY_STANDINGS_URLS[category];
   if (!url) return [];
 
-  const html = await fetchHtml(url);
-  if (!html) return [];
-
-  const { document } = parseHTML(html);
   const rows: any[] = [];
-  
-  if (url.includes('motorsport.com')) {
-    document.querySelectorAll('tr.ms-table_row').forEach((tr: any) => {
-      const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim();
-      const points = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim();
-      
-      let driver = tr.querySelector('.ms-table_field--driver .name-short')?.textContent?.trim() ||
-                   tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() ||
-                   tr.querySelector('.ms-table_field--result_constructor')?.textContent?.trim() ||
-                   tr.querySelector('.name-short, .name')?.textContent?.trim() ||
-                   tr.querySelectorAll('td')[1]?.textContent?.trim() || '';
 
-      if (pos && driver && !isNaN(parseInt(pos))) {
-        rows.push({ pos, driver, points: points || '0' });
+  if (category === 'TC') {
+    try {
+      // 1. Fetch SoloTC home page to find the latest championship article
+      const homeHtml = await fetchHtml('https://www.solotc.com.ar/');
+      let standingsUrl = 'https://www.solotc.com.ar/asi-quedo-campeonato-tc-fecha-5-termas-2026/'; // default fallback
+      if (homeHtml) {
+        const { document: homeDoc } = parseHTML(homeHtml);
+        const links = homeDoc.querySelectorAll('a');
+        for (const link of links) {
+          const href = link.getAttribute('href') || '';
+          if (href.includes('campeonato-tc-fecha') || href.includes('asi-quedo-campeonato-tc')) {
+            standingsUrl = href;
+            break;
+          }
+        }
       }
-    });
+
+      // 2. Fetch the actual standings page
+      const html = await fetchHtml(standingsUrl);
+      if (html) {
+        const { document } = parseHTML(html);
+        const table = document.querySelector('table');
+        if (table) {
+          const trs = table.querySelectorAll('tr');
+          trs.forEach((tr: any, idx: number) => {
+            if (idx === 0) return; // Skip header
+            const tds = tr.querySelectorAll('td');
+            if (tds.length >= 3) {
+              const posText = tds[0].textContent?.trim().replace('°', '') || '';
+              const driverText = tds[1].textContent?.trim() || '';
+              const pointsText = tds[tds.length - 1].textContent?.trim() || '0';
+              if (posText && driverText && !isNaN(parseInt(posText))) {
+                rows.push({
+                  pos: posText,
+                  driver: driverText,
+                  points: pointsText
+                });
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching/parsing TC standings from SoloTC:', e);
+    }
+  } else {
+    const html = await fetchHtml(url);
+    if (html) {
+      const { document } = parseHTML(html);
+      
+      if (url.includes('motorsport.com')) {
+        const tableRows = document.querySelectorAll('tr.ms-table_row, table.ms-table tr, table tr');
+        tableRows.forEach((tr: any) => {
+          const pos = tr.querySelector('.ms-table_field--pos')?.textContent?.trim() ||
+                      tr.querySelectorAll('td')[0]?.textContent?.trim().replace('.', '');
+          const points = tr.querySelector('.ms-table_field--total_points')?.textContent?.trim() ||
+                         tr.querySelectorAll('td')[tr.querySelectorAll('td').length - 1]?.textContent?.trim() || '0';
+          
+          let driver = tr.querySelector('.ms-table_field--driver .name-short')?.textContent?.trim() ||
+                       tr.querySelector('.ms-table_field--team .name')?.textContent?.trim() ||
+                       tr.querySelector('.ms-table_field--result_constructor')?.textContent?.trim() ||
+                       tr.querySelector('.name-short, .name')?.textContent?.trim() ||
+                       tr.querySelectorAll('td')[1]?.textContent?.trim() || '';
+
+          if (pos && driver && !isNaN(parseInt(pos)) && driver.toLowerCase() !== 'piloto' && driver.toLowerCase() !== 'driver') {
+            rows.push({ pos, driver: driver.split('\n')[0].trim(), points });
+          }
+        });
+      } else if (url.includes('actc.org.ar') || url.includes('tiempos.actc.org.ar')) {
+        const tableRows = document.querySelectorAll('tr');
+        tableRows.forEach((tr: any) => {
+          let posText = tr.querySelector('.col-pos')?.textContent?.trim();
+          let driverText = tr.querySelector('.col-name')?.textContent?.trim();
+          let pointsText = tr.querySelector('.col-total')?.textContent?.trim();
+          
+          if (!posText || !driverText) {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length >= 3) {
+              posText = cells[0].textContent?.trim();
+              driverText = cells[1].textContent?.trim();
+              pointsText = cells[cells.length - 1].textContent?.trim();
+            }
+          }
+
+          if (posText && driverText) {
+            const cleanPos = posText.replace('.', '').trim();
+            if (/^\d+$/.test(cleanPos)) {
+              const driver = driverText.split('\n').map((s: string) => s.trim()).filter(Boolean).join(' ');
+              rows.push({
+                pos: cleanPos,
+                driver,
+                points: pointsText?.trim() || '0'
+              });
+            }
+          }
+        });
+      }
+    }
   }
 
   setCached(cacheKey, rows);
@@ -218,17 +369,91 @@ async function scrapeCalendar(category: string): Promise<any[]> {
   const events: any[] = [];
   
   if (url.includes('motorsport.com')) {
-    const tableRows = document.querySelectorAll('tr.ms-table_row');
-    tableRows.forEach((tr: any, i: number) => {
-      const dateStr = tr.querySelector('.ms-table_field--date')?.textContent?.trim() || '';
-      const raceName = tr.querySelector('.ms-table_field--title a')?.textContent?.trim() || '';
-      if (dateStr && raceName) {
-        events.push({
-          round: i + 1,
-          race: raceName,
-          dates: dateStr,
-          status: 'Upcoming'
+    // 1. Try to find JSON-LD first (most reliable on Motorsport.com)
+    const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+    let foundJsonEvents: any[] = [];
+    
+    scripts.forEach((script: any) => {
+      try {
+        const content = script.textContent || '';
+        const parsed = JSON.parse(content);
+        const potentialEvents = Array.isArray(parsed) ? parsed : (parsed['@graph'] || (parsed.itemListElement?.map((e: any) => e.item) || []));
+        potentialEvents.forEach((ev: any) => {
+          if (ev?.['@type'] === 'Event' || ev?.['@type'] === 'SportsEvent') {
+            foundJsonEvents.push(ev);
+          }
         });
+      } catch (e) {}
+    });
+
+    if (foundJsonEvents.length > 0) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const shortMonths = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+      // Sort by startDate
+      foundJsonEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+      foundJsonEvents.forEach((ev: any, idx: number) => {
+        const eventName = ev.name
+          ?.replace(/,\s*IndyCar\s*-\s*\d{4}/i, '')
+          ?.replace(/,\s*NASCAR\s*Cup\s*-\s*\d{4}/i, '')
+          ?.replace(/,\s*WEC\s*-\s*\d{4}/i, '')
+          ?.trim() || ev.name;
+
+        const startDate = new Date(ev.startDate);
+        const endDate = new Date(ev.endDate);
+        
+        let status = 'Upcoming';
+        if (now >= startDate && now <= endDate) {
+          status = 'Live';
+        } else if (now > endDate) {
+          status = 'Finished';
+        }
+        
+        let dates = `${startDate.getDate()} ${shortMonths[startDate.getMonth()]}`;
+        if (startDate.getTime() !== endDate.getTime() && startDate.getMonth() !== undefined) {
+          dates += ` - ${endDate.getDate()} ${shortMonths[endDate.getMonth()]}`;
+        }
+
+        events.push({
+          round: idx + 1,
+          race: eventName || 'Motorsport Event',
+          dates,
+          status,
+          winner: ev.competitor?.find((c: any) => c.winner)?.name || ''
+        });
+      });
+    }
+
+    // 2. Fallback to table scraping if JSON-LD fails or returned nothing
+    if (events.length === 0) {
+      const tableRows = document.querySelectorAll('tr.ms-table_row, .ms-schedule-table__item, tr[class*="event-row"]');
+      let tempRound = 1;
+
+      tableRows.forEach((tr: any) => {
+        const nameEl = tr.querySelector('.ms-table_field--title a, .ms-schedule-table-item-main__event .ms-link, .race-name, .event-name');
+        const dateStr = tr.querySelector('.ms-table_field--date')?.textContent?.trim() ||
+                        tr.querySelector('.ms-schedule-table-subevent-day__main, .date')?.textContent?.trim() || '';
+        
+        const raceName = nameEl?.textContent?.trim() || '';
+        if (raceName && dateStr) {
+          events.push({
+            round: tempRound++,
+            race: raceName,
+            dates: dateStr,
+            status: 'Upcoming'
+          });
+        }
+      });
+    }
+    
+    // Set first 'Upcoming' as 'Next'
+    let foundNext = false;
+    events.forEach(ev => {
+      if (ev.status === 'Upcoming' && !foundNext) {
+        ev.status = 'Next';
+        foundNext = true;
       }
     });
   } else if (url.includes('marca.com')) {
@@ -250,6 +475,57 @@ async function scrapeCalendar(category: string): Promise<any[]> {
       }
     });
     
+    // Set first 'Upcoming' as 'Next'
+    let foundNext = false;
+    events.forEach(ev => {
+      if (ev.status === 'Upcoming' && !foundNext) {
+        ev.status = 'Next';
+        foundNext = true;
+      }
+    });
+  } else if (url.includes('actc.org.ar')) {
+    const elements = document.querySelectorAll('.info-race');
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const monthsMap: Record<string, number> = {
+      'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 
+      'jul': 6, 'ago': 7, 'set': 8, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
+    };
+
+    elements.forEach((el: any, idx: number) => {
+      const dateEl = el.querySelector('.date');
+      const dayStr = dateEl?.querySelector('span')?.textContent?.trim() || '';
+      const monthYearStr = dateEl?.textContent?.replace(dayStr, '').trim().toLowerCase() || '';
+      const dates = dayStr ? `${dayStr} ${monthYearStr}` : '';
+      
+      let status = 'Upcoming';
+      if (dayStr && monthYearStr) {
+        const monthMatch = monthYearStr.match(/[a-z]{3}/);
+        if (monthMatch && monthsMap[monthMatch[0]] !== undefined) {
+          const raceDate = new Date(now.getFullYear(), monthsMap[monthMatch[0]], parseInt(dayStr));
+          raceDate.setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((now.getTime() - raceDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 5) status = 'Finished';
+          else if (diffDays >= 0) status = 'Live';
+          else status = 'Upcoming';
+        }
+      }
+
+      const hd = el.querySelector('.hd');
+      const race = hd?.querySelector('h2')?.textContent?.trim() || hd?.querySelector('p')?.textContent?.trim() || 'A confirmar';
+      const winner = el.querySelector('.winner, .winner .name, .ganador')?.textContent?.trim() || '';
+      if (winner || status === 'Finished') status = 'Finished';
+
+      events.push({
+        round: idx + 1,
+        race,
+        dates,
+        status,
+        winner: winner || undefined
+      });
+    });
+
     // Set first 'Upcoming' as 'Next'
     let foundNext = false;
     events.forEach(ev => {
