@@ -440,6 +440,8 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
 
       mergedRace.schedules = mergedSchedules;
       result.push(mergedRace);
+      for (let i = 1; i < primRaces.length; i++) result.push(primRaces[i]);
+      for (let i = 1; i < secRaces.length; i++) result.push(secRaces[i]);
     }
   }
 

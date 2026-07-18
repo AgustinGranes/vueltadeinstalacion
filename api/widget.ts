@@ -254,6 +254,8 @@ export default async function handler(req: any, res: any) {
 
           mergedRace.schedules = mergedSchedules;
           allRaces.push(mergedRace);
+          for (let i = 1; i < primRaces.length; i++) allRaces.push(primRaces[i]);
+          for (let i = 1; i < secRaces.length; i++) allRaces.push(secRaces[i]);
         }
       }
     }
