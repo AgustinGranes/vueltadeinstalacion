@@ -365,7 +365,31 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
 
   const secondaryByCat = new Map<string, Race[]>();
   for (const race of secondaryRaces) {
-    const key = _normalizeCategoryKey(race.category);
+    let key = _normalizeCategoryKey(race.category);
+
+    // Cross-category deduplication for NASCAR (e.g., JSON says Cup but VR says Truck)
+    if (key.includes('nascar')) {
+      for (const primRace of primaryRaces) {
+        const primKey = _normalizeCategoryKey(primRace.category);
+        if (primKey.includes('nascar')) {
+          const overlaps = (race.schedules || []).some(secSched => {
+            const secStart = (secSched as any).startAt || (secSched as any).start;
+            if (!secStart) return false;
+            return (primRace.schedules || []).some(primSched => {
+              const primStart = (primSched as any).startAt || (primSched as any).start;
+              if (!primStart) return false;
+              // Coincides within 4 hours
+              return Math.abs(secStart - primStart) < 4 * 3600000;
+            });
+          });
+          if (overlaps) {
+            key = primKey; // Override key to force merge
+            break;
+          }
+        }
+      }
+    }
+
     if (!secondaryByCat.has(key)) secondaryByCat.set(key, []);
     secondaryByCat.get(key)!.push(race);
   }
