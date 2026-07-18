@@ -2121,7 +2121,7 @@
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 12px;
-  word-break: break-all;
+  overflow: hidden;
 }
 
 .cal-url-text {
@@ -2130,6 +2130,10 @@
   color: #a0cfff;
   line-height: 1.5;
   user-select: all;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cal-copy-main-btn {
