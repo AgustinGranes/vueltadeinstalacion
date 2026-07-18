@@ -1045,7 +1045,7 @@ const App = () => {
     const isLive = (item: any) => {
       const now = Date.now();
       const match = (item.name + ' ' + item.event).match(/\b(\d+)\s*hs\b/i);
-      const durationMs = match ? parseInt(match[1], 10) * 3600000 : 6300000;
+      const durationMs = match ? parseInt(match[1], 10) * 3600000 : 7200000;
       return now >= item.startAt && now <= item.startAt + durationMs;
     };
 

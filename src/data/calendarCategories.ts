@@ -6,7 +6,8 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
     "Ultimate Formula Cup", "Formula Winter Series", "Eurocup-3", "E4", "British F4",
     "Italian F4", "Spanish F4", "French F4", "F4 CEZ", "Japanese F4", "AU4", "F4 US",
     "JS F4", "NACAM F4", "UAE4", "F4 Saudi Arabia", "Formula Trophy", "F4 Brazil",
-    "USF Pro 2000", "USF 2000", "USF Junior"
+    "USF Pro 2000", "USF 2000", "USF Junior", "Hoosier Formula Cup", "Fórmula Nacional Argentina",
+    "Fórmula 2 Argentina", "Fórmula 3 Metropolitana", "SimRacing"
   ],
   "SPORTSCARS": [
     "FIA WEC", "IMSA WeatherTech", "European Le Mans Series", "Asian Le Mans Series",
@@ -36,10 +37,13 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
   ],
   "TOURING CARS": [
     "BTCC", "TOCA Junior", "Supercars", "Super2", "Super Utes", "Stock Car Pro",
-    "Stock Series", "TCR World Tour", "TCR Europe", "TCR Europe Cup", "TCR South America",
+    "Stock Series", "Stock Light Brasil", "TCR World Tour", "TCR Europe", "TCR Europe Cup", "TCR South America",
     "TCR Italy", "TCR UK", "TC America", "TCR Eastern Europe", "Mini Challenge JCW",
     "Mini Challenge Trophy", "BRSCC Fiesta Juniors", "Clio Cup Bohemia", "EnduroKa",
-    "Scottish Mini Cooper Cup", "Scottish C1 Cup"
+    "Scottish Mini Cooper Cup", "Scottish C1 Cup", "TC2000", "Turismo Carretera", "TC Pista",
+    "TC Mouras", "Turismo Nacional C3", "Turismo Nacional Brasil", "Turismo Nacional C2",
+    "Copa Abarth Argentina", "Turismo Pista C3", "Turismo Pista C2", "Turismo Pista C1",
+    "Turismo Carretera 2000", "Top Race", "TC Pick Up"
   ],
   "STOCK CARS": [
     "NASCAR Cup", "NASCAR O'Reilly", "NASCAR Trucks", "NASCAR Modified Tour",
@@ -48,7 +52,7 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
   ],
   "RALLY": [
     "WRC", "ERX", "ERC", "ARA National", "Canadian Rally Champ", "Extreme E",
-    "World Rally Raid Champ", "World Desert"
+    "World Rally Raid Champ", "World Desert", "Rally Dakar"
   ],
   "BIKES": [
     "MotoGP", "Moto2", "Moto3", "MotoGP Rookies", "World SBK", "World SSP",
@@ -82,7 +86,7 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
     "Macau Motorcycle Grand Prix", "Macau Roadsport Challenge", "Motorsport Games GT",
     "Motorsport Games F4", "Motorsport Games TC", "Motorsport Games Rally",
     "Motorsport Games Other", "Motorsport Games Karting", "Formula Ford Festival",
-    "Walter Hayes Trophy", "Silverstone 24H", "Bathurst 6 Hours"
+    "Walter Hayes Trophy", "Silverstone 24H", "Bathurst 6 Hours", "Race Of Champions"
   ],
   "OTHER EVENTS": [
     "SailGP", "FIA European Truck Racing", "British Truck Racing", "Stadium Super Trucks"
