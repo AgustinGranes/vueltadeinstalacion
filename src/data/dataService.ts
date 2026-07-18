@@ -592,7 +592,7 @@ export const dataService = {
           sessionsBySeries[sId].push(s);
         }
 
-        for (const [seriesId, groupSessions] of Object.entries(sessionsBySeries)) {
+      for (const [seriesId, groupSessions] of Object.entries(sessionsBySeries)) {
           const seriesInfo = seriesMap[seriesId] || null;
           
           let categoryColor = '#888888';
@@ -603,6 +603,11 @@ export const dataService = {
 
           const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
           const categoryFullName = seriesInfo?.details?.name || categoryName;
+
+          const key = _normalizeCategoryKey(categoryFullName);
+          if (key === 'formula1' || key === 'f1' || key === 'formula2' || key === 'f2' || key === 'formula3' || key === 'f3') {
+            continue;
+          }
 
           const watchLinks: { platform: string; url: string }[] = [];
           if (seriesInfo?.streaming) {

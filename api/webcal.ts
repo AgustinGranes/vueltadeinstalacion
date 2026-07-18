@@ -78,6 +78,11 @@ export default async function handler(req: any, res: any) {
             const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
             const categoryFullName = seriesInfo?.details?.name || categoryName;
 
+            const c = (categoryFullName || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (c === 'formula1' || c === 'f1' || c === 'formula2' || c === 'f2' || c === 'formula3' || c === 'f3') {
+              continue;
+            }
+
             const firstSession = groupSessions[0];
             const circuitObj = firstSession?.circuit || {};
             const circuitName = [
