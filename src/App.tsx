@@ -1042,19 +1042,29 @@ const App = () => {
       }))
     ).sort((a, b) => a.startAt - b.startAt);
 
+    const isLive = (item: any) => {
+      const now = Date.now();
+      const match = (item.name + ' ' + item.event).match(/\b(\d+)\s*hs\b/i);
+      const duration = match ? parseInt(match[1], 10) * 3600000 : 3600000;
+      return now >= item.startAt && now <= item.startAt + duration;
+    };
+
+    const upcomingSchedules = flatSchedules.filter(s => s.startAt >= Date.now() || isLive(s));
+    upcomingSchedules.sort((a, b) => {
+      const aLive = isLive(a);
+      const bLive = isLive(b);
+      if (aLive && !bLive) return -1;
+      if (!aLive && bLive) return 1;
+      return a.startAt - b.startAt;
+    });
+
+    const finishedSchedules = flatSchedules.filter(s => s.startAt < Date.now() && !isLive(s));
     const hiddenCount = hiddenCalCategories.length;
 
     const toggleTempCalCat = (c: string) => {
       setTempHiddenCalCategories(prev =>
         prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
       );
-    };
-
-    const formatDateWeekly = (ts: number) => {
-      const d = new Date(ts);
-      const str = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-      // "Sat, Jul 18" -> "Sat Jul 18"
-      return str.replace(',', '');
     };
 
     const formatRelativeTime = (ts: number) => {
@@ -1159,7 +1169,7 @@ const App = () => {
             {flatSchedules.length === 0 && !isHomeLoading && <p className="empty-msg">{hiddenCount > 0 ? 'Todas las categorías están ocultas. Usá Filtros para mostrarlas.' : 'No hay eventos esta semana.'}</p>}
             
             {/* PRÓXIMOS SECTION */}
-            {flatSchedules.some(s => s.startAt >= Date.now()) && (
+            {upcomingSchedules.length > 0 && (
               <div className="weekly-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'upcoming' ? 'active' : ''}`}
@@ -1167,7 +1177,7 @@ const App = () => {
                 >
                   <div className="section-title-group">
                     <Calendar size={18} />
-                    <span>Próximos</span>
+                    <span>Próximos y En Vivo</span>
                   </div>
                   <ChevronRight size={18} className={`section-chevron ${expandedWeeklySection === 'upcoming' ? 'open' : ''}`} />
                 </button>
@@ -1180,7 +1190,7 @@ const App = () => {
                       exit={{ height: 0, opacity: 0 }}
                       className="section-content-overflow"
                     >
-                      {flatSchedules.filter(s => s.startAt >= Date.now()).map((item, idx) => (
+                      {upcomingSchedules.map((item, idx) => (
                         <div key={idx} className="weekly-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           
                           {/* Top Row: Category (Left) and Session Name (Right) */}
@@ -1205,17 +1215,22 @@ const App = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <Calendar size={15} />
-                                  <span>{formatDateWeekly(item.startAt)}</span>
-                               </div>
-                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                               <span>{formatRelativeTime(item.startAt)}</span>
-                               <Clock size={15} />
+                               {isLive(item) ? (
+                                 <>
+                                   <span style={{ color: '#ff3b30', fontWeight: 'bold' }}>EN VIVO</span>
+                                   <div className="live-indicator-dot" />
+                                 </>
+                               ) : (
+                                 <>
+                                   <span>{formatRelativeTime(item.startAt)}</span>
+                                   <Clock size={15} />
+                                 </>
+                               )}
                             </div>
                           </div>
                         </div>
@@ -1227,7 +1242,7 @@ const App = () => {
             )}
 
             {/* FINALIZADOS SECTION */}
-            {flatSchedules.some(s => s.startAt < Date.now()) && (
+            {finishedSchedules.length > 0 && (
               <div className="weekly-section finished-section">
                 <button 
                   className={`section-header-btn ${expandedWeeklySection === 'finished' ? 'active' : ''}`}
@@ -1248,8 +1263,9 @@ const App = () => {
                       exit={{ height: 0, opacity: 0 }}
                       className="section-content-overflow"
                     >
-                      {flatSchedules.filter(s => s.startAt < Date.now()).map((item, idx) => (
-                        <div key={idx} className="weekly-card finished" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', opacity: 0.7 }}>
+                      {finishedSchedules.map((item, idx) => (
+                        <div key={idx} className="weekly-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', opacity: 0.6 }}>
+                          
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                {item.categoryImage ? (
@@ -1269,15 +1285,15 @@ const App = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <Calendar size={15} />
-                                  <span>{formatDateWeekly(item.startAt)}</span>
-                               </div>
-                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
                             </div>
-                          </div>                        </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                               <span>Finalizado</span>
+                            </div>
+                          </div>
+                        </div>
                       ))}
                     </motion.div>
                   )}

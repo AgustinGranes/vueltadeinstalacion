@@ -487,13 +487,20 @@ export const dataService = {
             circuitName = r.circuitId.split('_').filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
           }
 
+          const _formatCategoryName = (cat: string) => {
+            if (!cat) return '';
+            if (cat === 'Super Formula Japonesa') return 'Super Formula';
+            if (cat === 'World Rally Championship') return 'WRC';
+            return cat;
+          };
+
           return {
             id: r._id || r.id || '',
             categoryId: r.categoryId || '',
             categoryColor: catInfo.categoryColor || r.categoryColor,
             categoryImage: catInfo.categoryImage || r.categoryImage || (r.categoryId ? `https://api.vueltarapida.com/logos/${r.categoryId}.png` : ''),
-            category: r.category || r.name || '',
-            categoryShort: r.categoryShort || r.name || '',
+            category: _formatCategoryName(r.category || r.name || ''),
+            categoryShort: _formatCategoryName(r.categoryShort || r.name || ''),
             event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuit: circuitName.replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuitId: r.circuitId,
