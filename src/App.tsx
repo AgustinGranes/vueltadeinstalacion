@@ -3,6 +3,7 @@ import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, 
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
+import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
 
 type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK' | 'WTCR' | 'TCRSA';
@@ -1037,13 +1038,11 @@ const App = () => {
 
   const renderCalendario = () => {
 
-    // All unique category names present this week
-    const allCalCategories = Array.from(new Set(weeklyRaces.map(r => r.category))).filter(Boolean).sort();
-
-    // Apply category filter (exclude hidden)
-    const visibleRaces = hiddenCalCategories.length === 0
-      ? weeklyRaces
-      : weeklyRaces.filter(r => !hiddenCalCategories.includes(r.category));
+    // Apply category filter (exclude hidden, but NEVER hide VueltaRapida events)
+    const visibleRaces = weeklyRaces.filter(r => {
+      if (!String(r.id).startsWith('horarios-')) return true;
+      return !hiddenCalCategories.includes(r.category || '');
+    });
 
     const flatSchedules = visibleRaces.flatMap(race =>
       race.schedules.map(s => ({
@@ -1060,7 +1059,7 @@ const App = () => {
       }))
     ).sort((a, b) => a.startAt - b.startAt);
 
-    const hiddenCount = hiddenCalCategories.filter(h => allCalCategories.includes(h)).length;
+    const hiddenCount = hiddenCalCategories.length;
 
     const toggleTempCalCat = (c: string) => {
       setTempHiddenCalCategories(prev =>
@@ -1093,29 +1092,48 @@ const App = () => {
                 className="news-filter-dropdown"
                 style={{ overflow: 'hidden' }}
               >
-                <div className="filter-chips-grid">
-                  {allCalCategories.map(c => (
-                    <button
-                      key={c}
-                      className={`filter-chip ${!tempHiddenCalCategories.includes(c) ? 'active' : ''}`}
-                      onClick={() => toggleTempCalCat(c)}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                <div className="master-filter-list" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '10px 0' }}>
+                  {Object.entries(MASTER_CALENDAR_CATEGORIES).map(([group, cats]) => {
+                    const isAllHidden = cats.every(c => tempHiddenCalCategories.includes(c));
+                    return (
+                      <div key={group} className="filter-group">
+                        <div className="filter-group-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 8px', padding: '0 16px' }}>
+                          <h4 style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{group}</h4>
+                          <button className="filter-group-toggle" onClick={() => {
+                            if (isAllHidden) {
+                              setTempHiddenCalCategories(prev => prev.filter(x => !cats.includes(x)));
+                            } else {
+                              setTempHiddenCalCategories(prev => Array.from(new Set([...prev, ...cats])));
+                            }
+                          }} style={{ fontSize: '11px', background: 'var(--bg-card-hover)', color: 'var(--accent-blue)', padding: '4px 8px', borderRadius: '8px', border: 'none' }}>
+                            {isAllHidden ? 'Mostrar' : 'Ocultar'}
+                          </button>
+                        </div>
+                        <div className="filter-chips-grid" style={{ padding: '0 16px' }}>
+                          {cats.map(c => (
+                            <button
+                              key={c}
+                              className={`filter-chip ${!tempHiddenCalCategories.includes(c) ? 'active' : ''}`}
+                              onClick={() => toggleTempCalCat(c)}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="filter-actions">
-                  <button className="filter-btn filter-reset-btn" onClick={() => {
-                    setHiddenCalCategories([]);
-                    setTempHiddenCalCategories([]);
-                    localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify([]));
-                    setIsCalFilterOpen(false);
-                  }}>Mostrar todas</button>
-                  <button className="filter-btn filter-apply-btn" onClick={() => {
+                <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px', borderBottom: '1px solid var(--separator)' }}>
+                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories(ALL_MASTER_CATEGORIES)}>Ocultar Todas</button>
+                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories([])}>Mostrar Todas</button>
+                </div>
+                <div className="filter-actions" style={{ padding: '16px', paddingTop: '0' }}>
+                  <button className="filter-btn filter-apply-btn" style={{ width: '100%' }} onClick={() => {
                     setHiddenCalCategories(tempHiddenCalCategories);
                     localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(tempHiddenCalCategories));
                     setIsCalFilterOpen(false);
-                  }}>Aplicar</button>
+                  }}>Guardar Cambios</button>
                 </div>
               </motion.div>
             )}
