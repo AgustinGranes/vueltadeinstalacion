@@ -49,7 +49,7 @@ const CALENDAR_FILTER_KEY = 'vr_calendar_hidden_categories';
 
 const App = () => {
   // Navigation
-  const [mainTab, setMainTab] = useState<MainTab>('home');
+  const [mainTab, setMainTab] = useState<MainTab>('calendario');
   const [view, setView] = useState<'main' | 'category'>('main');
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('F1');
   const [categorySubTab, setCategorySubTab] = useState<CategorySubTab>('calendar');
@@ -3019,10 +3019,10 @@ const App = () => {
 
             {view === 'main' && (
               <nav className="tab-bar">
-                <button className={`tab-btn ${mainTab === 'home' ? 'active' : ''}`} onClick={() => setMainTab('home')}>
+                {/* <button className={`tab-btn ${mainTab === 'home' ? 'active' : ''}`} onClick={() => setMainTab('home')}>
                   <Home size={22} />
                   <span>Inicio</span>
-                </button>
+                </button> */}
                 <button className={`tab-btn ${mainTab === 'calendario' ? 'active' : ''}`} onClick={() => setMainTab('calendario')}>
                   <Calendar size={22} />
                   <span>Calendario</span>
