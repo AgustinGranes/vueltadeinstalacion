@@ -1218,23 +1218,6 @@ const App = () => {
                                <Clock size={15} />
                             </div>
                           </div>
-
-                          <div className="weekly-details-footer" style={{ marginTop: '4px' }}>
-                            {item.watchLinks && item.watchLinks.length > 0 && (
-                              <div className="weekly-links">
-                                {item.watchLinks.map((wl, wi) => (
-                                  <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
-                                    {wl.platform} <ExternalLink size={12} />
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                            {item.ticketLink && (
-                              <a href={item.ticketLink} target="_blank" rel="noopener noreferrer" className="ticket-chip">
-                                🎟️ Entradas <ExternalLink size={12} />
-                              </a>
-                            )}
-                          </div>
                         </div>
                       ))}
                     </motion.div>
@@ -1294,20 +1277,7 @@ const App = () => {
                                   <span>{item.time}</span>
                                </div>
                             </div>
-                          </div>
-
-                          <div className="weekly-details-footer" style={{ marginTop: '4px' }}>
-                            {item.watchLinks && item.watchLinks.length > 0 && (
-                              <div className="weekly-links">
-                                {item.watchLinks.map((wl, wi) => (
-                                  <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
-                                    {wl.platform} <ExternalLink size={12} />
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                          </div>                        </div>
                       ))}
                     </motion.div>
                   )}
