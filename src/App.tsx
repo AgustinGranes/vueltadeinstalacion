@@ -1072,7 +1072,7 @@ const App = () => {
       <motion.div key="calendario" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="calendario-view">
 
         {/* CATEGORY FILTER — identical style to news filter */}
-        <div className="news-filter-container" style={{ marginBottom: '12px' }}>
+        <div className="news-filter-container">
           <button className="news-filter-toggle" onClick={() => {
             if (!isCalFilterOpen) setTempHiddenCalCategories([...hiddenCalCategories]);
             setIsCalFilterOpen(!isCalFilterOpen);
@@ -3110,7 +3110,7 @@ const App = () => {
               <h3>Suscribirse al Calendario</h3>
               <p>Copiá esta URL y pegala en tu aplicación de calendario favorita (Google Calendar, Apple Calendar, Outlook, etc.) para recibir todos los eventos automáticamente.</p>
               <div className="cal-url-box">
-                <span className="cal-url-text">{`https://${window.location.host}/api/webcal`}</span>
+                <span className="cal-url-text">{`https://${window.location.host}/api/webcal${hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}` : ''}`}</span>
               </div>
               <button
                 className="cal-option-btn copy-cal-btn cal-copy-main-btn"

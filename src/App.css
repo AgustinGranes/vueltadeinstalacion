@@ -1842,7 +1842,7 @@
   .weekly-list {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 12px;
     width: 100%;
   }
 
@@ -1994,7 +1994,7 @@
 
 .inline-calendar-subscribe {
   width: 100%;
-  margin-top: 12px; 
+  margin-top: 0; 
   background: white !important;
   color: black !important;
   display: flex;
