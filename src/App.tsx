@@ -1021,10 +1021,19 @@ const App = () => {
 
   const renderCalendario = () => {
 
-    // Apply category filter (exclude hidden, but NEVER hide VueltaRapida events)
+    // Apply category filter (check substrings in category and event name)
     const visibleRaces = weeklyRaces.filter(r => {
-      if (!String(r.id).startsWith('horarios-')) return true;
-      return !hiddenCalCategories.includes(r.category || '');
+      if (hiddenCalCategories.length === 0) return true;
+      const raceCat = (r.category || '').toLowerCase();
+      const raceEvent = (r.event || '').toLowerCase();
+      
+      for (const hiddenCat of hiddenCalCategories) {
+        const lowerHidden = hiddenCat.toLowerCase();
+        if (raceCat.includes(lowerHidden) || raceEvent.includes(lowerHidden)) {
+          return false;
+        }
+      }
+      return true;
     });
 
     const flatSchedules = visibleRaces.flatMap(race =>
@@ -1045,7 +1054,7 @@ const App = () => {
     const isLive = (item: any) => {
       const now = Date.now();
       const match = (item.name + ' ' + item.event).match(/\b(\d+)\s*hs\b/i);
-      const durationMs = match ? parseInt(match[1], 10) * 3600000 : 7200000;
+      const durationMs = match ? parseInt(match[1], 10) * 3600000 : 3600000;
       return now >= item.startAt && now <= item.startAt + durationMs;
     };
 

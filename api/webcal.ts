@@ -213,12 +213,16 @@ export default async function handler(req: any, res: any) {
 
     // --- Filter out hidden categories ---
     const filteredRaces = allRaces.filter(race => {
-      // NEVER hide VueltaRapida events
-      if (!String(race.id).startsWith('horarios-')) return true;
       if (hiddenCategories.length === 0) return true;
       const cat = (race.category || '').toLowerCase();
-      // Only exclude if it exactly matches a hidden category name (which is also lowerecased)
-      return !hiddenCategories.includes(cat);
+      const evt = (race.event || '').toLowerCase();
+      
+      for (const hidden of hiddenCategories) {
+        if (cat.includes(hidden) || evt.includes(hidden)) {
+          return false;
+        }
+      }
+      return true;
     });
 
     // --- ICS helpers ---
