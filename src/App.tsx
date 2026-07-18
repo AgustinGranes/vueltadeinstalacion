@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
+import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
@@ -980,33 +980,42 @@ const App = () => {
     </motion.div>
   );
 
-  const getLocalFallbackImage = (cat: string) => {
-    const c = cat?.toUpperCase() || '';
-    if (c.includes('F1') || c.includes('FORMULA 1')) return F1_LOGO;
-    if (c.includes('F2') || c.includes('FORMULA 2')) return F2_LOGO;
-    if (c.includes('F3') || c.includes('FORMULA 3')) return F3_LOGO;
-    if (c.includes('FE') || c.includes('FORMULA E')) return FE_LOGO;
-    if (c.includes('F1A') || c.includes('F1 ACADEMY')) return F1A_LOGO;
-    if (c.includes('MOTOGP')) return MotoGP_LOGO;
-    if (c.includes('WRC2')) return WRC2_LOGO;
-    if (c.includes('WRC')) return WRC_LOGO;
-    if (c.includes('INDYCAR')) return INDYCAR_LOGO;
-    if (c.includes('NASCAR TRUCK')) return NASCART_LOGO;
-    if (c.includes('WEC')) return WEC_LOGO;
-    if (c.includes('NASCAR O REILLY')) return NASCARO_LOGO;
-    if (c.includes('NASCAR')) return NASCAR_LOGO;
-    if (c.includes('IMSA')) return IMSA_LOGO;
-    if (c.includes('TC2000')) return '/TC2000.png';
-    if (c.includes('TNC3')) return TNC3_LOGO;
-    if (c.includes('TNC2')) return TNC2_LOGO;
-    if (c.includes('TCPK') || c.includes('TC PICK UP')) return TCPK_LOGO;
-    if (c.includes('TCPM') || c.includes('PISTA MOURAS')) return '/TCPM.png';
-    if (c.includes('TCM') || c.includes('MOURAS')) return '/TCM.png';
-    if (c.includes('TCP') || c.includes('PISTA')) return TCP_LOGO;
-    if (c === 'TC' || c.includes('TURISMO CARRETERA')) return TC_LOGO;
-    if (c.includes('SF') || c.includes('SUPER FORMULA')) return SF_LOGO;
-    if (c.includes('ELMS') || c.includes('EUROPEAN LE MANS')) return ELMS_LOGO;
-    if (c.includes('WTCR') || c.includes('TCR WORLD')) return WTCR_LOGO;
+  const getCategoryLogo = (category: string) => {
+    if (!category) return null;
+    const c = category.toUpperCase();
+    if (c === 'F1' || c === 'FORMULA 1' || c.includes('FORMULA 1')) return F1_LOGO;
+    if (c === 'F2' || c === 'FORMULA 2' || c.includes('FORMULA 2')) return F2_LOGO;
+    if (c === 'F3' || c === 'FORMULA 3' || c.includes('FORMULA 3')) return F3_LOGO;
+    if (c === 'FE' || c === 'FORMULA E' || c.includes('FORMULA E')) return FE_LOGO;
+    if (c === 'F1A' || c === 'F1 ACADEMY' || c.includes('F1 ACADEMY')) return F1A_LOGO;
+    if (c === 'MOTOGP' || c.includes('MOTOGP')) return MotoGP_LOGO;
+    if (c === 'WRC2' || c.includes('WRC2')) return WRC2_LOGO;
+    if (c === 'WRC' || c.includes('WRC') || c.includes('WORLD RALLY')) return WRC_LOGO;
+    if (c === 'INDYCAR' || c.includes('INDYCAR')) return INDYCAR_LOGO;
+    if (c === 'NASCAR TRUCK' || c.includes('NASCAR TRUCK') || c.includes('NASCART')) return NASCART_LOGO;
+    if (c === 'NASCAR O REILLY' || c.includes('NASCAR O REILLY') || c === "NASCARO") return NASCARO_LOGO;
+    if (c === 'NASCAR' || c.includes('NASCAR')) return NASCAR_LOGO;
+    if (c === 'WEC' || c.includes('WEC')) return '/WEC.png';
+    if (c === 'IMSA' || c.includes('IMSA')) return IMSA_LOGO;
+    if (c === 'TC2000' || c.includes('TC2000')) return '/TC2000.png';
+    if (c === 'TNC3' || c.includes('TNC3') || c.includes('TN CLASE 3') || c.includes('TURISMO NACIONAL CLASE 3')) return TNC3_LOGO;
+    if (c === 'TNC2' || c.includes('TNC2') || c.includes('TN CLASE 2') || c.includes('TURISMO NACIONAL CLASE 2')) return TNC2_LOGO;
+    if (c === 'TCPK' || c.includes('TCPK') || c.includes('TC PICK UP')) return TCPK_LOGO;
+    if (c === 'TCPPK' || c.includes('TCPPK') || c.includes('TC PISTA PICK UP')) return '/TCPPK.png';
+    if (c === 'TCPM' || c.includes('TCPM') || c.includes('TC PISTA MOURAS')) return '/TCPM.png';
+    if (c === 'TCM' || c.includes('TCM') || c.includes('TC MOURAS')) return '/TCM.png';
+    if (c === 'TCP' || c.includes('TCP') || c.includes('TC PISTA')) return TCP_LOGO;
+    if (c === 'TC' || c.includes('TC') || c.includes('TURISMO CARRETERA')) return TC_LOGO;
+    if (c === 'SF' || c === 'SUPER FORMULA' || c.includes('SUPER FORMULA')) return SF_LOGO;
+    if (c === 'ELMS' || c === 'EUROPEAN LE MANS' || c.includes('EUROPEAN LE MANS')) return ELMS_LOGO;
+    if (c === 'WTCR' || c === 'TCR WORLD' || c.includes('TCR WORLD')) return WTCR_LOGO;
+    if (c === 'TCRSA' || c === 'TCR SOUTH AMERICA' || c.includes('TCR SOUTH AMERICA')) return TCRSA_LOGO;
+    if (c === 'BTCC' || c.includes('BTCC')) return BTCC_LOGO;
+    if (c === 'DTM' || c.includes('DTM')) return DTM_LOGO;
+    if (c === 'SUPERCARS' || c.includes('SUPERCARS')) return SUPERCARS_LOGO;
+    if (c === 'GTWC' || c.includes('GTWC') || c.includes('GT WORLD CHALLENGE')) return GTWC_LOGO;
+    if (c === 'PROCAR4000' || c.includes('PROCAR4000') || c.includes('PROCAR')) return PROCAR_LOGO;
+    if (c === 'WORLD SBK' || c === 'WORLDSBK' || c.includes('SBK')) return WORLDSBK_LOGO;
     return null;
   };
 
@@ -1022,7 +1031,7 @@ const App = () => {
       race.schedules.map(s => ({
         ...s,
         category: race.category,
-        categoryImage: getLocalFallbackImage(race.category) || race.categoryImage,
+        categoryImage: getCategoryLogo(race.category) || race.categoryImage,
         categoryColor: getCategoryColor(race.category),
         event: race.event,
         circuit: race.circuit,
@@ -1039,6 +1048,24 @@ const App = () => {
       setTempHiddenCalCategories(prev =>
         prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
       );
+    };
+
+    const formatDateWeekly = (ts: number) => {
+      const d = new Date(ts);
+      const str = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      // "Sat, Jul 18" -> "Sat Jul 18"
+      return str.replace(',', '');
+    };
+
+    const formatRelativeTime = (ts: number) => {
+      const diff = ts - Date.now();
+      if (diff < 0) return '';
+      const diffMins = Math.floor(diff / (1000 * 60));
+      if (diffMins < 60) return `en ${diffMins} min${diffMins === 1 ? '' : 's'}`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `en ${diffHours} hora${diffHours === 1 ? '' : 's'}`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `en ${diffDays} día${diffDays === 1 ? '' : 's'}`;
     };
 
     return (
@@ -1154,42 +1181,59 @@ const App = () => {
                       className="section-content-overflow"
                     >
                       {flatSchedules.filter(s => s.startAt >= Date.now()).map((item, idx) => (
-                        <div key={idx} className="weekly-card">
-                          <div className="weekly-color-bar" style={{ background: item.categoryColor }} />
-                          <div className="weekly-body">
-                            <div className="weekly-top">
-                              {item.categoryImage && (
-                                <img 
-                                  src={item.categoryImage} 
-                                  alt="" 
-                                  className="weekly-cat-img" 
-                                  referrerPolicy="no-referrer"
-                                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                                />
-                              )}
-                              <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time}</span>
+                        <div key={idx} className="weekly-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          
+                          {/* Top Row: Category (Left) and Session Name (Right) */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               {item.categoryImage ? (
+                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                               ) : (
+                                 <div style={{ width: '8px', height: '16px', borderRadius: '4px', background: item.categoryColor }} />
+                               )}
+                               <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', letterSpacing: '-0.3px' }}>{item.category}</span>
                             </div>
-                            <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
-                            {/* CIRCUIT IMAGES REMOVED FROM WEEKLY VIEW */}
+                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{item.name}</span>
+                          </div>
+                          
+                          {/* Middle Row: Circuit Name */}
+                          <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
+                            {item.event} {item.circuit ? `- ${item.circuit}` : ''}
+                          </h3>
 
-                            <div className="weekly-details-footer">
-                              {item.watchLinks && item.watchLinks.length > 0 && (
-                                <div className="weekly-links">
-                                  {item.watchLinks.map((wl, wi) => (
-                                    <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
-                                      {wl.platform} <ExternalLink size={12} />
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-                              {item.ticketLink && (
-                                <a href={item.ticketLink} target="_blank" rel="noopener noreferrer" className="ticket-chip">
-                                  🎟️ Entradas <ExternalLink size={12} />
-                                </a>
-                              )}
+                          {/* Bottom Row: Date/Time (Left) and Relative Time (Right) */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Calendar size={15} />
+                                  <span>{formatDateWeekly(item.startAt)}</span>
+                               </div>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Clock size={15} />
+                                  <span>{item.time}</span>
+                               </div>
                             </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                               <span>{formatRelativeTime(item.startAt)}</span>
+                               <Clock size={15} />
+                            </div>
+                          </div>
+
+                          <div className="weekly-details-footer" style={{ marginTop: '4px' }}>
+                            {item.watchLinks && item.watchLinks.length > 0 && (
+                              <div className="weekly-links">
+                                {item.watchLinks.map((wl, wi) => (
+                                  <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
+                                    {wl.platform} <ExternalLink size={12} />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                            {item.ticketLink && (
+                              <a href={item.ticketLink} target="_blank" rel="noopener noreferrer" className="ticket-chip">
+                                🎟️ Entradas <ExternalLink size={12} />
+                              </a>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1222,37 +1266,46 @@ const App = () => {
                       className="section-content-overflow"
                     >
                       {flatSchedules.filter(s => s.startAt < Date.now()).map((item, idx) => (
-                        <div key={idx} className="weekly-card finished">
-                          <div className="weekly-color-bar" style={{ background: item.categoryColor }} />
-                          <div className="weekly-body">
-                            <div className="weekly-top">
-                              {item.categoryImage && (
-                                <img 
-                                  src={item.categoryImage} 
-                                  alt="" 
-                                  className="weekly-cat-img" 
-                                  referrerPolicy="no-referrer"
-                                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                                />
-                              )}
-                              <span className="weekly-cat-badge" style={{ color: item.categoryColor }}>{item.category}</span>
-                              <span className="weekly-sched-time-right">{item.time}</span>
+                        <div key={idx} className="weekly-card finished" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', opacity: 0.7 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                               {item.categoryImage ? (
+                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                               ) : (
+                                 <div style={{ width: '8px', height: '16px', borderRadius: '4px', background: item.categoryColor }} />
+                               )}
+                               <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', letterSpacing: '-0.3px' }}>{item.category}</span>
                             </div>
-                            <h3 className="weekly-event-name">{item.name}</h3>
-                            <p className="weekly-circuit">{item.event} {item.circuit}</p>
-                            {/* CIRCUIT IMAGES REMOVED FROM WEEKLY VIEW */}
+                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{item.name}</span>
+                          </div>
+                          
+                          <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
+                            {item.event} {item.circuit ? `- ${item.circuit}` : ''}
+                          </h3>
 
-                            <div className="weekly-details-footer">
-                              {item.watchLinks && item.watchLinks.length > 0 && (
-                                <div className="weekly-links">
-                                  {item.watchLinks.map((wl, wi) => (
-                                    <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
-                                      {wl.platform} <ExternalLink size={12} />
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Calendar size={15} />
+                                  <span>{formatDateWeekly(item.startAt)}</span>
+                               </div>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <Clock size={15} />
+                                  <span>{item.time}</span>
+                               </div>
                             </div>
+                          </div>
+
+                          <div className="weekly-details-footer" style={{ marginTop: '4px' }}>
+                            {item.watchLinks && item.watchLinks.length > 0 && (
+                              <div className="weekly-links">
+                                {item.watchLinks.map((wl, wi) => (
+                                  <a key={wi} href={wl.url} target="_blank" rel="noopener noreferrer" className="watch-chip">
+                                    {wl.platform} <ExternalLink size={12} />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1494,39 +1547,7 @@ const App = () => {
     const isWTCR = selectedCategory === 'WTCR';
     const isTCRSA = selectedCategory === 'TCRSA';
     
-    let logo = F1_LOGO;
-    if (isWRC) logo = WRC_LOGO;
-    if (isWRC2) logo = WRC2_LOGO;
-    if (isTC) logo = TC_LOGO;
-    if (isTCP) logo = TCP_LOGO;
-    if (isTCM) logo = '/TCM.png';
-    if (isTCPM) logo = '/TCPM.png';
-    if (isTCPK) logo = TCPK_LOGO;
-    if (isTCPPK) logo = '/TCPPK.png';
-    if (isTC2000) logo = '/TC2000.png';
-    if (isTNC3) logo = TNC3_LOGO;
-    if (isTNC2) logo = TNC2_LOGO;
-    if (isIndy) logo = INDYCAR_LOGO;
-    if (isNascar) logo = NASCAR_LOGO;
-    if (isWEC) logo = '/WEC.png';
-    if (isIMSA) logo = IMSA_LOGO;
-    if (isNASCARO) logo = NASCARO_LOGO;
-    if (isNASCART) logo = NASCART_LOGO;
-    if (isF2) logo = F2_LOGO;
-    if (isF3) logo = F3_LOGO;
-    if (isFE) logo = FE_LOGO;
-    if (isF1A) logo = F1A_LOGO;
-    if (isSUPERCARS) logo = SUPERCARS_LOGO;
-    if (isGTWC) logo = GTWC_LOGO;
-    if (isMotoGP) logo = MotoGP_LOGO;
-    if (isBTCC) logo = BTCC_LOGO;
-    if (isDTM) logo = DTM_LOGO;
-    if (isSF) logo = SF_LOGO;
-    if (isELMS) logo = ELMS_LOGO;
-    if (isPROCAR4000) logo = PROCAR_LOGO;
-    if (isWORLDSBK) logo = WORLDSBK_LOGO;
-    if (isWTCR) logo = WTCR_LOGO;
-    if (isTCRSA) logo = TCRSA_LOGO;
+    let logo = getCategoryLogo(selectedCategory || '') || F1_LOGO;
 
     let catTitle = '';
     if (isF1) catTitle = 'Formula 1';
