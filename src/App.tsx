@@ -991,8 +991,8 @@ const App = () => {
     if (c === 'MOTOGP' || c.includes('MOTOGP')) return MotoGP_LOGO;
     if (c === 'WRC2' || c.includes('WRC2')) return WRC2_LOGO;
     if (c === 'WRC' || c.includes('WRC') || c.includes('WORLD RALLY')) return WRC_LOGO;
-    if (c === 'INDYCAR' || c.includes('INDYCAR')) return INDYCAR_LOGO;
-    if (c === 'NASCAR TRUCK' || c === 'NASCART' || c === 'NASCAR CRAFTSMAN TRUCK SERIES') return NASCART_LOGO;
+    if (c.includes('INDYCAR') || c.includes('INDY NXT') || c.includes('INDYNXT')) return INDYCAR_LOGO;
+    if (c.includes('NASCAR TRUCK') || c === 'NASCART' || c.includes('CRAFTSMAN TRUCK')) return NASCART_LOGO;
     if (c === 'NASCAR O REILLY' || c === 'NASCARO') return NASCARO_LOGO;
     if (c === 'NASCAR' || c === 'NASCAR CUP SERIES') return NASCAR_LOGO;
     if (c === 'WEC' || c === 'FIA WORLD ENDURANCE CHAMPIONSHIP') return '/WEC.png';

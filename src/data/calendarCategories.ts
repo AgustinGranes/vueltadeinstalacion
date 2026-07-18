@@ -46,7 +46,7 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
     "Turismo Carretera 2000", "Top Race", "TC Pick Up"
   ],
   "STOCK CARS": [
-    "NASCAR Cup", "NASCAR O'Reilly", "NASCAR Trucks", "NASCAR Modified Tour",
+    "NASCAR Cup", "NASCAR O'Reilly", "NASCAR Truck", "NASCAR Modified Tour",
     "NASCAR Canada", "NASCAR Mexico", "NASCAR Brazil", "EuroNASCAR", "ARCA",
     "ARCA Series West", "ARCA Series East", "CARS Tour"
   ],
