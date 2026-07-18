@@ -181,24 +181,34 @@ export default async function handler(req: any, res: any) {
         primaryByCat.get(key)!.push(race);
       }
 
-      const toAdd: any[] = [];
-      for (const secRace of horariosRaces) {
-        const key = _normalizeCategoryKey(secRace.category);
-        const primRaces = primaryByCat.get(key);
+      const secondaryByCat = new Map<string, any[]>();
+      for (const race of horariosRaces) {
+        const key = _normalizeCategoryKey(race.category);
+        if (!secondaryByCat.has(key)) secondaryByCat.set(key, []);
+        secondaryByCat.get(key)!.push(race);
+      }
 
-        if (!primRaces || primRaces.length === 0) {
-          toAdd.push(secRace);
-          continue;
-        }
+      const allKeys = new Set([...primaryByCat.keys(), ...secondaryByCat.keys()]);
+      
+      for (const key of allKeys) {
+        const primRaces = primaryByCat.get(key) || [];
+        const secRaces = secondaryByCat.get(key) || [];
 
-        const primTotal = primRaces.reduce((sum, r) => sum + (r.schedules?.length || 0), 0);
-        const secTotal = secRace.schedules?.length || 0;
+        if (primRaces.length > 0 && secRaces.length === 0) {
+          allRaces.push(...primRaces);
+        } else if (secRaces.length > 0 && primRaces.length === 0) {
+          allRaces.push(...secRaces);
+        } else {
+          const primTotal = primRaces.reduce((sum, r) => sum + (r.schedules?.length || 0), 0);
+          const secTotal = secRaces.reduce((sum, r) => sum + (r.schedules?.length || 0), 0);
 
-        if (secTotal > primTotal) {
-          toAdd.push(secRace);
+          if (secTotal > primTotal) {
+            allRaces.push(...secRaces);
+          } else {
+            allRaces.push(...primRaces);
+          }
         }
       }
-      allRaces = [...vrRaces, ...toAdd];
     }
 
     // --- Filter out hidden categories ---

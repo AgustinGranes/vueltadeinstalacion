@@ -355,7 +355,7 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
   if (secondaryRaces.length === 0) return primaryRaces;
   if (primaryRaces.length === 0) return secondaryRaces;
 
-  // Group primary races by normalized category key
+  const result: Race[] = [];
   const primaryByCat = new Map<string, Race[]>();
   for (const race of primaryRaces) {
     const key = _normalizeCategoryKey(race.category);
@@ -363,30 +363,36 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
     primaryByCat.get(key)!.push(race);
   }
 
-  // Decide which secondary races to include
-  const toAdd: Race[] = [];
-  for (const secRace of secondaryRaces) {
-    const key = _normalizeCategoryKey(secRace.category);
-    const primRaces = primaryByCat.get(key);
-
-    if (!primRaces || primRaces.length === 0) {
-      // Category not in primary at all — include secondary
-      toAdd.push(secRace);
-      continue;
-    }
-
-    // Category exists in primary — compare total schedule count
-    const primTotal = primRaces.reduce((sum, r) => sum + r.schedules.length, 0);
-    const secTotal = secRace.schedules.length;
-
-    if (secTotal > primTotal) {
-      // Secondary has more detail — include it
-      toAdd.push(secRace);
-    }
-    // Otherwise, primary (VueltaRapida) wins — skip secondary
+  const secondaryByCat = new Map<string, Race[]>();
+  for (const race of secondaryRaces) {
+    const key = _normalizeCategoryKey(race.category);
+    if (!secondaryByCat.has(key)) secondaryByCat.set(key, []);
+    secondaryByCat.get(key)!.push(race);
   }
 
-  return [...primaryRaces, ...toAdd];
+  const allKeys = new Set([...primaryByCat.keys(), ...secondaryByCat.keys()]);
+  
+  for (const key of allKeys) {
+    const primRaces = primaryByCat.get(key) || [];
+    const secRaces = secondaryByCat.get(key) || [];
+
+    if (primRaces.length > 0 && secRaces.length === 0) {
+      result.push(...primRaces);
+    } else if (secRaces.length > 0 && primRaces.length === 0) {
+      result.push(...secRaces);
+    } else {
+      const primTotal = primRaces.reduce((sum, r) => sum + r.schedules.length, 0);
+      const secTotal = secRaces.reduce((sum, r) => sum + r.schedules.length, 0);
+
+      if (secTotal > primTotal) {
+        result.push(...secRaces);
+      } else {
+        result.push(...primRaces);
+      }
+    }
+  }
+
+  return result;
 }
 
 export const dataService = {
