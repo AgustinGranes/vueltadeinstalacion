@@ -982,7 +982,7 @@ const App = () => {
 
   const getCategoryLogo = (category: string) => {
     if (!category) return null;
-    const c = category.toUpperCase();
+    const c = category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     if (c === 'F1' || c === 'FORMULA 1' || c.includes('FORMULA 1')) return F1_LOGO;
     if (c === 'F2' || c === 'FORMULA 2' || c.includes('FORMULA 2')) return F2_LOGO;
     if (c === 'F3' || c === 'FORMULA 3' || c.includes('FORMULA 3')) return F3_LOGO;

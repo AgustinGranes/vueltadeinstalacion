@@ -269,6 +269,7 @@ export interface NascarStandings {
 function _normalizeCategoryKey(cat: string): string {
   let c = (cat || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   c = c.replace(/trucks/g, 'truck');
+  c = c.replace(/\b(series|championship|champ|ntt)\b/g, '');
   c = c.replace(/[^a-z0-9]/g, '');
   return c;
 }
