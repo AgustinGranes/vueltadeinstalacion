@@ -1045,8 +1045,8 @@ const App = () => {
     const isLive = (item: any) => {
       const now = Date.now();
       const match = (item.name + ' ' + item.event).match(/\b(\d+)\s*hs\b/i);
-      const duration = match ? parseInt(match[1], 10) * 3600000 : 3600000;
-      return now >= item.startAt && now <= item.startAt + duration;
+      const durationMs = match ? parseInt(match[1], 10) * 3600000 : 6300000;
+      return now >= item.startAt && now <= item.startAt + durationMs;
     };
 
     const upcomingSchedules = flatSchedules.filter(s => s.startAt >= Date.now() || isLive(s));
