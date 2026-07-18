@@ -1,6 +1,8 @@
 const widget = new ListWidget();
 widget.backgroundColor = Color.dynamic(new Color("#ffffff"), new Color("#151515"));
 widget.setPadding(12, 14, 12, 14);
+
+// Acción al tocar el widget:
 widget.url = "https://vueltadeinstalacion.vercel.app/";
 
 // Forzar actualización agresiva cada 5 minutos
@@ -32,6 +34,12 @@ try {
       let row = container.addStack();
       row.layoutVertically();
       
+      // Procesar la fecha
+      const d = new Date(ev.startAt);
+      const days = ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."];
+      const dateStr = `${days[d.getDay()]} ${d.getDate()}`;
+      const timeStr = ev.time || "--:--";
+      
       // Fila 1: Categoría (Izq) | Sesión (Der)
       let top = row.addStack();
       top.centerAlignContent();
@@ -49,9 +57,26 @@ try {
       top.addSpacer();
       
       let sessName = top.addText(ev.name);
-      sessName.font = Fo
-<truncated 1237 bytes>
- (i < evList.length - 1) container.addSpacer(10);
+      sessName.font = Font.boldSystemFont(11);
+      sessName.textColor = Color.dynamic(Color.black(), Color.white());
+      sessName.lineLimit = 1;
+      
+      // Fila 2: Fecha (Izq) | Hora (Der)
+      row.addSpacer(2);
+      let bottom = row.addStack();
+      bottom.centerAlignContent();
+      
+      let dateText = bottom.addText(dateStr);
+      dateText.font = Font.systemFont(10);
+      dateText.textColor = Color.gray();
+      
+      bottom.addSpacer();
+      
+      let timeText = bottom.addText(timeStr);
+      timeText.font = Font.systemFont(10);
+      timeText.textColor = Color.gray();
+      
+      if (i < evList.length - 1) container.addSpacer(10);
     }
   }
 
@@ -62,7 +87,7 @@ try {
     // Columna Izquierda
     const leftCol = mainStack.addStack();
     leftCol.layoutVertically();
-    const leftTitle = leftCol.addText("🔴 EN VIVO");
+    const leftTitle = leftCol.addText("EN VIVO:");
     leftTitle.font = Font.boldSystemFont(13);
     leftTitle.textColor = Color.red();
     leftCol.addSpacer(8);
@@ -70,6 +95,7 @@ try {
     
     mainStack.addSpacer(10); 
     
+    // === LÍNEA SEPARADORA DINÁMICA ===
     const centerDividerStack = mainStack.addStack();
     centerDividerStack.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     centerDividerStack.size = new Size(1, 0); 
@@ -79,14 +105,14 @@ try {
     // Columna Derecha
     const rightCol = mainStack.addStack();
     rightCol.layoutVertically();
-    const rightTitle = rightCol.addText("🔜 Próximos");
+    const rightTitle = rightCol.addText("Próximos:");
     rightTitle.font = Font.boldSystemFont(13);
-    rightTitle.textColor = Color.dynamic(Color.black(), Color.white());
+    rightTitle.textColor = Color.gray();
     rightCol.addSpacer(8);
     renderEvents(rightCol, upcomingEvents.slice(0, 4));
     
   } else {
-    const titleText = (liveEvents.length > 0) ? "🏎️ Próximos y En Vivo" : "🏎️ Próximos Eventos";
+    const titleText = (liveEvents.length > 0) ? "Próximos y En Vivo:" : "Próximos:";
     const title = widget.addText(titleText);
     title.font = Font.boldSystemFont(14);
     title.textColor = Color.dynamic(Color.black(), Color.white());
