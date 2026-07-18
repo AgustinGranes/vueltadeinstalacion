@@ -65,35 +65,47 @@ export default async function handler(req: any, res: any) {
 
           if (validSessions.length === 0) continue;
 
-          const primarySeriesId = (ev.series || [])[0] || '';
-          const seriesInfo = seriesMap[primarySeriesId] || null;
-          const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || primarySeriesId.toUpperCase() || 'Motorsport';
-          const categoryFullName = seriesInfo?.details?.name || categoryName;
+          // Group sessions by their INDIVIDUAL series field
+          const sessionsBySeries: Record<string, any[]> = {};
+          for (const s of validSessions) {
+            const sId = s.series || (ev.series || [])[0] || '';
+            if (!sessionsBySeries[sId]) sessionsBySeries[sId] = [];
+            sessionsBySeries[sId].push(s);
+          }
 
-          const firstSession = validSessions[0];
-          const circuitObj = firstSession?.circuit || {};
-          const circuitName = [
-            circuitObj.circuit,
-            circuitObj.layout && circuitObj.layout !== 'N/A' ? circuitObj.layout : null,
-            circuitObj.emoji || circuitObj.country
-          ].filter(Boolean).join(' · ');
+          for (const [seriesId, groupSessions] of Object.entries(sessionsBySeries)) {
+            const seriesInfo = seriesMap[seriesId] || null;
+            const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
+            const categoryFullName = seriesInfo?.details?.name || categoryName;
 
-          const schedulesList = validSessions.map((s: any, idx: number) => ({
-            id: `horarios-${ev.eventId}-${s.id || idx}`,
-            name: s.sessionName || s.sessionType || `Sesión ${idx + 1}`,
-            startAt: new Date(s.date).getTime(),
-            confirmed: true
-          }));
+            const firstSession = groupSessions[0];
+            const circuitObj = firstSession?.circuit || {};
+            const circuitName = [
+              circuitObj.circuit,
+              circuitObj.layout && circuitObj.layout !== 'N/A' ? circuitObj.layout : null,
+              circuitObj.emoji || circuitObj.country
+            ].filter(Boolean).join(' · ');
 
-          horariosRaces.push({
-            id: `horarios-${ev.eventId}`,
-            categoryId: primarySeriesId,
-            category: categoryFullName,
-            categoryShort: categoryName,
-            event: ev.eventName || categoryName,
-            circuit: circuitName,
-            schedules: schedulesList,
-          });
+            const schedulesList = groupSessions.map((s: any, idx: number) => ({
+              id: `horarios-${ev.eventId}-${s.id || idx}`,
+              name: s.sessionName || s.sessionType || `Sesión ${idx + 1}`,
+              startAt: new Date(s.date).getTime(),
+              confirmed: true
+            }));
+
+            // Sort schedules within this group
+            schedulesList.sort((a, b) => a.startAt - b.startAt);
+
+            horariosRaces.push({
+              id: `horarios-${ev.eventId}-${seriesId}`,
+              categoryId: seriesId,
+              category: categoryFullName,
+              categoryShort: categoryName,
+              event: ev.eventName || categoryName,
+              circuit: circuitName,
+              schedules: schedulesList,
+            });
+          }
         }
       }
     } catch (e) {

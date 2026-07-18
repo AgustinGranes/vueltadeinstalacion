@@ -669,73 +669,78 @@ export const dataService = {
 
         if (validSessions.length === 0) continue;
 
-        // Get the primary series for this event (use first series ID)
-        const primarySeriesId = (ev.series || [])[0] || '';
-        const seriesInfo = seriesMap[primarySeriesId] || null;
-
-        // Build color from series colours
-        let categoryColor = '#888888';
-        if (seriesInfo?.colours?.dark) {
-          const [r, g, b] = seriesInfo.colours.dark;
-          categoryColor = `rgb(${r},${g},${b})`;
+        // Group sessions by their INDIVIDUAL series field
+        const sessionsBySeries: Record<string, any[]> = {};
+        for (const s of validSessions) {
+          const sId = s.series || (ev.series || [])[0] || '';
+          if (!sessionsBySeries[sId]) sessionsBySeries[sId] = [];
+          sessionsBySeries[sId].push(s);
         }
 
-        // Build display name
-        const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || primarySeriesId.toUpperCase() || 'Motorsport';
-        const categoryFullName = seriesInfo?.details?.name || categoryName;
+        for (const [seriesId, groupSessions] of Object.entries(sessionsBySeries)) {
+          const seriesInfo = seriesMap[seriesId] || null;
+          
+          let categoryColor = '#888888';
+          if (seriesInfo?.colours?.dark) {
+            const [r, g, b] = seriesInfo.colours.dark;
+            categoryColor = `rgb(${r},${g},${b})`;
+          }
 
-        // Build streaming / watch links
-        const watchLinks: { platform: string; url: string }[] = [];
-        if (seriesInfo?.streaming) {
-          for (const stream of seriesInfo.streaming) {
-            if (stream.url) {
-              watchLinks.push({ platform: stream.name || 'Ver', url: stream.url });
+          const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
+          const categoryFullName = seriesInfo?.details?.name || categoryName;
+
+          const watchLinks: { platform: string; url: string }[] = [];
+          if (seriesInfo?.streaming) {
+            for (const stream of seriesInfo.streaming) {
+              if (stream.url) {
+                watchLinks.push({ platform: stream.name || 'Ver', url: stream.url });
+              }
             }
           }
+
+          const firstSession = groupSessions[0];
+          const circuitObj = firstSession?.circuit || {};
+          const circuitParts: string[] = [];
+          if (circuitObj.circuit) circuitParts.push(circuitObj.circuit);
+          if (circuitObj.layout && circuitObj.layout !== 'N/A') circuitParts.push(circuitObj.layout);
+          if (circuitObj.country) circuitParts.push(circuitObj.country);
+          const circuitName = circuitParts.join(' · ');
+
+          const schedulesList = groupSessions.map((s: any, idx: number) => {
+            const d = new Date(s.date);
+            const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+            const timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const sessionLabel = s.sessionName || s.sessionType || `Sesión ${idx + 1}`;
+            return {
+              id: `horarios-${ev.eventId}-${s.id || idx}`,
+              name: sessionLabel,
+              time: `${dayStr}, ${timeStr}`,
+              startAt: d.getTime(),
+            };
+          });
+
+          // Sort schedules within this group
+          schedulesList.sort((a, b) => a.startAt - b.startAt);
+
+          const ticketLink = ev.affiliate?.ticketLinkURL || seriesInfo?.affiliate?.ticketLinkURL || '';
+
+          races.push({
+            id: `horarios-${ev.eventId}-${seriesId}`,
+            categoryId: seriesId,
+            category: categoryFullName,
+            categoryShort: categoryName,
+            categoryColor,
+            categoryImage: '',
+            event: ev.eventName || categoryName,
+            circuit: circuitName,
+            circuitImage: '',
+            platforms: watchLinks.map(w => w.platform),
+            schedules: schedulesList,
+            time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
+            ticketLink,
+            watchLinks,
+          });
         }
-
-        // Build circuit info from first valid session
-        const firstSession = validSessions[0];
-        const circuitObj = firstSession?.circuit || {};
-        const circuitParts: string[] = [];
-        if (circuitObj.circuit) circuitParts.push(circuitObj.circuit);
-        if (circuitObj.layout && circuitObj.layout !== 'N/A') circuitParts.push(circuitObj.layout);
-        if (circuitObj.country) circuitParts.push(circuitObj.country);
-        const circuitName = circuitParts.join(' · ');
-
-        // Build schedules list from all valid sessions
-        const schedulesList = validSessions.map((s: any, idx: number) => {
-          const d = new Date(s.date);
-          const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
-          const timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-          const sessionLabel = s.sessionName || s.sessionType || `Sesión ${idx + 1}`;
-          return {
-            id: `horarios-${ev.eventId}-${s.id || idx}`,
-            name: sessionLabel,
-            time: `${dayStr}, ${timeStr}`,
-            startAt: d.getTime(),
-          };
-        });
-
-        // Ticket link from affiliate info
-        const ticketLink = ev.affiliate?.ticketLinkURL || seriesInfo?.affiliate?.ticketLinkURL || '';
-
-        races.push({
-          id: `horarios-${ev.eventId}`,
-          categoryId: primarySeriesId,
-          category: categoryFullName,
-          categoryShort: categoryName,
-          categoryColor,
-          categoryImage: '',
-          event: ev.eventName || categoryName,
-          circuit: circuitName,
-          circuitImage: '',
-          platforms: watchLinks.map(w => w.platform),
-          schedules: schedulesList,
-          time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
-          ticketLink,
-          watchLinks,
-        });
       }
 
       return races;
