@@ -70,14 +70,9 @@ try {
     
     mainStack.addSpacer(10); 
     
-    // === LÍNEA SEPARADORA (150px de alto para forzar que toque bordes) ===
     const centerDividerStack = mainStack.addStack();
-    centerDividerStack.layoutVertically();
-    centerDividerStack.centerAlignContent();
-    
-    let divider = centerDividerStack.addStack();
-    divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
-    divider.size = new Size(1, 150); 
+    centerDividerStack.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
+    centerDividerStack.size = new Size(1, 0); 
     
     mainStack.addSpacer(10); 
     
