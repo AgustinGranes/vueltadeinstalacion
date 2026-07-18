@@ -489,7 +489,7 @@ export const dataService = {
 
           const _formatCategoryName = (cat: string) => {
             if (!cat) return '';
-            if (cat === 'Super Formula Japonesa') return 'Super Formula';
+            if (cat === 'Super Formula Japonesa' || cat === 'Super Fórmula Japonesa') return 'Super Formula';
             if (cat === 'World Rally Championship') return 'WRC';
             return cat;
           };

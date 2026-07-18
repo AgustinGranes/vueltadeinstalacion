@@ -256,7 +256,7 @@ export default async function handler(req: any, res: any) {
     for (const race of filteredRaces) {
       const schedules: any[] = race.schedules || [];
       let category: string = race.category || race.name || 'Motorsport';
-      if (category === 'Super Formula Japonesa') category = 'Super Formula';
+      if (category === 'Super Formula Japonesa' || category === 'Super Fórmula Japonesa') category = 'Super Formula';
       if (category === 'World Rally Championship') category = 'WRC';
       const event: string = (race.completeName || race.name || category)
         .replace(/\s*[–—-]+\s*$/, '').trim();
