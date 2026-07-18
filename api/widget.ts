@@ -246,7 +246,7 @@ export default async function handler(req: any, res: any) {
         let timeStr = sched.time;
         if (!timeStr || timeStr === '--:--') {
           const d = new Date(startTs);
-          timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+          timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' });
         }
 
         flatSchedules.push({
