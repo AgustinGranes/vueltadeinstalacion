@@ -260,6 +260,134 @@ export interface NascarStandings {
   manufacturers: TCStandingRow[];
 }
 
+// ===== DEDUPLICATION HELPERS =====
+
+/**
+ * Normalizes a category/series name to a canonical lowercase key for comparison.
+ * Covers names from both VueltaRapida and horarios.json (theracingline).
+ */
+function _normalizeCategoryKey(cat: string): string {
+  const c = (cat || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Formula categories
+  if (c === 'f1' || c.includes('formula1') || c.includes('formulaone')) return 'f1';
+  if (c === 'f2' || c.includes('formula2') || c.includes('formulatwo')) return 'f2';
+  if (c === 'f3' || c.includes('formula3')) return 'f3';
+  if (c === 'fe' || c.includes('formulae') || c.includes('formulaelectric')) return 'fe';
+  if (c.includes('f1academy') || c.includes('f1acad') || c === 'f1acad') return 'f1academy';
+  if (c.includes('freca') || (c.includes('formula') && c.includes('regional') && c.includes('eu'))) return 'freca';
+  if (c.includes('euroformulaopen') || c.includes('euroformula')) return 'efo';
+  // Rally
+  if (c.includes('wrc2')) return 'wrc2';
+  if (c.includes('wrc') || c.includes('worldrally')) return 'wrc';
+  if (c.includes('erc') || c.includes('europeanrally')) return 'erc';
+  // Open-wheel
+  if (c.includes('indynxt') || c.includes('indynext')) return 'indynxt';
+  if (c.includes('indycar')) return 'indycar';
+  // NASCAR
+  if (c.includes('nascar') && (c.includes('cup') || c === 'cup' || c.includes('nascarcup'))) return 'nascarcup';
+  if (c.includes('nascar') && (c.includes('truck') || c.includes('trucks'))) return 'nascartrucks';
+  if (c.includes('nascar') && (c.includes('xfinity') || c.includes('oreilly') || c.includes('reilly'))) return 'nascarxfinity';
+  if (c.includes('nascarmodified') || c.includes('nascarmod')) return 'nascarmodifieds';
+  if (c.includes('nascarcanada')) return 'nascarcanada';
+  if (c.includes('arca') && c.includes('east')) return 'arcaeast';
+  if (c.includes('arca')) return 'arca';
+  // Endurance / Sportscars
+  if (c.includes('fiawec') || (c.includes('wec') && !c.includes('gtwce'))) return 'wec';
+  if (c.includes('imsa') && !c.includes('pilot') && !c.includes('sportscar')) return 'imsa';
+  if (c.includes('imsapilot') || (c.includes('imsa') && c.includes('pilot'))) return 'imsapilot';
+  if (c.includes('imsasportscar') || (c.includes('imsa') && c.includes('sportscar'))) return 'imsasportscar';
+  if (c.includes('elms') || (c.includes('european') && c.includes('lemans'))) return 'elms';
+  if (c.includes('gtwceuro') || (c.includes('gtwc') && (c.includes('eu') || c.includes('europe')))) return 'gtwceuro';
+  if (c.includes('gtwcaus') || (c.includes('gtwc') && c.includes('aus'))) return 'gtwcaus';
+  if (c.includes('gtwcam') || (c.includes('gtwc') && c.includes('am'))) return 'gtwcamerica';
+  if (c.includes('gtwcasia') || (c.includes('gtwc') && c.includes('asia'))) return 'gtwcasia';
+  if (c.includes('gtwc') || (c.includes('gt') && c.includes('world') && c.includes('challenge'))) return 'gtwc';
+  if (c.includes('dtm')) return 'dtm';
+  if (c.includes('britishgt') || (c.includes('british') && c.includes('gt'))) return 'britishgt';
+  if (c.includes('gt4euro') || (c.includes('gt4') && c.includes('eu'))) return 'gt4euro';
+  if (c.includes('gt2euro') || (c.includes('gt2') && c.includes('eu'))) return 'gt2euro';
+  if (c.includes('gtopen') || (c.includes('gt') && c.includes('open'))) return 'gtopen';
+  if (c.includes('nls') || c.includes('nurburgring')) return 'nls';
+  if (c.includes('igtc')) return 'igtc';
+  if (c.includes('supertaikyu')) return 'supertaikyu';
+  if (c.includes('supergt')) return 'supergt';
+  if (c.includes('superformulalights') || (c.includes('superformula') && c.includes('light'))) return 'superformulalights';
+  if (c.includes('superformula') || c === 'sf') return 'superformula';
+  // Motorcycles
+  if (c.includes('motogp')) return 'motogp';
+  if (c.includes('worldsbk') || c.includes('superbike') || c.includes('worldsuperbike')) return 'worldsbk';
+  if (c.includes('mxgp')) return 'mxgp';
+  if (c.includes('mx2')) return 'mx2';
+  if (c.includes('bsb') || c.includes('britishsuperbike')) return 'bsb';
+  // TCR / Touring
+  if (c.includes('tcrsa') || c.includes('tcrsouth') || c.includes('tcrsam') || c.includes('tcrsouthamerica')) return 'tcrsa';
+  if (c.includes('wtcr') || c.includes('worldtcr') || c.includes('tcrtour') || c.includes('tcworld')) return 'wtcr';
+  if (c.includes('tcrit') || (c.includes('tcr') && c.includes('it'))) return 'tcrit';
+  if (c.includes('btcc') || c.includes('britishtouringcar')) return 'btcc';
+  // Argentina / South America
+  if (c === 'tc' || c.includes('turismocarretera')) return 'tc';
+  if (c.includes('tcpistapickup') || c.includes('tcppk') || c === 'tcppk') return 'tcppk';
+  if (c.includes('tcpickup') || c.includes('tcpk') || c === 'tcpk') return 'tcpk';
+  if (c.includes('tcpistamouras') || c.includes('tcpm') || c === 'tcpm') return 'tcpm';
+  if (c.includes('tcpista') || c === 'tcp') return 'tcp';
+  if (c.includes('tcmouras') || c === 'tcm') return 'tcm';
+  if (c.includes('tc2000')) return 'tc2000';
+  if (c.includes('tnclase2') || c.includes('tnc2')) return 'tnc2';
+  if (c.includes('tnclase3') || c.includes('tnc3')) return 'tnc3';
+  if (c.includes('procar')) return 'procar4000';
+  if (c.includes('stockcarpro') || c.includes('stockcar')) return 'stockcarpro';
+  // Drift / others
+  if (c.includes('driftmasters') || c.includes('drift')) return 'drift';
+  // Fallback: strip all non-alphanumeric
+  return c;
+}
+
+/**
+ * Merges VueltaRapida races with horarios.json races, deduplicating by category.
+ * Rules:
+ *  - If the same normalized category key exists in both sources:
+ *    - Prefer VueltaRapida if it has >= total schedules
+ *    - Use horarios if it has MORE total schedules than the VR entry
+ *  - Categories only in one source are included as-is.
+ */
+function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[] {
+  if (secondaryRaces.length === 0) return primaryRaces;
+  if (primaryRaces.length === 0) return secondaryRaces;
+
+  // Group primary races by normalized category key
+  const primaryByCat = new Map<string, Race[]>();
+  for (const race of primaryRaces) {
+    const key = _normalizeCategoryKey(race.category);
+    if (!primaryByCat.has(key)) primaryByCat.set(key, []);
+    primaryByCat.get(key)!.push(race);
+  }
+
+  // Decide which secondary races to include
+  const toAdd: Race[] = [];
+  for (const secRace of secondaryRaces) {
+    const key = _normalizeCategoryKey(secRace.category);
+    const primRaces = primaryByCat.get(key);
+
+    if (!primRaces || primRaces.length === 0) {
+      // Category not in primary at all — include secondary
+      toAdd.push(secRace);
+      continue;
+    }
+
+    // Category exists in primary — compare total schedule count
+    const primTotal = primRaces.reduce((sum, r) => sum + r.schedules.length, 0);
+    const secTotal = secRace.schedules.length;
+
+    if (secTotal > primTotal) {
+      // Secondary has more detail — include it
+      toAdd.push(secRace);
+    }
+    // Otherwise, primary (VueltaRapida) wins — skip secondary
+  }
+
+  return [...primaryRaces, ...toAdd];
+}
+
 export const dataService = {
 
   // === WEEKLY CALENDAR (VueltaRapida API) ===
@@ -371,11 +499,11 @@ export const dataService = {
           };
         }));
 
-        // Also fetch and merge horarios.json events
+        // Also fetch and merge horarios.json events (with deduplication)
         try {
           const horariosRaces = await this.getHorariosWeekly();
           if (horariosRaces.length > 0) {
-            return [...racesWithImages, ...horariosRaces];
+            return _deduplicateRaces(racesWithImages, horariosRaces);
           }
         } catch (e) {
           console.warn('[DataService] Failed to fetch horarios:', e);
@@ -421,10 +549,10 @@ export const dataService = {
         });
       });
 
-      // Also add horarios.json events in fallback
+      // Also add horarios.json events in fallback (with deduplication)
       try {
         const horariosRaces = await this.getHorariosWeekly();
-        return [...scrapedRaces, ...horariosRaces];
+        return _deduplicateRaces(scrapedRaces, horariosRaces);
       } catch (e) {
         console.warn('[DataService] Failed to fetch horarios in fallback:', e);
       }
