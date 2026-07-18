@@ -276,6 +276,7 @@ function _normalizeCategoryKey(cat: string): string {
   if (c.includes('f1academy') || c.includes('f1acad') || c === 'f1acad') return 'f1academy';
   if (c.includes('freca') || (c.includes('formula') && c.includes('regional') && c.includes('eu'))) return 'freca';
   if (c.includes('euroformulaopen') || c.includes('euroformula')) return 'efo';
+  if (c.includes('superformula')) return 'superformula';
   // Rally
   if (c.includes('wrc2')) return 'wrc2';
   if (c.includes('wrc') || c.includes('worldrally')) return 'wrc';

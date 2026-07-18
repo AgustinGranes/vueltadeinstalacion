@@ -110,6 +110,7 @@ export default async function handler(req: any, res: any) {
       if (c.includes('f1academy') || c.includes('f1acad') || c === 'f1acad') return 'f1academy';
       if (c.includes('freca') || (c.includes('formula') && c.includes('regional') && c.includes('eu'))) return 'freca';
       if (c.includes('euroformulaopen') || c.includes('euroformula')) return 'efo';
+      if (c.includes('superformula')) return 'superformula';
       if (c.includes('wrc2')) return 'wrc2';
       if (c.includes('wrc') || c.includes('worldrally')) return 'wrc';
       if (c.includes('erc') || c.includes('europeanrally')) return 'erc';
