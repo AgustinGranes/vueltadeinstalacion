@@ -102,7 +102,7 @@ export default async function handler(req: any, res: any) {
 
     // --- Deduplication Helper ---
     const _normalizeCategoryKey = (cat: string): string => {
-      const c = (cat || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const c = (cat || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
       if (c === 'f1' || c.includes('formula1') || c.includes('formulaone')) return 'f1';
       if (c === 'f2' || c.includes('formula2') || c.includes('formulatwo')) return 'f2';
       if (c === 'f3' || c.includes('formula3')) return 'f3';
