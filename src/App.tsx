@@ -42,6 +42,8 @@ const TCRSA_LOGO = '/TCRSA.png';
 
 const NEWS_CATEGORIES = ['F1', 'F2', 'F3', 'FE', 'F1 Academy', 'BTCC', 'DTM', 'Super Formula', 'ELMS', 'PROCAR4000', 'WORLD SBK', 'WTCR', 'TCR South America', 'Supercars', 'GT World Challenge', 'WRC', 'WRC2', 'TC', 'TNC3', 'TNC2', 'TCP', 'TCM', 'TCPM', 'TCPK', 'TCPPK', 'TC2000', 'IndyCar', 'NASCAR', 'NASCAR TRUCK', 'NASCAR O REILLY', 'WEC', 'IMSA', 'MotoGP'];
 
+const CALENDAR_FILTER_KEY = 'vr_calendar_hidden_categories';
+
 
 
 const App = () => {
@@ -202,10 +204,20 @@ const App = () => {
 
   const loadedDataRef = useRef<Set<string>>(new Set());
 
-  // Filter states
+  // Filter states — News
   const [selectedNewsCategories, setSelectedNewsCategories] = useState<string[]>(NEWS_CATEGORIES);
   const [tempNewsCategories, setTempNewsCategories] = useState<string[]>(NEWS_CATEGORIES);
   const [isNewsFilterOpen, setIsNewsFilterOpen] = useState(false);
+
+  // Filter states — Calendar (stores HIDDEN categories; empty = show all)
+  const [hiddenCalCategories, setHiddenCalCategories] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(CALENDAR_FILTER_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+  const [tempHiddenCalCategories, setTempHiddenCalCategories] = useState<string[]>([]);
+  const [isCalFilterOpen, setIsCalFilterOpen] = useState(false);
 
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
@@ -586,7 +598,8 @@ const App = () => {
   };
 
   const handleCopyICSUrl = () => {
-    const httpsUrl = `https://${window.location.host}/api/webcal`;
+    const hiddenParam = hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}` : '';
+    const httpsUrl = `https://${window.location.host}/api/webcal${hiddenParam}`;
     navigator.clipboard.writeText(httpsUrl).then(() => {
       setCopySuccess(true);
       setTimeout(() => { setCopySuccess(false); }, 2500);
@@ -1024,7 +1037,15 @@ const App = () => {
 
   const renderCalendario = () => {
 
-    const flatSchedules = weeklyRaces.flatMap(race =>
+    // All unique category names present this week
+    const allCalCategories = Array.from(new Set(weeklyRaces.map(r => r.category))).filter(Boolean).sort();
+
+    // Apply category filter (exclude hidden)
+    const visibleRaces = hiddenCalCategories.length === 0
+      ? weeklyRaces
+      : weeklyRaces.filter(r => !hiddenCalCategories.includes(r.category));
+
+    const flatSchedules = visibleRaces.flatMap(race =>
       race.schedules.map(s => ({
         ...s,
         category: race.category,
@@ -1039,8 +1060,68 @@ const App = () => {
       }))
     ).sort((a, b) => a.startAt - b.startAt);
 
+    const hiddenCount = hiddenCalCategories.filter(h => allCalCategories.includes(h)).length;
+
+    const toggleTempCalCat = (c: string) => {
+      setTempHiddenCalCategories(prev =>
+        prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]
+      );
+    };
+
     return (
       <motion.div key="calendario" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="calendario-view">
+
+        {/* CATEGORY FILTER — identical style to news filter */}
+        <div className="news-filter-container" style={{ marginBottom: '12px' }}>
+          <button className="news-filter-toggle" onClick={() => {
+            if (!isCalFilterOpen) setTempHiddenCalCategories([...hiddenCalCategories]);
+            setIsCalFilterOpen(!isCalFilterOpen);
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Filtros
+              {hiddenCount > 0 && <span className="filter-badge-count">{hiddenCount} ocultas</span>}
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isCalFilterOpen ? 'open' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {isCalFilterOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="news-filter-dropdown"
+                style={{ overflow: 'hidden' }}
+              >
+                <div className="filter-chips-grid">
+                  {allCalCategories.map(c => (
+                    <button
+                      key={c}
+                      className={`filter-chip ${!tempHiddenCalCategories.includes(c) ? 'active' : ''}`}
+                      onClick={() => toggleTempCalCat(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="filter-actions">
+                  <button className="filter-btn filter-reset-btn" onClick={() => {
+                    setHiddenCalCategories([]);
+                    setTempHiddenCalCategories([]);
+                    localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify([]));
+                    setIsCalFilterOpen(false);
+                  }}>Mostrar todas</button>
+                  <button className="filter-btn filter-apply-btn" onClick={() => {
+                    setHiddenCalCategories(tempHiddenCalCategories);
+                    localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(tempHiddenCalCategories));
+                    setIsCalFilterOpen(false);
+                  }}>Aplicar</button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="view-toggle">
           <button className={`toggle-btn ${calendarViewMode === 'semanal' ? 'active' : ''}`} onClick={() => setCalendarViewMode('semanal')}>
             Vista Semanal
@@ -1056,7 +1137,7 @@ const App = () => {
           </div>
         ) : calendarViewMode === 'semanal' ? (
           <div className="weekly-list">
-            {flatSchedules.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {flatSchedules.length === 0 && !isHomeLoading && <p className="empty-msg">{hiddenCount > 0 ? 'Todas las categorías están ocultas. Usá Filtros para mostrarlas.' : 'No hay eventos esta semana.'}</p>}
             
             {/* PRÓXIMOS SECTION */}
             {flatSchedules.some(s => s.startAt >= Date.now()) && (
@@ -1198,9 +1279,9 @@ const App = () => {
           </div>
         ) : (
           <div className="category-calendar-list">
-            {weeklyRaces.length === 0 && !isHomeLoading && <p className="empty-msg">No hay eventos esta semana.</p>}
+            {visibleRaces.length === 0 && !isHomeLoading && <p className="empty-msg">{hiddenCount > 0 ? 'Todas las categorías están ocultas. Usá Filtros para mostrarlas.' : 'No hay eventos esta semana.'}</p>}
             {Object.entries(
-              weeklyRaces.reduce<Record<string, Race[]>>((acc, race) => {
+              visibleRaces.reduce<Record<string, Race[]>>((acc, race) => {
                 const key = race.category || 'Otros';
                 if (!acc[key]) acc[key] = [];
                 acc[key].push(race);
