@@ -381,14 +381,41 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
     } else if (secRaces.length > 0 && primRaces.length === 0) {
       result.push(...secRaces);
     } else {
-      const primTotal = primRaces.reduce((sum, r) => sum + r.schedules.length, 0);
-      const secTotal = secRaces.reduce((sum, r) => sum + r.schedules.length, 0);
+      // SMART MERGE: Both sources have the event.
+      // Use the Primary Race (VueltaRapida) as the base to keep its logo, circuit, and title.
+      const primRace = primRaces[0];
+      const secRace = secRaces[0];
 
-      if (secTotal > primTotal) {
-        result.push(...secRaces);
-      } else {
-        result.push(...primRaces);
+      const mergedRace = { ...primRace };
+      // Copy primRace schedules (VR schedules)
+      const mergedSchedules = [...(primRace.schedules || [])];
+
+      // Append secRace schedules (horarios) that DO NOT overlap with primRace schedules
+      for (const secSched of (secRace.schedules || [])) {
+        const secStart = (secSched as any).startAt || (secSched as any).start;
+        if (!secStart) continue;
+
+        const overlaps = mergedSchedules.some(primSched => {
+          const primStart = (primSched as any).startAt || (primSched as any).start;
+          if (!primStart) return false;
+          // Consider overlapping if within 3 hours
+          return Math.abs(secStart - primStart) < 3 * 3600000;
+        });
+
+        if (!overlaps) {
+          mergedSchedules.push(secSched);
+        }
       }
+
+      // Sort by time
+      mergedSchedules.sort((a, b) => {
+        const aT = (a as any).startAt || (a as any).start || 0;
+        const bT = (b as any).startAt || (b as any).start || 0;
+        return aT - bT;
+      });
+
+      mergedRace.schedules = mergedSchedules;
+      result.push(mergedRace);
     }
   }
 
