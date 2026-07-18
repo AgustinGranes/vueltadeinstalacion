@@ -24,7 +24,7 @@ try {
   
   // Dynamic sizing based on widget family
   const isLarge = config.widgetFamily === "large" || config.widgetFamily === "extraLarge";
-  const maxEvents = isLarge ? 9 : 4;
+  const maxEvents = isLarge ? 8 : 4;
   const titleSize = isLarge ? 14 : 12;
   const catSize = isLarge ? 12 : 10;
   const eventSize = isLarge ? 12 : 10;
@@ -112,7 +112,7 @@ try {
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     
     // Altura calculada para ocupar el máximo sin desbordar el widget mediano
-    let divHeight = isLarge ? 320 : 145;
+    let divHeight = isLarge ? 340 : 145;
     divider.size = new Size(1, divHeight);
     
     mainStack.addSpacer(10); 
