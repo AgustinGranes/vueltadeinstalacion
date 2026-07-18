@@ -114,69 +114,9 @@ export default async function handler(req: any, res: any) {
 
     // --- Deduplication Helper ---
     const _normalizeCategoryKey = (cat: string): string => {
-      const c = (cat || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (c === 'f1' || c.includes('formula1') || c.includes('formulaone')) return 'f1';
-      if (c === 'f2' || c.includes('formula2') || c.includes('formulatwo')) return 'f2';
-      if (c === 'f3' || c.includes('formula3')) return 'f3';
-      if (c === 'fe' || c.includes('formulae') || c.includes('formulaelectric')) return 'fe';
-      if (c.includes('f1academy') || c.includes('f1acad') || c === 'f1acad') return 'f1academy';
-      if (c.includes('freca') || (c.includes('formula') && c.includes('regional') && c.includes('eu'))) return 'freca';
-      if (c.includes('euroformulaopen') || c.includes('euroformula')) return 'efo';
-      if (c.includes('superformula')) return 'superformula';
-      if (c.includes('wrc2')) return 'wrc2';
-      if (c.includes('wrc') || c.includes('worldrally')) return 'wrc';
-      if (c.includes('erc') || c.includes('europeanrally')) return 'erc';
-      if (c.includes('indynxt') || c.includes('indynext')) return 'indynxt';
-      if (c.includes('indycar')) return 'indycar';
-      if (c.includes('nascar') && (c.includes('cup') || c === 'cup' || c.includes('nascarcup'))) return 'nascarcup';
-      if (c.includes('nascar') && (c.includes('truck') || c.includes('trucks'))) return 'nascartrucks';
-      if (c.includes('nascar') && (c.includes('xfinity') || c.includes('oreilly') || c.includes('reilly'))) return 'nascarxfinity';
-      if (c.includes('nascarmodified') || c.includes('nascarmod')) return 'nascarmodifieds';
-      if (c.includes('nascarcanada')) return 'nascarcanada';
-      if (c.includes('arca') && c.includes('east')) return 'arcaeast';
-      if (c.includes('arca')) return 'arca';
-      if (c.includes('fiawec') || (c.includes('wec') && !c.includes('gtwce'))) return 'wec';
-      if (c.includes('imsa') && !c.includes('pilot') && !c.includes('sportscar')) return 'imsa';
-      if (c.includes('imsapilot') || (c.includes('imsa') && c.includes('pilot'))) return 'imsapilot';
-      if (c.includes('imsasportscar') || (c.includes('imsa') && c.includes('sportscar'))) return 'imsasportscar';
-      if (c.includes('elms') || (c.includes('european') && c.includes('lemans'))) return 'elms';
-      if (c.includes('gtwceuro') || (c.includes('gtwc') && (c.includes('eu') || c.includes('europe')))) return 'gtwceuro';
-      if (c.includes('gtwcaus') || (c.includes('gtwc') && c.includes('aus'))) return 'gtwcaus';
-      if (c.includes('gtwcam') || (c.includes('gtwc') && c.includes('am'))) return 'gtwcamerica';
-      if (c.includes('gtwcasia') || (c.includes('gtwc') && c.includes('asia'))) return 'gtwcasia';
-      if (c.includes('gtwc') || (c.includes('gt') && c.includes('world') && c.includes('challenge'))) return 'gtwc';
-      if (c.includes('dtm')) return 'dtm';
-      if (c.includes('britishgt') || (c.includes('british') && c.includes('gt'))) return 'britishgt';
-      if (c.includes('gt4euro') || (c.includes('gt4') && c.includes('eu'))) return 'gt4euro';
-      if (c.includes('gt2euro') || (c.includes('gt2') && c.includes('eu'))) return 'gt2euro';
-      if (c.includes('gtopen') || (c.includes('gt') && c.includes('open'))) return 'gtopen';
-      if (c.includes('nls') || c.includes('nurburgring')) return 'nls';
-      if (c.includes('igtc')) return 'igtc';
-      if (c.includes('supertaikyu')) return 'supertaikyu';
-      if (c.includes('supergt')) return 'supergt';
-      if (c.includes('superformulalights') || (c.includes('superformula') && c.includes('light'))) return 'superformulalights';
-      if (c.includes('superformula') || c === 'sf') return 'superformula';
-      if (c.includes('motogp')) return 'motogp';
-      if (c.includes('worldsbk') || c.includes('superbike') || c.includes('worldsuperbike')) return 'worldsbk';
-      if (c.includes('mxgp')) return 'mxgp';
-      if (c.includes('mx2')) return 'mx2';
-      if (c.includes('bsb') || c.includes('britishsuperbike')) return 'bsb';
-      if (c.includes('tcrsa') || c.includes('tcrsouth') || c.includes('tcrsam') || c.includes('tcrsouthamerica')) return 'tcrsa';
-      if (c.includes('wtcr') || c.includes('worldtcr') || c.includes('tcrtour') || c.includes('tcworld')) return 'wtcr';
-      if (c.includes('tcrit') || (c.includes('tcr') && c.includes('it'))) return 'tcrit';
-      if (c.includes('btcc') || c.includes('britishtouringcar')) return 'btcc';
-      if (c === 'tc' || c.includes('turismocarretera')) return 'tc';
-      if (c.includes('tcpistapickup') || c.includes('tcppk') || c === 'tcppk') return 'tcppk';
-      if (c.includes('tcpickup') || c.includes('tcpk') || c === 'tcpk') return 'tcpk';
-      if (c.includes('tcpistamouras') || c.includes('tcpm') || c === 'tcpm') return 'tcpm';
-      if (c.includes('tcpista') || c === 'tcp') return 'tcp';
-      if (c.includes('tcmouras') || c === 'tcm') return 'tcm';
-      if (c.includes('tc2000')) return 'tc2000';
-      if (c.includes('tnclase2') || c.includes('tnc2')) return 'tnc2';
-      if (c.includes('tnclase3') || c.includes('tnc3')) return 'tnc3';
-      if (c.includes('procar')) return 'procar4000';
-      if (c.includes('stockcarpro') || c.includes('stockcar')) return 'stockcarpro';
-      if (c.includes('driftmasters') || c.includes('drift')) return 'drift';
+      let c = (cat || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      c = c.replace(/trucks/g, 'truck');
+      c = c.replace(/[^a-z0-9]/g, '');
       return c;
     };
 
@@ -184,7 +124,12 @@ export default async function handler(req: any, res: any) {
     if (horariosRaces.length === 0) {
       allRaces = vrRaces;
     } else if (vrRaces.length === 0) {
-      allRaces = horariosRaces;
+      allRaces = horariosRaces.map((r: any) => {
+        if (r.category && r.category.toLowerCase().includes('nascar') && r.category.toLowerCase().includes('trucks')) {
+          return { ...r, category: r.category.replace(/Trucks/ig, 'Truck'), categoryShort: (r.categoryShort || '').replace(/Trucks/ig, 'Truck') };
+        }
+        return r;
+      });
     } else {
       const primaryByCat = new Map<string, any[]>();
       for (const race of vrRaces) {
@@ -196,31 +141,6 @@ export default async function handler(req: any, res: any) {
       const secondaryByCat = new Map<string, any[]>();
       for (const race of horariosRaces) {
         let key = _normalizeCategoryKey(race.category);
-
-        // Cross-category deduplication for NASCAR
-        if (key.includes('nascar')) {
-          const primaryRacesFlat = Array.from(primaryByCat.values()).flat();
-          for (const primRace of primaryRacesFlat) {
-            const primKey = _normalizeCategoryKey(primRace.category);
-            if (primKey.includes('nascar')) {
-              const overlaps = (race.schedules || []).some((secSched: any) => {
-                const secStart = secSched.startAt || secSched.start;
-                if (!secStart) return false;
-                return (primRace.schedules || []).some((primSched: any) => {
-                  const primStart = primSched.startAt || primSched.start;
-                  if (!primStart) return false;
-                  // Coincides within 4 hours
-                  return Math.abs(secStart - primStart) < 4 * 3600000;
-                });
-              });
-              if (overlaps) {
-                key = primKey; // Override key to force merge
-                break;
-              }
-            }
-          }
-        }
-
         if (!secondaryByCat.has(key)) secondaryByCat.set(key, []);
         secondaryByCat.get(key)!.push(race);
       }
@@ -229,42 +149,47 @@ export default async function handler(req: any, res: any) {
       
       for (const key of allKeys) {
         const primRaces = primaryByCat.get(key) || [];
-        const secRaces = secondaryByCat.get(key) || [];
+        let secRaces = secondaryByCat.get(key) || [];
+
+        secRaces = secRaces.map((r: any) => {
+          if (r.category && r.category.toLowerCase().includes('nascar') && r.category.toLowerCase().includes('trucks')) {
+            return { ...r, category: r.category.replace(/Trucks/ig, 'Truck'), categoryShort: (r.categoryShort || '').replace(/Trucks/ig, 'Truck') };
+          }
+          return r;
+        });
 
         if (primRaces.length > 0 && secRaces.length === 0) {
           allRaces.push(...primRaces);
         } else if (secRaces.length > 0 && primRaces.length === 0) {
           allRaces.push(...secRaces);
         } else {
-          // SMART MERGE: Use Primary Race as base
           const primRace = primRaces[0];
           const secRace = secRaces[0];
 
           const mergedRace = { ...primRace };
-          const mergedSchedules = [...(primRace.schedules || [])];
+          const primScheds = primRace.schedules || [];
+          const secScheds = secRace.schedules || [];
 
-          for (const secSched of (secRace.schedules || [])) {
-            const secStart = secSched.startAt || secSched.start;
-            if (!secStart) continue;
-
-            const overlaps = mergedSchedules.some(primSched => {
-              const primStart = primSched.startAt || primSched.start;
-              if (!primStart) return false;
-              return Math.abs(secStart - primStart) < 3 * 3600000;
+          const overlaps = primScheds.some((p: any) => {
+            const pT = p.startAt || p.start;
+            return secScheds.some((s: any) => {
+              const sT = s.startAt || s.start;
+              return Math.abs(pT - sT) < 48 * 3600000;
             });
-
-            if (!overlaps) {
-              mergedSchedules.push(secSched);
-            }
-          }
-
-          mergedSchedules.sort((a, b) => {
-            const aT = a.startAt || a.start || 0;
-            const bT = b.startAt || b.start || 0;
-            return aT - bT;
           });
 
-          mergedRace.schedules = mergedSchedules;
+          if (overlaps) {
+            if (secScheds.length > primScheds.length) {
+               mergedRace.schedules = [...secScheds];
+            } else {
+               mergedRace.schedules = [...primScheds];
+            }
+          } else {
+            allRaces.push(primRace);
+            allRaces.push(secRace);
+            continue;
+          }
+
           allRaces.push(mergedRace);
           for (let i = 1; i < primRaces.length; i++) allRaces.push(primRaces[i]);
           for (let i = 1; i < secRaces.length; i++) allRaces.push(secRaces[i]);
