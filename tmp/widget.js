@@ -1,6 +1,6 @@
 const widget = new ListWidget();
 widget.backgroundColor = Color.dynamic(new Color("#ffffff"), new Color("#151515"));
-widget.setPadding(12, 14, 12, 14);
+widget.setPadding(14, 14, 14, 14);
 
 // Acción al tocar el widget:
 widget.url = "https://vueltadeinstalacion.vercel.app/";
@@ -45,7 +45,7 @@ try {
       top.centerAlignContent();
       
       let cat = top.addText(ev.category);
-      cat.font = Font.boldSystemFont(11);
+      cat.font = Font.boldSystemFont(10);
       cat.lineLimit = 1;
       
       if (ev.isLive) {
@@ -57,7 +57,7 @@ try {
       top.addSpacer();
       
       let sessName = top.addText(ev.name);
-      sessName.font = Font.boldSystemFont(11);
+      sessName.font = Font.boldSystemFont(10);
       sessName.textColor = Color.dynamic(Color.black(), Color.white());
       sessName.lineLimit = 1;
       
@@ -67,16 +67,16 @@ try {
       bottom.centerAlignContent();
       
       let dateText = bottom.addText(dateStr);
-      dateText.font = Font.systemFont(10);
+      dateText.font = Font.systemFont(9);
       dateText.textColor = Color.gray();
       
       bottom.addSpacer();
       
       let timeText = bottom.addText(timeStr);
-      timeText.font = Font.systemFont(10);
+      timeText.font = Font.systemFont(9);
       timeText.textColor = Color.gray();
       
-      if (i < evList.length - 1) container.addSpacer(10);
+      if (i < evList.length - 1) container.addSpacer(8);
     }
   }
 
@@ -88,17 +88,17 @@ try {
     const leftCol = mainStack.addStack();
     leftCol.layoutVertically();
     const leftTitle = leftCol.addText("EN VIVO:");
-    leftTitle.font = Font.boldSystemFont(13);
+    leftTitle.font = Font.boldSystemFont(12);
     leftTitle.textColor = Color.red();
     leftCol.addSpacer(8);
-    renderEvents(leftCol, liveEvents.slice(0, 4));
+    renderEvents(leftCol, liveEvents.slice(0, 3));
     
     mainStack.addSpacer(10); 
     
-    // === LÍNEA SEPARADORA DINÁMICA ===
-    const centerDividerStack = mainStack.addStack();
-    centerDividerStack.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
-    centerDividerStack.size = new Size(1, 0); 
+    // === LÍNEA SEPARADORA COMPLETA ===
+    const divider = mainStack.addStack();
+    divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
+    divider.size = new Size(1, 0);
     
     mainStack.addSpacer(10); 
     
@@ -106,10 +106,10 @@ try {
     const rightCol = mainStack.addStack();
     rightCol.layoutVertically();
     const rightTitle = rightCol.addText("Próximos:");
-    rightTitle.font = Font.boldSystemFont(13);
+    rightTitle.font = Font.boldSystemFont(12);
     rightTitle.textColor = Color.gray();
     rightCol.addSpacer(8);
-    renderEvents(rightCol, upcomingEvents.slice(0, 4));
+    renderEvents(rightCol, upcomingEvents.slice(0, 3));
     
   } else {
     const titleText = (liveEvents.length > 0) ? "Próximos y En Vivo:" : "Próximos:";
@@ -119,7 +119,7 @@ try {
     widget.addSpacer(10);
     
     if (events.length === 0) {
-      let msg = widget.addText("No hay eventos esta semana.");
+      let msg = widget.addText("No hay eventos registrados por el momento.");
       msg.font = Font.systemFont(12);
       msg.textColor = Color.gray();
     } else {
