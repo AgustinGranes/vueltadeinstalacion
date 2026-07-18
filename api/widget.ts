@@ -183,7 +183,32 @@ export default async function handler(req: any, res: any) {
 
       const secondaryByCat = new Map<string, any[]>();
       for (const race of horariosRaces) {
-        const key = _normalizeCategoryKey(race.category);
+        let key = _normalizeCategoryKey(race.category);
+
+        // Cross-category deduplication for NASCAR
+        if (key.includes('nascar')) {
+          const primaryRacesFlat = Array.from(primaryByCat.values()).flat();
+          for (const primRace of primaryRacesFlat) {
+            const primKey = _normalizeCategoryKey(primRace.category);
+            if (primKey.includes('nascar')) {
+              const overlaps = (race.schedules || []).some((secSched: any) => {
+                const secStart = secSched.startAt || secSched.start;
+                if (!secStart) return false;
+                return (primRace.schedules || []).some((primSched: any) => {
+                  const primStart = primSched.startAt || primSched.start;
+                  if (!primStart) return false;
+                  // Coincides within 4 hours
+                  return Math.abs(secStart - primStart) < 4 * 3600000;
+                });
+              });
+              if (overlaps) {
+                key = primKey; // Override key to force merge
+                break;
+              }
+            }
+          }
+        }
+
         if (!secondaryByCat.has(key)) secondaryByCat.set(key, []);
         secondaryByCat.get(key)!.push(race);
       }
@@ -199,14 +224,36 @@ export default async function handler(req: any, res: any) {
         } else if (secRaces.length > 0 && primRaces.length === 0) {
           allRaces.push(...secRaces);
         } else {
-          const primTotal = primRaces.reduce((sum, r) => sum + (r.schedules?.length || 0), 0);
-          const secTotal = secRaces.reduce((sum, r) => sum + (r.schedules?.length || 0), 0);
+          // SMART MERGE: Use Primary Race as base
+          const primRace = primRaces[0];
+          const secRace = secRaces[0];
 
-          if (secTotal > primTotal) {
-            allRaces.push(...secRaces);
-          } else {
-            allRaces.push(...primRaces);
+          const mergedRace = { ...primRace };
+          const mergedSchedules = [...(primRace.schedules || [])];
+
+          for (const secSched of (secRace.schedules || [])) {
+            const secStart = secSched.startAt || secSched.start;
+            if (!secStart) continue;
+
+            const overlaps = mergedSchedules.some(primSched => {
+              const primStart = primSched.startAt || primSched.start;
+              if (!primStart) return false;
+              return Math.abs(secStart - primStart) < 3 * 3600000;
+            });
+
+            if (!overlaps) {
+              mergedSchedules.push(secSched);
+            }
           }
+
+          mergedSchedules.sort((a, b) => {
+            const aT = a.startAt || a.start || 0;
+            const bT = b.startAt || b.start || 0;
+            return aT - bT;
+          });
+
+          mergedRace.schedules = mergedSchedules;
+          allRaces.push(mergedRace);
         }
       }
     }
