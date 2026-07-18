@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Calendar, Home, Newspaper, RefreshCw, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
+import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
@@ -197,7 +197,7 @@ const App = () => {
   const [isCatNewsLoading, setIsCatNewsLoading] = useState(false);
   const [isHomeLoading, setIsHomeLoading] = useState(false);
   const [isGlobalNewsLoading, setIsGlobalNewsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [expandedWeeklySection, setExpandedWeeklySection] = useState<'upcoming' | 'finished' | null>('upcoming');
   const [showPwaPrompt, setShowPwaPrompt] = useState(false);
@@ -502,35 +502,9 @@ const App = () => {
       console.error('Home fetch error:', e);
     } finally {
       setIsHomeLoading(false);
-      setIsRefreshing(false);
     }
   }, []);
 
-  const refreshAll = useCallback(async () => {
-    setIsRefreshing(true);
-    loadedDataRef.current.clear(); // Reset cache to force refetch
-    
-    if (view === 'category') {
-      const cat = selectedCategory;
-      loadedDataRef.current.delete(`${cat}-calendar`);
-      loadedDataRef.current.delete(`${cat}-standings`);
-      loadedDataRef.current.delete(`${cat}-news`);
-      await Promise.allSettled([
-        fetchCategoryCalendar(cat),
-        fetchCategoryStandings(cat),
-        fetchCategoryNews(cat)
-      ]);
-    } else if (mainTab === 'home') {
-      await fetchHomeData();
-    } else if (mainTab === 'noticias') {
-      await fetchGlobalNews();
-    } else if (mainTab === 'calendario') {
-      // Home data is essentially the weekly calendar
-      await fetchHomeData();
-    }
-    
-    setIsRefreshing(false);
-  }, [view, mainTab, selectedCategory, fetchHomeData, fetchGlobalNews]);
 
   useEffect(() => {
     // Mandatory initial splash screen delay
@@ -3014,40 +2988,7 @@ const App = () => {
             </header>
 
             <main className="content-area">
-              <div className="pull-to-refresh-container">
-                 <AnimatePresence>
-                   {isRefreshing && (
-                     <motion.div 
-                       initial={{ height: 0, opacity: 0 }}
-                       animate={{ height: 50, opacity: 1 }}
-                       exit={{ height: 0, opacity: 0 }}
-                       className="pull-to-refresh-indicator"
-                     >
-                       <RefreshCw size={20} className="spinning" />
-                     </motion.div>
-                   )}
-                 </AnimatePresence>
-              </div>
-
-              <div
-                onTouchStart={(e) => {
-                  if (window.scrollY === 0) {
-                    (window as any).pullStart = e.touches[0].pageY;
-                  }
-                }}
-                onTouchMove={(e) => {
-                  if ((window as any).pullStart !== undefined && window.scrollY === 0) {
-                    const pullDist = e.touches[0].pageY - (window as any).pullStart;
-                    if (pullDist > 100 && !isRefreshing) {
-                      refreshAll();
-                      (window as any).pullStart = undefined;
-                    }
-                  }
-                }}
-                onTouchEnd={() => {
-                  (window as any).pullStart = undefined;
-                }}
-              >
+              <div>
                 <AnimatePresence mode="wait">
                   {view === 'category' ? renderCategoryView() : (
                     <>
