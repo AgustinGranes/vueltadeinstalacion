@@ -370,6 +370,17 @@ export const dataService = {
             watchLinks,
           };
         }));
+
+        // Also fetch and merge horarios.json events
+        try {
+          const horariosRaces = await this.getHorariosWeekly();
+          if (horariosRaces.length > 0) {
+            return [...racesWithImages, ...horariosRaces];
+          }
+        } catch (e) {
+          console.warn('[DataService] Failed to fetch horarios:', e);
+        }
+
         return racesWithImages;
       }
 
@@ -410,9 +421,131 @@ export const dataService = {
         });
       });
 
+      // Also add horarios.json events in fallback
+      try {
+        const horariosRaces = await this.getHorariosWeekly();
+        return [...scrapedRaces, ...horariosRaces];
+      } catch (e) {
+        console.warn('[DataService] Failed to fetch horarios in fallback:', e);
+      }
+
       return scrapedRaces;
     } catch (e) {
       console.error('[DataService] Weekly calendar error:', e);
+      return [];
+    }
+  },
+
+  // === HORARIOS.JSON WEEKLY EVENTS (GitHub DataExtractor) ===
+  async getHorariosWeekly(): Promise<Race[]> {
+    try {
+      const HORARIOS_URL = 'https://raw.githubusercontent.com/AgustinGranes/DataExtractor/main/data/horarios.json';
+      const res = await fetch(HORARIOS_URL);
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
+
+      // Build a map of series by their ID
+      const seriesMap: Record<string, any> = {};
+      if (Array.isArray(data.series)) {
+        for (const s of data.series) {
+          if (s.details?.id) seriesMap[s.details.id] = s;
+        }
+      }
+
+      // Get the window: from start of today (local) to 7 days later (end of day)
+      const nowLocal = new Date();
+      const startOfToday = new Date(nowLocal);
+      startOfToday.setHours(0, 0, 0, 0);
+      const endOf7Days = new Date(startOfToday);
+      endOf7Days.setDate(startOfToday.getDate() + 7);
+      endOf7Days.setHours(23, 59, 59, 999);
+
+      const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+      const races: Race[] = [];
+      const events = Array.isArray(data.events) ? data.events : [];
+
+      for (const ev of events) {
+        // Filter sessions in the next 7 days (comparing local time)
+        const validSessions = (ev.sessions || []).filter((s: any) => {
+          const d = new Date(s.date);
+          return d >= startOfToday && d <= endOf7Days;
+        });
+
+        if (validSessions.length === 0) continue;
+
+        // Get the primary series for this event (use first series ID)
+        const primarySeriesId = (ev.series || [])[0] || '';
+        const seriesInfo = seriesMap[primarySeriesId] || null;
+
+        // Build color from series colours
+        let categoryColor = '#888888';
+        if (seriesInfo?.colours?.dark) {
+          const [r, g, b] = seriesInfo.colours.dark;
+          categoryColor = `rgb(${r},${g},${b})`;
+        }
+
+        // Build display name
+        const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || primarySeriesId.toUpperCase() || 'Motorsport';
+        const categoryFullName = seriesInfo?.details?.name || categoryName;
+
+        // Build streaming / watch links
+        const watchLinks: { platform: string; url: string }[] = [];
+        if (seriesInfo?.streaming) {
+          for (const stream of seriesInfo.streaming) {
+            if (stream.url) {
+              watchLinks.push({ platform: stream.name || 'Ver', url: stream.url });
+            }
+          }
+        }
+
+        // Build circuit info from first valid session
+        const firstSession = validSessions[0];
+        const circuitObj = firstSession?.circuit || {};
+        const circuitParts: string[] = [];
+        if (circuitObj.circuit) circuitParts.push(circuitObj.circuit);
+        if (circuitObj.layout && circuitObj.layout !== 'N/A') circuitParts.push(circuitObj.layout);
+        if (circuitObj.country) circuitParts.push(circuitObj.country);
+        const circuitName = circuitParts.join(' · ');
+
+        // Build schedules list from all valid sessions
+        const schedulesList = validSessions.map((s: any, idx: number) => {
+          const d = new Date(s.date);
+          const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+          const timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const sessionLabel = s.sessionName || s.sessionType || `Sesión ${idx + 1}`;
+          return {
+            id: `horarios-${ev.eventId}-${s.id || idx}`,
+            name: sessionLabel,
+            time: `${dayStr}, ${timeStr}`,
+            startAt: d.getTime(),
+          };
+        });
+
+        // Ticket link from affiliate info
+        const ticketLink = ev.affiliate?.ticketLinkURL || seriesInfo?.affiliate?.ticketLinkURL || '';
+
+        races.push({
+          id: `horarios-${ev.eventId}`,
+          categoryId: primarySeriesId,
+          category: categoryFullName,
+          categoryShort: categoryName,
+          categoryColor,
+          categoryImage: '',
+          event: ev.eventName || categoryName,
+          circuit: circuitName,
+          circuitImage: '',
+          platforms: watchLinks.map(w => w.platform),
+          schedules: schedulesList,
+          time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
+          ticketLink,
+          watchLinks,
+        });
+      }
+
+      return races;
+    } catch (e) {
+      console.error('[DataService] Horarios weekly error:', e);
       return [];
     }
   },
