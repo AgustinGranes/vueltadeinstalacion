@@ -243,10 +243,12 @@ export default async function handler(req: any, res: any) {
         const isConfirmed = sched.confirmed !== false && sched.time !== '--:--' && sched.time !== '';
         if (!isConfirmed) continue;
         
-        let timeStr = sched.time;
-        if (!timeStr || timeStr === '--:--') {
+        let timeStr = '';
+        if (startTs) {
           const d = new Date(startTs);
           timeStr = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' });
+        } else {
+          timeStr = sched.time || '--:--';
         }
 
         flatSchedules.push({
