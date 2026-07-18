@@ -96,9 +96,16 @@ try {
     mainStack.addSpacer(10); 
     
     // === LÍNEA SEPARADORA COMPLETA ===
-    const divider = mainStack.addStack();
+    const centerDividerStack = mainStack.addStack();
+    centerDividerStack.layoutVertically();
+    centerDividerStack.centerAlignContent();
+    
+    let divider = centerDividerStack.addStack();
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
-    divider.size = new Size(1, 0);
+    
+    // Altura segura garantizada para que no desborde ni desaparezca
+    let divHeight = config.widgetFamily === "large" ? 320 : 125;
+    divider.size = new Size(1, divHeight);
     
     mainStack.addSpacer(10); 
     
