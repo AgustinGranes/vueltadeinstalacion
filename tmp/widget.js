@@ -91,7 +91,7 @@ try {
     leftTitle.font = Font.boldSystemFont(12);
     leftTitle.textColor = Color.red();
     leftCol.addSpacer(8);
-    renderEvents(leftCol, liveEvents.slice(0, 3));
+    renderEvents(leftCol, liveEvents.slice(0, 4));
     
     mainStack.addSpacer(10); 
     
@@ -103,8 +103,8 @@ try {
     let divider = centerDividerStack.addStack();
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     
-    // Altura segura garantizada para que no desborde ni desaparezca
-    let divHeight = config.widgetFamily === "large" ? 320 : 125;
+    // Altura calculada para ocupar el máximo sin desbordar el widget mediano
+    let divHeight = config.widgetFamily === "large" ? 320 : 145;
     divider.size = new Size(1, divHeight);
     
     mainStack.addSpacer(10); 
@@ -116,7 +116,7 @@ try {
     rightTitle.font = Font.boldSystemFont(12);
     rightTitle.textColor = Color.gray();
     rightCol.addSpacer(8);
-    renderEvents(rightCol, upcomingEvents.slice(0, 3));
+    renderEvents(rightCol, upcomingEvents.slice(0, 4));
     
   } else {
     const titleText = (liveEvents.length > 0) ? "Próximos y En Vivo:" : "Próximos:";
