@@ -21,6 +21,14 @@ try {
   if (config.widgetFamily === "small") {
     isSplit = false;
   }
+  
+  // Dynamic sizing based on widget family
+  const isLarge = config.widgetFamily === "large" || config.widgetFamily === "extraLarge";
+  const maxEvents = isLarge ? 9 : 4;
+  const titleSize = isLarge ? 14 : 12;
+  const catSize = isLarge ? 12 : 10;
+  const eventSize = isLarge ? 12 : 10;
+  const dateSize = isLarge ? 11 : 9;
 
   function renderEvents(container, evList) {
     if (evList.length === 0) {
@@ -45,7 +53,7 @@ try {
       top.centerAlignContent();
       
       let cat = top.addText(ev.category);
-      cat.font = Font.boldSystemFont(10);
+      cat.font = Font.boldSystemFont(catSize);
       cat.lineLimit = 1;
       
       if (ev.isLive) {
@@ -57,7 +65,7 @@ try {
       top.addSpacer();
       
       let sessName = top.addText(ev.name);
-      sessName.font = Font.boldSystemFont(10);
+      sessName.font = Font.boldSystemFont(eventSize);
       sessName.textColor = Color.dynamic(Color.black(), Color.white());
       sessName.lineLimit = 1;
       
@@ -67,13 +75,13 @@ try {
       bottom.centerAlignContent();
       
       let dateText = bottom.addText(dateStr);
-      dateText.font = Font.systemFont(9);
+      dateText.font = Font.systemFont(dateSize);
       dateText.textColor = Color.gray();
       
       bottom.addSpacer();
       
       let timeText = bottom.addText(timeStr);
-      timeText.font = Font.systemFont(9);
+      timeText.font = Font.systemFont(dateSize);
       timeText.textColor = Color.gray();
       
       if (i < evList.length - 1) container.addSpacer(8);
@@ -88,10 +96,10 @@ try {
     const leftCol = mainStack.addStack();
     leftCol.layoutVertically();
     const leftTitle = leftCol.addText("EN VIVO:");
-    leftTitle.font = Font.boldSystemFont(12);
+    leftTitle.font = Font.boldSystemFont(titleSize);
     leftTitle.textColor = Color.red();
     leftCol.addSpacer(8);
-    renderEvents(leftCol, liveEvents.slice(0, 4));
+    renderEvents(leftCol, liveEvents.slice(0, maxEvents));
     
     mainStack.addSpacer(10); 
     
@@ -104,7 +112,7 @@ try {
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     
     // Altura calculada para ocupar el máximo sin desbordar el widget mediano
-    let divHeight = config.widgetFamily === "large" ? 320 : 145;
+    let divHeight = isLarge ? 320 : 145;
     divider.size = new Size(1, divHeight);
     
     mainStack.addSpacer(10); 
@@ -113,15 +121,15 @@ try {
     const rightCol = mainStack.addStack();
     rightCol.layoutVertically();
     const rightTitle = rightCol.addText("Próximos:");
-    rightTitle.font = Font.boldSystemFont(12);
+    rightTitle.font = Font.boldSystemFont(titleSize);
     rightTitle.textColor = Color.gray();
     rightCol.addSpacer(8);
-    renderEvents(rightCol, upcomingEvents.slice(0, 4));
+    renderEvents(rightCol, upcomingEvents.slice(0, maxEvents));
     
   } else {
     const titleText = (liveEvents.length > 0) ? "Próximos y En Vivo:" : "Próximos:";
     const title = widget.addText(titleText);
-    title.font = Font.boldSystemFont(14);
+    title.font = Font.boldSystemFont(titleSize + 2);
     title.textColor = Color.dynamic(Color.black(), Color.white());
     widget.addSpacer(10);
     
@@ -130,7 +138,7 @@ try {
       msg.font = Font.systemFont(12);
       msg.textColor = Color.gray();
     } else {
-      renderEvents(widget, events.slice(0, 4));
+      renderEvents(widget, events.slice(0, maxEvents));
     }
   }
 } catch(e) {
