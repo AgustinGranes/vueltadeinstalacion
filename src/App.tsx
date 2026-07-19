@@ -1548,7 +1548,7 @@ const App = () => {
                       {authError && <p style={{ color: '#ff4444', fontSize: '13px', margin: '0' }}>{authError}</p>}
                     </form>
                   </div>
-                  <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px', borderBottom: '1px solid var(--separator)' }}>
+                  <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px', borderBottom: '1px solid transparent' }}>
                     <button className="filter-btn filter-reset-btn" onClick={handleEmailLogin}>Ingresar</button>
                     <button className="filter-btn filter-reset-btn" onClick={handleEmailRegister}>Registrarse</button>
                   </div>
