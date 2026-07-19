@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import mediumLargeWidgetCode from './widgets/widget.js?raw';
+import lockscreenWidgetCode from './widgets/lockscreen_widget.js?raw';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
@@ -62,6 +64,8 @@ const App = () => {
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -1490,26 +1494,47 @@ const App = () => {
     return (
       <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="settings-view" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {user ? (
-          <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="Avatar" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
-              ) : (
-                <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <UserIcon size={24} color="#fff" />
-                </div>
-              )}
-              <div>
-                <h3 style={{ margin: 0, fontSize: '18px' }}>{user.displayName || 'Usuario'}</h3>
-                <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>{user.email}</p>
+          <div className="news-filter-container">
+            <button className="news-filter-toggle" onClick={() => setIsAccountOpen(!isAccountOpen)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserIcon size={18} />
+                <span>Cuenta ({user.email})</span>
               </div>
-            </div>
-            <button 
-              onClick={() => signOut(auth)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              <LogOut size={18} /> Cerrar Sesión
+              <ChevronRight size={18} className={`filter-chevron ${isAccountOpen ? 'open' : ''}`} />
             </button>
+            <AnimatePresence>
+              {isAccountOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="news-filter-dropdown"
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt="Avatar" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
+                      ) : (
+                        <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <UserIcon size={24} color="#fff" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '18px' }}>{user.displayName || 'Usuario'}</h3>
+                        <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>{user.email}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => signOut(auth)}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                    >
+                      <LogOut size={18} /> Cerrar Sesión
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           <div className="news-filter-container">
@@ -1563,6 +1588,77 @@ const App = () => {
             </AnimatePresence>
           </div>
         )}
+
+        <div className="news-filter-container">
+          <button className="news-filter-toggle" onClick={() => setIsWidgetsOpen(!isWidgetsOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>📱</span>
+              <span>Widgets para iOS</span>
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isWidgetsOpen ? 'open' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {isWidgetsOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="news-filter-dropdown"
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Paso a paso para instalar:</h3>
+                    <ol style={{ margin: 0, paddingLeft: '20px', color: '#ccc', fontSize: '14px', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li>Descarga la app gratuita <strong>Scriptable</strong> desde la App Store de tu iPhone.</li>
+                      <li>Abre Scriptable y toca el ícono <strong>+</strong> arriba a la derecha para crear un nuevo script.</li>
+                      <li>Copia el código del widget que prefieras (abajo) y pégalo allí.</li>
+                      <li>Toca el nombre arriba (ej. "Untitled Script") y cámbialo por "Carreras" o similar. Toca <strong>Done</strong>.</li>
+                      <li>Ve a la pantalla de inicio de tu iPhone y mantén presionado un espacio vacío.</li>
+                      <li>Toca <strong>+</strong> arriba a la izquierda, busca Scriptable y añade el widget del tamaño correspondiente.</li>
+                      <li>Toca el widget añadido. En <strong>Script</strong>, elige el que creaste.</li>
+                      <li>En <strong>Parameter</strong> (Parámetro), debes pegar el texto exacto que aparece a continuación para que se apliquen tus filtros:</li>
+                    </ol>
+                  </div>
+
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--accent-blue)' }}>Parámetro de Filtros (Cópialo):</h4>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
+                      Este texto contiene las categorías que ocultaste. Pegalo en el campo "Parameter" del widget.
+                    </p>
+                    <textarea 
+                      readOnly 
+                      value={hiddenCalCategories.length > 0 ? hiddenCalCategories.join(',') : 'Ningún filtro activo'}
+                      style={{ width: '100%', minHeight: '60px', background: '#111', color: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #333', fontSize: '13px', fontFamily: 'monospace', resize: 'none' }}
+                      onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                    />
+                  </div>
+
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Código: Lockscreen</h4>
+                    <textarea 
+                      readOnly 
+                      value={lockscreenWidgetCode}
+                      style={{ width: '100%', height: '120px', background: '#111', color: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #333', fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' }}
+                      onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                    />
+                  </div>
+
+                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Código: Mediano / Grande</h4>
+                    <textarea 
+                      readOnly 
+                      value={mediumLargeWidgetCode}
+                      style={{ width: '100%', height: '150px', background: '#111', color: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #333', fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' }}
+                      onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                    />
+                  </div>
+
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
     );
   };
