@@ -109,6 +109,7 @@ try {
     // Columna Izquierda
     const leftCol = mainStack.addStack();
     leftCol.layoutVertically();
+    if (!isLarge) leftCol.addSpacer(2); // Desplazar texto un poco hacia abajo en widget mediano
     const leftTitle = leftCol.addText("EN VIVO:");
     leftTitle.font = Font.boldSystemFont(titleSize);
     leftTitle.textColor = Color.red();
@@ -134,14 +135,15 @@ try {
     // Columna Derecha
     const rightCol = mainStack.addStack();
     rightCol.layoutVertically();
-    const rightTitle = rightCol.addText("Próximos:");
+    if (!isLarge) rightCol.addSpacer(2); // Desplazar texto un poco hacia abajo en widget mediano
+    const rightTitle = rightCol.addText("PRÓXIMO:");
     rightTitle.font = Font.boldSystemFont(titleSize);
     rightTitle.textColor = Color.gray();
     rightCol.addSpacer(8);
     renderEvents(rightCol, upcomingEvents.slice(0, maxEvents));
     
   } else {
-    const titleText = (liveEvents.length > 0) ? "Próximos y En Vivo:" : "Próximos:";
+    const titleText = (liveEvents.length > 0) ? "PRÓXIMO Y EN VIVO:" : "PRÓXIMO:";
     const title = widget.addText(titleText);
     title.font = Font.boldSystemFont(titleSize + 2);
     title.textColor = Color.dynamic(Color.black(), Color.white());
