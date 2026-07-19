@@ -573,7 +573,7 @@ const App = () => {
   };
 
   const handleCopyICSUrl = () => {
-    const hiddenParam = hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}` : '';
+    const hiddenParam = hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}&v=2` : '?v=2';
     const httpsUrl = `https://${window.location.host}/api/webcal${hiddenParam}`;
     navigator.clipboard.writeText(httpsUrl).then(() => {
       setCopySuccess(true);
@@ -3094,7 +3094,7 @@ const App = () => {
               <h3>Suscribirse al Calendario</h3>
               <p>Copiá esta URL y pegala en tu aplicación de calendario favorita (Google Calendar, Apple Calendar, Outlook, etc.) para recibir todos los eventos automáticamente.</p>
               <div className="cal-url-box">
-                <span className="cal-url-text">{`https://${window.location.host}/api/webcal${hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}` : ''}`}</span>
+                <span className="cal-url-text">{`https://${window.location.host}/api/webcal${hiddenCalCategories.length > 0 ? `?hidden=${encodeURIComponent(hiddenCalCategories.join(','))}&v=2` : '?v=2'}`}</span>
               </div>
               <button
                 className="cal-option-btn copy-cal-btn cal-copy-main-btn"
