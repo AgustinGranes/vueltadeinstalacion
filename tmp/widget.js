@@ -1,6 +1,12 @@
 const widget = new ListWidget();
 widget.backgroundColor = Color.dynamic(new Color("#ffffff"), new Color("#151515"));
-widget.setPadding(14, 14, 14, 14);
+
+// Padding dinámico: más margen si el widget es grande
+if (config.widgetFamily === "large" || config.widgetFamily === "extraLarge") {
+  widget.setPadding(20, 20, 20, 20);
+} else {
+  widget.setPadding(14, 14, 14, 14);
+}
 
 // Acción al tocar el widget:
 widget.url = "https://vueltadeinstalacion.vercel.app/";
@@ -111,8 +117,8 @@ try {
     let divider = centerDividerStack.addStack();
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     
-    // Altura calculada para ocupar el máximo sin desbordar el widget mediano
-    let divHeight = isLarge ? 340 : 145;
+    // Altura calculada para el widget grande: un poco más corta que antes y ajustada al nuevo padding
+    let divHeight = isLarge ? 320 : 145;
     divider.size = new Size(1, divHeight);
     
     mainStack.addSpacer(10); 
