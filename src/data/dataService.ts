@@ -68,6 +68,60 @@ export function getCategoryColor(cat: string): string {
   return CATEGORY_COLORS[cat] || 'var(--accent-blue)';
 }
 
+const CATEGORY_LOCAL_LOGOS: Record<string, string> = {
+  'IndyCar': '/categories/indycar.png',
+  'Indy NXT': '/categories/indynxt.png',
+  'Super Formula': '/categories/superformula.png',
+  'British F4': '/categories/britishf4.png',
+  'Italian F4': '/categories/f4italian.png',
+  'Spanish F4': '/categories/spanishf4.png',
+  'French F4': '/categories/frenchf4.png',
+  'FIA WEC': '/categories/wec.png',
+  'IMSA WeatherTech': '/categories/imsaweathertech.png',
+  'IMSA Pilot': '/categories/imsapilot.png',
+  'IMSA SportsCar Challenge': '/categories/imsasportscarchallenge.png',
+  'NLS (VLN) / N24': '/categories/nls-nurburgring24.png',
+  'Super GT': '/categories/supergt.png',
+  'DTM': '/categories/dtm.png',
+  'GTWC Europe': '/categories/gtwceurope.png',
+  'GTWC America': '/categories/gtwcamerica.svg',
+  'ADAC GT Masters': '/categories/adacgtmasters.png',
+  'Gulf 12 Hours': '/categories/gulf12hours.png',
+  'Porsche Mobil 1 Supercup': '/categories/porschemobil1supercup.png',
+  'BTCC': '/categories/btcc.png',
+  'Supercars': '/categories/supercars.png',
+  'Stock Car Pro': '/categories/stockcar.png',
+  'TCR World Tour': '/categories/tcrworldtour.png',
+  'TCR Europe': '/categories/tcreurope.png',
+  'TCR South America': '/categories/tcrsouthamerica.png',
+  'NASCAR Cup': '/categories/nascarcup.png',
+  "NASCAR O'Reilly": '/categories/nascaroreilly.png',
+  'NASCAR Truck': '/categories/nascartruck.png',
+  'ARCA': '/categories/arca.png',
+  'WRC': '/categories/wrc.png',
+  'ERX': '/categories/erx.png',
+  'ERC': '/categories/erc.png',
+  'MotoGP': '/categories/motogp.png',
+  'Moto2': '/categories/moto2.png',
+  'Moto3': '/categories/moto3.png',
+  'World SBK': '/categories/worldsbk.png',
+  'FIM EWC': '/categories/ewc.png',
+  'Isle of Man TT': '/categories/ttisleoftheman.png',
+  'World of Outlaws Sprint': '/categories/worldofoutlawssprint.png',
+  'World of Outlaws LMs': '/categories/worldofoutlawslms.png',
+  'USAC Silver Crown': '/categories/usacsilvercrown.png',
+  'USAC Sprint Car': '/categories/usacsprintcar.png',
+  'USAC Midget': '/categories/usacmidget.png',
+  'Lucas Oil Late Models': '/categories/lucasoillatemodels.png',
+  'High Limit Racing': '/categories/highlimitracing.png',
+  'Formula Drift': '/categories/formuladrift.png',
+  'Drift Masters': '/categories/driftmasters.png',
+  'NHRA': '/categories/nhra.png',
+  'Goodwood': '/categories/goodwood.png',
+  'Bathurst 6 Hours': '/categories/bathurst6hours.png',
+  'British Truck Racing': '/categories/britishtruckracing.png'
+};
+
 // ========== TYPES ==========
 
 export type Race = {
@@ -330,6 +384,9 @@ function _deduplicateRaces(primaryRaces: Race[], secondaryRaces: Race[]): Race[]
       const secRace = secRaces[0];
 
       const mergedRace = { ...primRace };
+      if (!mergedRace.categoryImage && secRace.categoryImage) {
+        mergedRace.categoryImage = secRace.categoryImage;
+      }
       
       const primScheds = primRace.schedules || [];
       const secScheds = secRace.schedules || [];
@@ -650,7 +707,7 @@ export const dataService = {
             category: categoryFullName,
             categoryShort: categoryName,
             categoryColor,
-            categoryImage: '',
+            categoryImage: CATEGORY_LOCAL_LOGOS[categoryFullName] || CATEGORY_LOCAL_LOGOS[categoryName] || '',
             event: ev.eventName || categoryName,
             circuit: circuitName,
             circuitImage: '',
