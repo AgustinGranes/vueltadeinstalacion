@@ -1,13 +1,6 @@
 const widget = new ListWidget();
 widget.backgroundColor = Color.dynamic(new Color("#ffffff"), new Color("#151515"));
 
-// Padding dinámico: más margen si el widget es grande
-if (config.widgetFamily === "large" || config.widgetFamily === "extraLarge") {
-  widget.setPadding(20, 20, 20, 20);
-} else {
-  widget.setPadding(14, 14, 14, 14);
-}
-
 // Acción al tocar el widget:
 widget.url = "https://vueltadeinstalacion.vercel.app/";
 
@@ -26,6 +19,17 @@ try {
   
   if (config.widgetFamily === "small") {
     isSplit = false;
+  }
+  
+  // Padding dinámico basado en tamaño y estado (dividido o no)
+  if (config.widgetFamily === "large" || config.widgetFamily === "extraLarge") {
+    widget.setPadding(20, 20, 20, 20);
+  } else {
+    if (isSplit) {
+      widget.setPadding(14, 14, 14, 14); // Menos padding para no asfixiar el contenido dividido
+    } else {
+      widget.setPadding(22, 22, 22, 22); // Más padding cuando es columna simple para que quede mejor centrado
+    }
   }
   
   // Dynamic sizing based on widget family
