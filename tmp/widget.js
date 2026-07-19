@@ -13,10 +13,9 @@ try {
   
   const events = await new Request(url).loadJSON();
   
-  // DESHABILITADO TEMPORALMENTE PARA PRUEBAS:
-  const liveEvents = []; // events.filter(e => e.isLive);
-  const upcomingEvents = events; // events.filter(e => !e.isLive);
-  let isSplit = false; // liveEvents.length > 0;
+  const liveEvents = events.filter(e => e.isLive);
+  const upcomingEvents = events.filter(e => !e.isLive);
+  let isSplit = liveEvents.length > 0;
   
   if (config.widgetFamily === "small") {
     isSplit = false;
@@ -40,6 +39,10 @@ try {
   const catSize = isLarge ? 12 : 10;
   const eventSize = isLarge ? 12 : 10;
   const dateSize = isLarge ? 11 : 9;
+  
+  const spacerTitle = isLarge ? 10 : 6;
+  const spacerEvent = isLarge ? 8 : 4;
+  const spacerRow = isLarge ? 2 : 1;
 
   function renderEvents(container, evList) {
     if (evList.length === 0) {
@@ -81,7 +84,7 @@ try {
       sessName.lineLimit = 1;
       
       // Fila 2: Fecha (Izq) | Hora (Der)
-      row.addSpacer(1);
+      row.addSpacer(spacerRow);
       let bottom = row.addStack();
       bottom.centerAlignContent();
       
@@ -95,7 +98,7 @@ try {
       timeText.font = Font.systemFont(dateSize);
       timeText.textColor = Color.gray();
       
-      if (i < evList.length - 1) container.addSpacer(4);
+      if (i < evList.length - 1) container.addSpacer(spacerEvent);
     }
   }
 
@@ -142,7 +145,7 @@ try {
     const title = widget.addText(titleText);
     title.font = Font.boldSystemFont(titleSize + 2);
     title.textColor = Color.dynamic(Color.black(), Color.white());
-    widget.addSpacer(6);
+    widget.addSpacer(spacerTitle);
     
     if (events.length === 0) {
       let msg = widget.addText("No hay eventos registrados por el momento.");
