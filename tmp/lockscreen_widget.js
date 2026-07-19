@@ -34,7 +34,7 @@ try {
     row2.addSpacer();
     
     let sess = row2.addText(ev.name);
-    sess.font = Font.boldSystemFont(13);
+    sess.font = Font.systemFont(13);
     sess.textColor = Color.dynamic(Color.black(), Color.white());
     
     widget.addSpacer(2);
