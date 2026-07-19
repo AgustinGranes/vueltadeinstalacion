@@ -28,7 +28,7 @@ try {
     if (isSplit) {
       widget.setPadding(14, 14, 14, 14); // Menos padding para no asfixiar el contenido dividido
     } else {
-      widget.setPadding(22, 22, 22, 22); // Más padding cuando es columna simple para que quede mejor centrado
+      widget.setPadding(25, 18, 25, 18); // Más padding arriba/abajo, menos a los costados
     }
   }
   
