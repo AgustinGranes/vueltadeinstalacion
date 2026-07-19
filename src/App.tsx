@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock } from 'lucide-react';
+import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock, Settings, LogIn, LogOut, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { auth, googleProvider } from './firebase';
+import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, User } from 'firebase/auth';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
 
 type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK' | 'WTCR' | 'TCRSA';
-type MainTab = 'home' | 'calendario' | 'noticias';
+type MainTab = 'home' | 'calendario' | 'noticias' | 'configuracion';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
@@ -54,6 +56,17 @@ const App = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('F1');
   const [categorySubTab, setCategorySubTab] = useState<CategorySubTab>('calendar');
   const [calendarViewMode, setCalendarViewMode] = useState<CalendarViewMode>('semanal');
+  const [user, setUser] = useState<User | null>(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -1412,6 +1425,104 @@ const App = () => {
               <Calendar size={32} />
               <span>{copySuccess ? '¡Enlace Copiado!' : 'Suscribirse al calendario ICS'}</span>
             </button>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setAuthError('');
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      setAuthError(error.message);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthError('');
+      await signInWithEmailAndPassword(auth, authEmail, authPassword);
+    } catch (error: any) {
+      setAuthError('Error al iniciar sesión. Comprueba tus credenciales.');
+    }
+  };
+
+  const handleEmailRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setAuthError('');
+      await createUserWithEmailAndPassword(auth, authEmail, authPassword);
+    } catch (error: any) {
+      setAuthError('Error al registrarse. Puede que el correo ya esté en uso.');
+    }
+  };
+
+  const renderSettings = () => {
+    return (
+      <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="settings-view" style={{ padding: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>Configuración</h2>
+        
+        {user ? (
+          <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              {user.photoURL ? (
+                <img src={user.photoURL} alt="Avatar" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
+              ) : (
+                <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <UserIcon size={24} color="#fff" />
+                </div>
+              )}
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px' }}>{user.displayName || 'Usuario'}</h3>
+                <p style={{ margin: 0, color: '#999', fontSize: '14px' }}>{user.email}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => signOut(auth)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              <LogOut size={18} /> Cerrar Sesión
+            </button>
+          </div>
+        ) : (
+          <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px' }}>Iniciar Sesión</h3>
+            
+            <button 
+              onClick={handleGoogleLogin}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+              Continuar con Google
+            </button>
+            
+            <div style={{ textAlign: 'center', color: '#999', fontSize: '14px', margin: '5px 0' }}>o usa tu correo</div>
+            
+            <form style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input 
+                type="email" 
+                placeholder="Correo electrónico" 
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
+              />
+              <input 
+                type="password" 
+                placeholder="Contraseña" 
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
+              />
+              {authError && <p style={{ color: '#ff4444', fontSize: '13px', margin: '0' }}>{authError}</p>}
+              
+              <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                <button type="submit" onClick={handleEmailLogin} style={{ flex: 1, padding: '12px', background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Ingresar</button>
+                <button type="button" onClick={handleEmailRegister} style={{ flex: 1, padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Registrarse</button>
+              </div>
+            </form>
           </div>
         )}
       </motion.div>
@@ -3021,6 +3132,7 @@ const App = () => {
                       {mainTab === 'home' && renderHome()}
                       {mainTab === 'calendario' && renderCalendario()}
                       {mainTab === 'noticias' && renderNoticias()}
+                      {mainTab === 'configuracion' && renderSettings()}
                     </>
                   )}
                 </AnimatePresence>
@@ -3029,10 +3141,6 @@ const App = () => {
 
             {view === 'main' && (
               <nav className="tab-bar">
-                {/* <button className={`tab-btn ${mainTab === 'home' ? 'active' : ''}`} onClick={() => setMainTab('home')}>
-                  <Home size={22} />
-                  <span>Inicio</span>
-                </button> */}
                 <button className={`tab-btn ${mainTab === 'calendario' ? 'active' : ''}`} onClick={() => setMainTab('calendario')}>
                   <Calendar size={22} />
                   <span>Calendario</span>
@@ -3040,6 +3148,10 @@ const App = () => {
                 <button className={`tab-btn ${mainTab === 'noticias' ? 'active' : ''}`} onClick={() => setMainTab('noticias')}>
                   <Newspaper size={22} />
                   <span>Noticias</span>
+                </button>
+                <button className={`tab-btn ${mainTab === 'configuracion' ? 'active' : ''}`} onClick={() => setMainTab('configuracion')}>
+                  <Settings size={22} />
+                  <span>Configuración</span>
                 </button>
               </nav>
             )}
