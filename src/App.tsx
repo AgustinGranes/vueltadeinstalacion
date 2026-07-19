@@ -66,6 +66,7 @@ const App = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isWhereToPitOpen, setIsWhereToPitOpen] = useState(false);
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -1654,6 +1655,39 @@ const App = () => {
                     />
                   </div>
 
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="news-filter-container">
+          <button className="news-filter-toggle" onClick={() => setIsWhereToPitOpen(!isWhereToPitOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>📺</span>
+              <span>¿Dónde veo las carreras?</span>
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isWhereToPitOpen ? 'open' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {isWhereToPitOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="news-filter-dropdown"
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px', color: '#ccc', fontSize: '15px', lineHeight: '1.6' }}>
+                  <p style={{ margin: 0 }}>
+                    ¿Cansado de buscar dónde transmiten tu categoría favorita? Descubrí <strong>WhereToPit</strong>, la guía definitiva para los fanáticos del automovilismo.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    Encontrá al instante en qué canal o plataforma oficial podés ver la Fórmula 1, WEC, MotoGP, TC, IndyCar y más de 40 categorías. Además, usá nuestra calculadora integrada para sumar tus suscripciones y saber exactamente cuánto te cuesta por mes seguir tu pasión.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    En <a href="https://wheretopit.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 'bold' }}>wheretopit.vercel.app</a>, todo el Motorsport en un solo lugar. ¡Empezá a usarla gratis hoy!
+                  </p>
                 </div>
               </motion.div>
             )}
