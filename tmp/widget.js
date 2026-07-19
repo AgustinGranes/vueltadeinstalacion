@@ -13,9 +13,10 @@ try {
   
   const events = await new Request(url).loadJSON();
   
-  const liveEvents = events.filter(e => e.isLive);
-  const upcomingEvents = events.filter(e => !e.isLive);
-  let isSplit = liveEvents.length > 0;
+  // DESHABILITADO TEMPORALMENTE PARA PRUEBAS:
+  const liveEvents = []; // events.filter(e => e.isLive);
+  const upcomingEvents = events; // events.filter(e => !e.isLive);
+  let isSplit = false; // liveEvents.length > 0;
   
   if (config.widgetFamily === "small") {
     isSplit = false;
@@ -80,7 +81,7 @@ try {
       sessName.lineLimit = 1;
       
       // Fila 2: Fecha (Izq) | Hora (Der)
-      row.addSpacer(2);
+      row.addSpacer(1);
       let bottom = row.addStack();
       bottom.centerAlignContent();
       
@@ -94,7 +95,7 @@ try {
       timeText.font = Font.systemFont(dateSize);
       timeText.textColor = Color.gray();
       
-      if (i < evList.length - 1) container.addSpacer(8);
+      if (i < evList.length - 1) container.addSpacer(4);
     }
   }
 
@@ -141,7 +142,7 @@ try {
     const title = widget.addText(titleText);
     title.font = Font.boldSystemFont(titleSize + 2);
     title.textColor = Color.dynamic(Color.black(), Color.white());
-    widget.addSpacer(10);
+    widget.addSpacer(6);
     
     if (events.length === 0) {
       let msg = widget.addText("No hay eventos registrados por el momento.");
