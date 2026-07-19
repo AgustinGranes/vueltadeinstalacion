@@ -1488,7 +1488,7 @@ const App = () => {
 
   const renderSettings = () => {
     return (
-      <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="settings-view" style={{ padding: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="settings-view" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {user ? (
           <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
