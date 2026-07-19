@@ -260,6 +260,19 @@ export default async function handler(req: any, res: any) {
 
     flatSchedules.sort((a, b) => a.startAt - b.startAt);
 
+    // --- Deduplicate identical schedules (e.g., Carrera 2 vs Race 2 at same time) ---
+    const uniqueSchedules: any[] = [];
+    for (const sched of flatSchedules) {
+      const isDup = uniqueSchedules.some(u => {
+        const catMatch = _normalizeCategoryKey(u.category) === _normalizeCategoryKey(sched.category);
+        const timeDiff = Math.abs(u.startAt - sched.startAt);
+        // If same category and within 10 minutes, treat as duplicate
+        return catMatch && timeDiff < 600000;
+      });
+      if (!isDup) uniqueSchedules.push(sched);
+    }
+    flatSchedules = uniqueSchedules;
+
     const upcomingSchedules = flatSchedules.filter(s => s.startAt >= Date.now() || isLive(s)).map(s => ({
       ...s,
       isLive: isLive(s)

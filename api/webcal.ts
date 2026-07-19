@@ -247,7 +247,7 @@ export default async function handler(req: any, res: any) {
       'CALSCALE:GREGORIAN',
     ];
 
-    let eventCount = 0;
+    let flatSchedules: any[] = [];
 
     for (const race of filteredRaces) {
       const schedules: any[] = race.schedules || [];
@@ -268,26 +268,50 @@ export default async function handler(req: any, res: any) {
         if (!isConfirmed) continue;
 
         const schedName: string = sched.name || sched.title || 'Evento';
-        const uid = `${startTs}-${(category + schedName).replace(/[^a-zA-Z0-9]/g, '')}@vueltadeinstalacion`;
-
-        lines.push('BEGIN:VEVENT');
-        lines.push(`UID:${uid}`);
-        lines.push(`DTSTAMP:${nowStamp}`);
-
-        const endTs = sched.endAt || (startTs + 3600000);
-        lines.push(`DTSTART:${toICSDatetime(startTs)}`);
-        lines.push(`DTEND:${toICSDatetime(endTs)}`);
-
-        const summary = `${escapeICS(category)}: ${escapeICS(schedName)}`;
-        lines.push(`SUMMARY:${summary}`);
-
-        const descParts = [event, circuit].filter(Boolean).join(' · ');
-        if (descParts) lines.push(`DESCRIPTION:${escapeICS(descParts)}`);
-        if (circuit) lines.push(`LOCATION:${escapeICS(circuit)}`);
-
-        lines.push('END:VEVENT');
-        eventCount++;
+        flatSchedules.push({
+          category,
+          event,
+          circuit,
+          name: schedName,
+          startAt: startTs,
+          endAt: sched.endAt || (startTs + 3600000)
+        });
       }
+    }
+
+    // --- Deduplicate identical schedules (e.g., Carrera 2 vs Race 2 at same time) ---
+    const uniqueSchedules: any[] = [];
+    for (const sched of flatSchedules) {
+      const isDup = uniqueSchedules.some(u => {
+        const catMatch = _normalizeCategoryKey(u.category) === _normalizeCategoryKey(sched.category);
+        const timeDiff = Math.abs(u.startAt - sched.startAt);
+        // If same category and within 10 minutes, treat as duplicate
+        return catMatch && timeDiff < 600000;
+      });
+      if (!isDup) uniqueSchedules.push(sched);
+    }
+    flatSchedules = uniqueSchedules;
+
+    let eventCount = 0;
+    for (const sched of flatSchedules) {
+      const uid = `${sched.startAt}-${(sched.category + sched.name).replace(/[^a-zA-Z0-9]/g, '')}@vueltadeinstalacion`;
+
+      lines.push('BEGIN:VEVENT');
+      lines.push(`UID:${uid}`);
+      lines.push(`DTSTAMP:${nowStamp}`);
+
+      lines.push(`DTSTART:${toICSDatetime(sched.startAt)}`);
+      lines.push(`DTEND:${toICSDatetime(sched.endAt)}`);
+
+      const summary = `${escapeICS(sched.category)}: ${escapeICS(sched.name)}`;
+      lines.push(`SUMMARY:${summary}`);
+
+      const descParts = [sched.event, sched.circuit].filter(Boolean).join(' · ');
+      if (descParts) lines.push(`DESCRIPTION:${escapeICS(descParts)}`);
+      if (sched.circuit) lines.push(`LOCATION:${escapeICS(sched.circuit)}`);
+
+      lines.push('END:VEVENT');
+      eventCount++;
     }
 
     // Placeholder if no events found
