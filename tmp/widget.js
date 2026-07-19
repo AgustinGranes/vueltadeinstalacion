@@ -73,14 +73,14 @@ try {
       if (ev.isLive) {
         cat.textColor = new Color(ev.color ? ev.color.replace('#','') : "ff3b30");
       } else {
-        cat.textColor = Color.gray();
+        cat.textColor = Color.dynamic(Color.black(), Color.white());
       }
       
       top.addSpacer();
       
       let sessName = top.addText(ev.name);
       sessName.font = Font.boldSystemFont(eventSize);
-      sessName.textColor = Color.dynamic(Color.black(), Color.white());
+      sessName.textColor = Color.gray();
       sessName.lineLimit = 1;
       
       // Fila 2: Fecha (Izq) | Hora (Der)
@@ -138,7 +138,7 @@ try {
     if (!isLarge) rightCol.addSpacer(2); // Desplazar texto un poco hacia abajo en widget mediano
     const rightTitle = rightCol.addText("PRÓXIMO:");
     rightTitle.font = Font.boldSystemFont(titleSize);
-    rightTitle.textColor = Color.gray();
+    rightTitle.textColor = Color.dynamic(Color.black(), Color.white());
     rightCol.addSpacer(8);
     renderEvents(rightCol, upcomingEvents.slice(0, maxEvents));
     
