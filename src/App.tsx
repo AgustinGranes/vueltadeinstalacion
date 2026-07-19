@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock, Settings, LogOut, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth, googleProvider } from './firebase';
+import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, type User } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
@@ -60,13 +61,6 @@ const App = () => {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -233,6 +227,39 @@ const App = () => {
   const [tempHiddenCalCategories, setTempHiddenCalCategories] = useState<string[]>([]);
   const [isCalFilterOpen, setIsCalFilterOpen] = useState(false);
 
+  const syncFiltersToCloud = async (filters: string[]) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'users', user.uid), { hiddenCalCategories: filters }, { merge: true });
+    } catch(e) {
+      console.error('Error saving filters to cloud:', e);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        try {
+          const userRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(userRef);
+          if (docSnap.exists() && docSnap.data().hiddenCalCategories) {
+            const cloudFilters = docSnap.data().hiddenCalCategories;
+            setHiddenCalCategories(cloudFilters);
+            localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(cloudFilters));
+          } else {
+            // New user, push local filters to cloud
+            const saved = localStorage.getItem(CALENDAR_FILTER_KEY);
+            const localFilters = saved ? JSON.parse(saved) : [];
+            await setDoc(userRef, { hiddenCalCategories: localFilters }, { merge: true });
+          }
+        } catch(e) {
+          console.error('Error syncing filters:', e);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
     const key = `${cat}-calendar`;
@@ -1058,9 +1085,6 @@ const App = () => {
           if (c === 'INDYCAR' || c === 'INDYCAR SERIES' || c === 'NTT INDYCAR SERIES') {
             return 'data:image/png;base64,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';
           }
-          if (c.includes('INDY NXT') || c.includes('INDYNXT')) {
-            return 'data:image/png;base64,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';
-          }
           return race.categoryImage;
         })(),
         categoryColor: getCategoryColor(race.category),
@@ -1174,8 +1198,9 @@ const App = () => {
                   <button className="filter-btn filter-apply-btn" style={{ width: '100%' }} onClick={() => {
                     setHiddenCalCategories(tempHiddenCalCategories);
                     localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(tempHiddenCalCategories));
+                    syncFiltersToCloud(tempHiddenCalCategories);
                     setIsCalFilterOpen(false);
-                  }}>Guardar Cambios</button>
+                  }}>Aplicar Filtros</button>
                 </div>
               </motion.div>
             )}
@@ -1463,8 +1488,6 @@ const App = () => {
   const renderSettings = () => {
     return (
       <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="settings-view" style={{ padding: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0' }}>Configuración</h2>
-        
         {user ? (
           <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -1488,42 +1511,45 @@ const App = () => {
             </button>
           </div>
         ) : (
-          <div style={{ background: 'var(--card-bg)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '18px' }}>Iniciar Sesión</h3>
-            
-            <button 
-              onClick={handleGoogleLogin}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
-              Continuar con Google
-            </button>
-            
-            <div style={{ textAlign: 'center', color: '#999', fontSize: '14px', margin: '5px 0' }}>o usa tu correo</div>
-            
-            <form style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input 
-                type="email" 
-                placeholder="Correo electrónico" 
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
-              />
-              <input 
-                type="password" 
-                placeholder="Contraseña" 
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
-              />
-              {authError && <p style={{ color: '#ff4444', fontSize: '13px', margin: '0' }}>{authError}</p>}
+          <details style={{ background: 'var(--card-bg)', borderRadius: '16px', overflow: 'hidden' }}>
+            <summary style={{ padding: '20px', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', outline: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff' }}>
+              Iniciar Sesión
+            </summary>
+            <div style={{ padding: '0 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <form style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <input 
+                  type="email" 
+                  placeholder="Correo electrónico" 
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
+                />
+                <input 
+                  type="password" 
+                  placeholder="Contraseña" 
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#1a1a1a', color: '#fff', fontSize: '15px' }}
+                />
+                {authError && <p style={{ color: '#ff4444', fontSize: '13px', margin: '0' }}>{authError}</p>}
+                
+                <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                  <button type="submit" onClick={handleEmailLogin} style={{ flex: 1, padding: '12px', background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Ingresar</button>
+                  <button type="button" onClick={handleEmailRegister} style={{ flex: 1, padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Registrarse</button>
+                </div>
+              </form>
               
-              <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-                <button type="submit" onClick={handleEmailLogin} style={{ flex: 1, padding: '12px', background: 'var(--accent-blue)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Ingresar</button>
-                <button type="button" onClick={handleEmailRegister} style={{ flex: 1, padding: '12px', background: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>Registrarse</button>
-              </div>
-            </form>
-          </div>
+              <div style={{ textAlign: 'center', color: '#999', fontSize: '14px', margin: '5px 0' }}>o usa tu cuenta de Google</div>
+              
+              <button 
+                onClick={handleGoogleLogin}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px', background: '#fff', color: '#000', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/><path fill="none" d="M1 1h22v22H1z"/></svg>
+                Continuar con Google
+              </button>
+            </div>
+          </details>
         )}
       </motion.div>
     );
