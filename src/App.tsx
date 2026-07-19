@@ -1215,7 +1215,7 @@ const App = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                {item.categoryImage ? (
-                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.7))' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                ) : (
                                  <div style={{ width: '8px', height: '16px', borderRadius: '4px', background: item.categoryColor }} />
                                )}
@@ -1287,7 +1287,7 @@ const App = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                {item.categoryImage ? (
-                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                 <img src={item.categoryImage} alt="" style={{ height: '20px', width: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.7))' }} referrerPolicy="no-referrer" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                ) : (
                                  <div style={{ width: '8px', height: '16px', borderRadius: '4px', background: item.categoryColor }} />
                                )}
@@ -1344,6 +1344,7 @@ const App = () => {
                       src={races[0].categoryImage} 
                       alt="" 
                       className="cat-event-logo" 
+                      style={{ filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))' }}
                       referrerPolicy="no-referrer"
                       onError={(e) => (e.currentTarget.style.display = 'none')}
                     />
