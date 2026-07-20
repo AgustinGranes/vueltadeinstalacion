@@ -231,7 +231,7 @@ export default async function handler(req: any, res: any) {
       let category = race.category || race.name || 'Motorsport';
       if (category === 'Super Formula Japonesa' || category === 'Super Fórmula Japonesa') category = 'Super Formula';
       if (category === 'World Rally Championship') category = 'WRC';
-      const event = (race.completeName || race.name || category).replace(/\s*[–—-]+\s*$/, '').trim();
+      const event = (race.circuit || race.event || race.completeName || race.name || category).replace(/\s*[–—-]+\s*$/, '').trim();
 
       for (const sched of schedules) {
         const startTs = sched.startAt || sched.start;
