@@ -1541,7 +1541,8 @@ const App = () => {
           <div className="news-filter-container">
             <button className="news-filter-toggle" onClick={() => setIsLoginOpen(!isLoginOpen)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                Iniciar Sesión
+                <span style={{ fontSize: '18px' }}>👤</span>
+                <span>Iniciar Sesión</span>
               </div>
               <ChevronRight size={18} className={`filter-chevron ${isLoginOpen ? 'open' : ''}`} />
             </button>
