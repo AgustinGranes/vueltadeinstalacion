@@ -14,57 +14,52 @@ try {
     msg.font = Font.systemFont(12);
   } else {
     let ev = upcomingEvents[0];
-    
-    let mainStack = widget.addStack();
-    mainStack.centerAlignContent();
-    
-    let leftStack = mainStack.addStack();
-    leftStack.layoutVertically();
-    
-    // Categoría (Negrita)
-    let cat = leftStack.addText(ev.category);
+    // Fila 1: Categoría
+    let row1 = widget.addStack();
+    let cat = row1.addText(ev.category);
     cat.font = Font.boldSystemFont(13);
     cat.textColor = Color.dynamic(Color.black(), Color.white());
     cat.lineLimit = 1;
+    row1.addSpacer();
     
-    // Ubicación (evita duplicar el nombre de la categoría)
+    // Fila 2: Ubicación | Sesión
+    let row2 = widget.addStack();
+    row2.centerAlignContent();
+    
     if (ev.event && ev.event.toUpperCase() !== ev.category.toUpperCase()) {
-      let loc = leftStack.addText(ev.event);
-      loc.font = Font.systemFont(11);
+      let loc = row2.addText(ev.event);
+      loc.font = Font.systemFont(13);
       loc.textColor = Color.dynamic(Color.black(), Color.white());
-      loc.textOpacity = 0.8;
       loc.lineLimit = 1;
     }
     
-    // Fecha
+    row2.addSpacer();
+    
+    let sess = row2.addText(ev.name);
+    sess.font = Font.systemFont(13);
+    sess.textColor = Color.dynamic(Color.black(), Color.white());
+    sess.lineLimit = 1;
+    
+    // Fila 3: Fecha | Horario
+    let row3 = widget.addStack();
+    row3.centerAlignContent();
+    
     const d = new Date(ev.startAt);
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    let dateStr = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
-    let dateText = leftStack.addText(dateStr);
-    dateText.font = Font.systemFont(11);
+    let dateStr = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
+    let dateText = row3.addText(dateStr);
+    dateText.font = Font.systemFont(13);
     dateText.textColor = Color.dynamic(Color.black(), Color.white());
     dateText.lineLimit = 1;
     
-    mainStack.addSpacer();
+    row3.addSpacer();
     
-    let rightStack = mainStack.addStack();
-    rightStack.layoutVertically();
-    
-    // Sesión
-    let sess = rightStack.addText(ev.name);
-    sess.font = Font.systemFont(11);
-    sess.textColor = Color.dynamic(Color.black(), Color.white());
-    sess.rightAlignText();
-    sess.lineLimit = 1;
-    sess.minimumScaleFactor = 0.8;
-    
-    // Horario
     let timeStr = ev.time || "--:--";
-    let timeText = rightStack.addText(timeStr);
-    timeText.font = Font.systemFont(11);
+    let timeText = row3.addText(timeStr);
+    timeText.font = Font.systemFont(13);
     timeText.textColor = Color.dynamic(Color.black(), Color.white());
-    timeText.rightAlignText();
+    timeText.lineLimit = 1;
   }
 } catch(e) {
   let err = widget.addText("Error / Sin red");
