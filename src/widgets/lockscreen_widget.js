@@ -15,37 +15,49 @@ try {
   } else {
     let ev = upcomingEvents[0];
     
-    // Fila 1: Categoría (Negrita)
-    let cat = widget.addText(ev.category);
-    cat.font = Font.boldSystemFont(14);
+    let mainStack = widget.addStack();
+    mainStack.centerAlignContent();
+    
+    let leftStack = mainStack.addStack();
+    leftStack.layoutVertically();
+    
+    // Categoría (Negrita)
+    let cat = leftStack.addText(ev.category);
+    cat.font = Font.boldSystemFont(13);
     cat.textColor = Color.dynamic(Color.black(), Color.white());
     
-    widget.addSpacer(2);
-    
-    // Fila 2: Ubicación
-    let loc = widget.addText(ev.event || "");
-    loc.font = Font.systemFont(12);
+    // Ubicación
+    let loc = leftStack.addText(ev.event || "");
+    loc.font = Font.systemFont(11);
     loc.textColor = Color.dynamic(Color.black(), Color.white());
     loc.textOpacity = 0.8;
     
-    widget.addSpacer(2);
-    
-    // Fila 3: Sesión (Izquierda) | Día Hora (Derecha)
-    let row3 = widget.addStack();
-    row3.centerAlignContent();
-    
-    let sess = row3.addText(ev.name);
-    sess.font = Font.systemFont(12);
-    sess.textColor = Color.dynamic(Color.black(), Color.white());
-    
-    row3.addSpacer();
-    
+    // Fecha
     const d = new Date(ev.startAt);
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    let timeStr = ev.time || "--:--";
-    let dateText = row3.addText(`${days[d.getDay()]} ${timeStr}`);
-    dateText.font = Font.systemFont(12);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let dateStr = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+    let dateText = leftStack.addText(dateStr);
+    dateText.font = Font.systemFont(11);
     dateText.textColor = Color.dynamic(Color.black(), Color.white());
+    
+    mainStack.addSpacer();
+    
+    let rightStack = mainStack.addStack();
+    rightStack.layoutVertically();
+    
+    // Sesión
+    let sess = rightStack.addText(ev.name);
+    sess.font = Font.systemFont(11);
+    sess.textColor = Color.dynamic(Color.black(), Color.white());
+    sess.rightAlignText();
+    
+    // Horario
+    let timeStr = ev.time || "--:--";
+    let timeText = rightStack.addText(timeStr);
+    timeText.font = Font.systemFont(11);
+    timeText.textColor = Color.dynamic(Color.black(), Color.white());
+    timeText.rightAlignText();
   }
 } catch(e) {
   let err = widget.addText("Error / Sin red");
