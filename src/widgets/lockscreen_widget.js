@@ -22,42 +22,30 @@ try {
     
     widget.addSpacer(2);
     
-    // Fila 2: Ubicación (Normal) | Sesión (Negrita)
-    let row2 = widget.addStack();
-    row2.centerAlignContent();
-    
-    let locName = ev.event || ""; 
-    let loc = row2.addText(locName);
-    loc.font = Font.systemFont(13);
+    // Fila 2: Ubicación
+    let loc = widget.addText(ev.event || "");
+    loc.font = Font.systemFont(12);
     loc.textColor = Color.dynamic(Color.black(), Color.white());
-    
-    row2.addSpacer();
-    
-    let sess = row2.addText(ev.name);
-    sess.font = Font.systemFont(13);
-    sess.textColor = Color.dynamic(Color.black(), Color.white());
+    loc.textOpacity = 0.8;
     
     widget.addSpacer(2);
     
-    // Fila 3: Fecha (Normal) | Hora (Normal)
+    // Fila 3: Sesión (Izquierda) | Día Hora (Derecha)
     let row3 = widget.addStack();
     row3.centerAlignContent();
     
-    const d = new Date(ev.startAt);
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const dateStr = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
-    
-    let dateText = row3.addText(dateStr);
-    dateText.font = Font.systemFont(13);
-    dateText.textColor = Color.dynamic(Color.black(), Color.white());
+    let sess = row3.addText(ev.name);
+    sess.font = Font.systemFont(12);
+    sess.textColor = Color.dynamic(Color.black(), Color.white());
     
     row3.addSpacer();
     
+    const d = new Date(ev.startAt);
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let timeStr = ev.time || "--:--";
-    let timeText = row3.addText(timeStr);
-    timeText.font = Font.systemFont(13);
-    timeText.textColor = Color.dynamic(Color.black(), Color.white());
+    let dateText = row3.addText(`${days[d.getDay()]} ${timeStr}`);
+    dateText.font = Font.systemFont(12);
+    dateText.textColor = Color.dynamic(Color.black(), Color.white());
   }
 } catch(e) {
   let err = widget.addText("Error / Sin red");
