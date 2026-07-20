@@ -25,12 +25,16 @@ try {
     let cat = leftStack.addText(ev.category);
     cat.font = Font.boldSystemFont(13);
     cat.textColor = Color.dynamic(Color.black(), Color.white());
+    cat.lineLimit = 1;
     
-    // Ubicación
-    let loc = leftStack.addText(ev.event || "");
-    loc.font = Font.systemFont(11);
-    loc.textColor = Color.dynamic(Color.black(), Color.white());
-    loc.textOpacity = 0.8;
+    // Ubicación (evita duplicar el nombre de la categoría)
+    if (ev.event && ev.event.toUpperCase() !== ev.category.toUpperCase()) {
+      let loc = leftStack.addText(ev.event);
+      loc.font = Font.systemFont(11);
+      loc.textColor = Color.dynamic(Color.black(), Color.white());
+      loc.textOpacity = 0.8;
+      loc.lineLimit = 1;
+    }
     
     // Fecha
     const d = new Date(ev.startAt);
@@ -40,6 +44,7 @@ try {
     let dateText = leftStack.addText(dateStr);
     dateText.font = Font.systemFont(11);
     dateText.textColor = Color.dynamic(Color.black(), Color.white());
+    dateText.lineLimit = 1;
     
     mainStack.addSpacer();
     
@@ -51,6 +56,8 @@ try {
     sess.font = Font.systemFont(11);
     sess.textColor = Color.dynamic(Color.black(), Color.white());
     sess.rightAlignText();
+    sess.lineLimit = 1;
+    sess.minimumScaleFactor = 0.8;
     
     // Horario
     let timeStr = ev.time || "--:--";
