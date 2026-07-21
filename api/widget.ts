@@ -36,6 +36,10 @@ export default async function handler(req: any, res: any) {
       if (apiRes.ok) {
         const data = await apiRes.json();
         vrRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
+        vrRaces = vrRaces.filter((r: any) => {
+          const cat = (r.category || r.name || '').toLowerCase();
+          return !['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3'].includes(cat);
+        });
       }
     } catch (fetchErr) {
       console.error('[webcal] VueltaRapida fetch error:', fetchErr);
@@ -77,11 +81,6 @@ export default async function handler(req: any, res: any) {
             const seriesInfo = seriesMap[seriesId] || null;
             const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
             const categoryFullName = seriesInfo?.details?.name || categoryName;
-
-            const c = (categoryFullName || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (c === 'formula1' || c === 'f1' || c === 'formula2' || c === 'f2' || c === 'formula3' || c === 'f3') {
-              continue;
-            }
 
             const firstSession = groupSessions[0];
             const circuitObj = firstSession?.circuit || {};

@@ -69,6 +69,15 @@ export function getCategoryColor(cat: string): string {
 }
 
 const CATEGORY_LOCAL_LOGOS: Record<string, string> = {
+  'Fórmula 1': '/categories/f1.png',
+  'Formula 1': '/categories/f1.png',
+  'F1': '/categories/f1.png',
+  'Fórmula 2': '/categories/f2.png',
+  'Formula 2': '/categories/f2.png',
+  'F2': '/categories/f2.png',
+  'Fórmula 3': '/categories/f3.png',
+  'Formula 3': '/categories/f3.png',
+  'F3': '/categories/f3.png',
   'IndyCar': '/categories/indycar.png',
   'Indy NXT': '/categories/indynxt.png',
   'Super Formula': '/categories/superformula.png',
@@ -463,7 +472,13 @@ export const dataService = {
         } catch(e) { console.warn('Failed to parse categories JSON'); }
       }
 
-      const races = Array.isArray(data) ? data : (data?.races || data?.data || []);
+      let races = Array.isArray(data) ? data : (data?.races || data?.data || []);
+      
+      // Block Formula 1, 2, 3 from vueltarapida to use JSON instead
+      races = races.filter((r: any) => {
+        const cat = (r.category || r.name || '').toLowerCase();
+        return !['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3'].includes(cat);
+      });
       
       if (races && Array.isArray(races) && races.length > 0) {
         const racesWithImages = await Promise.all(races.map(async (r: any) => {
@@ -662,11 +677,6 @@ export const dataService = {
 
           const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
           const categoryFullName = seriesInfo?.details?.name || categoryName;
-
-          const key = _normalizeCategoryKey(categoryFullName);
-          if (key === 'formula1' || key === 'f1' || key === 'formula2' || key === 'f2' || key === 'formula3' || key === 'f3') {
-            continue;
-          }
 
           const watchLinks: { platform: string; url: string }[] = [];
           if (seriesInfo?.streaming) {
