@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WeatherWidget } from './components/WeatherWidget';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, type User } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import mediumLargeWidgetCode from './widgets/widget.js?raw';
 import lockscreenWidgetCode from './widgets/lockscreen_widget.js?raw';
 import { dataService, getCategoryColor } from './data/dataService';
@@ -268,7 +268,7 @@ const App = () => {
       if (currentUser) {
         try {
           const userRef = doc(db, 'users', currentUser.uid);
-          unsubscribeSnapshot = onSnapshot(userRef, async (docSnap) => {
+          unsubscribeSnapshot = onSnapshot(userRef, async (docSnap: any) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
               if (data.hiddenCalCategories) {
