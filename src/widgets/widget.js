@@ -163,7 +163,7 @@ try {
     }
     
     if (isUpcoming && evList.length > maxCount) {
-      container.addSpacer(spacerEvent);
+      container.addSpacer(); // Flexible spacer pushes down
       let pagRow = container.addStack();
       pagRow.layoutHorizontally();
       pagRow.centerAlignContent();
@@ -209,6 +209,7 @@ try {
         if (rightSym) rightArr.tintColor = Color.gray();
         else rightArr.textColor = Color.gray();
       }
+      container.addSpacer(); // Flexible spacer at bottom to center it vertically
     }
   }
 
