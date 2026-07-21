@@ -151,6 +151,8 @@ export type Race = {
   time?: string;
   ticketLink?: string;
   watchLinks?: { platform: string; url: string }[];
+  lat?: number;
+  long?: number;
 };
 
 export type CalendarRace = {
@@ -535,6 +537,7 @@ export const dataService = {
             if (cat === 'World Rally Championship') return 'WRC';
             if (cat === 'Fórmula 4 Brasil' || cat === 'Formula 4 Brasil') return 'F4 Brazil';
             if (cat === 'NASCAR México' || cat === 'NASCAR Mexico') return 'NASCAR Mexico';
+            if (cat === 'Stock Car Brasil') return 'Stock Car Pro';
             return cat;
           };
 
@@ -734,6 +737,8 @@ export const dataService = {
             time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
             ticketLink,
             watchLinks,
+            lat: ev.circuit?.lat,
+            long: ev.circuit?.long,
           });
         }
       }

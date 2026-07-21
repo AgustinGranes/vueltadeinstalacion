@@ -126,6 +126,7 @@ export default async function handler(req: any, res: any) {
       c = c.replace(/trucks/g, 'truck');
       c = c.replace(/\b(series|championship|champ|ntt)\b/g, '');
       c = c.replace(/[^a-z0-9]/g, '');
+      if (c === 'stockcarbrasil') return 'stockcarpro';
       return c;
     };
 
