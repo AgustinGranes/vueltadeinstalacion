@@ -38,7 +38,8 @@ export default async function handler(req: any, res: any) {
         vrRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
         vrRaces = vrRaces.filter((r: any) => {
           const cat = (r.category || r.name || '').toLowerCase();
-          return !['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3'].includes(cat);
+          const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks'];
+          return !blockedCategories.includes(cat);
         });
       }
     } catch (fetchErr) {
