@@ -533,6 +533,8 @@ export const dataService = {
             if (!cat) return '';
             if (cat === 'Super Formula Japonesa' || cat === 'Super Fórmula Japonesa') return 'Super Formula';
             if (cat === 'World Rally Championship') return 'WRC';
+            if (cat === 'Fórmula 4 Brasil' || cat === 'Formula 4 Brasil') return 'F4 Brazil';
+            if (cat === 'NASCAR México' || cat === 'NASCAR Mexico') return 'NASCAR Mexico';
             return cat;
           };
 
