@@ -737,8 +737,8 @@ export const dataService = {
             time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
             ticketLink,
             watchLinks,
-            lat: ev.circuit?.lat,
-            long: ev.circuit?.long,
+            lat: circuitObj?.lat,
+            long: circuitObj?.long,
           });
         }
       }
