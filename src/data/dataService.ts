@@ -96,7 +96,7 @@ const CATEGORY_LOCAL_LOGOS: Record<string, string> = {
   'GTWC America': '/categories/gtwcamerica.svg',
   'ADAC GT Masters': '/categories/adacgtmasters.png',
   'Gulf 12 Hours': '/categories/gulf12hours.png',
-  'Porsche Mobil 1 Supercup': '/categories/porschemobil1supercup.png',
+  'Porsche Supercup': '/categories/porschesupercup.png',
   'BTCC': '/categories/btcc.png',
   'Supercars': '/categories/supercars.png',
   'Stock Car Pro': '/categories/stockcar.png',
@@ -476,10 +476,10 @@ export const dataService = {
 
       let races = Array.isArray(data) ? data : (data?.races || data?.data || []);
       
-      // Block Formula 1, 2, 3, BTCC, DTM, NASCAR from vueltarapida to use JSON instead
+      // Block Formula 1, 2, 3, BTCC, DTM, NASCAR, Porsche Supercup from vueltarapida to use JSON instead
       races = races.filter((r: any) => {
         const cat = (r.category || r.name || '').toLowerCase();
-        const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks'];
+        const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks', 'porsche mobil 1 supercup'];
         return !blockedCategories.includes(cat);
       });
       

@@ -33,7 +33,7 @@ export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
     "Toyota GR Cup NA", "Mazda MX-5 Cup", "McLaren Trophy EU", "McLaren Trophy US",
     "International GT", "Prototype Sprint Series", "Trans Am National Series",
     "Trans Am West Series", "Ginetta Challenge North America", "Ginetta GT Championship",
-    "Ginetta Junior Championship", "World Racing League", "BRSCC Mazda Clubman", "Porsche Mobil 1 Supercup"
+    "Ginetta Junior Championship", "World Racing League", "BRSCC Mazda Clubman"
   ],
   "TOURING CARS": [
     "BTCC", "TOCA Junior", "Supercars", "Super2", "Super Utes", "Stock Car Pro",
