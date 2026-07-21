@@ -12,9 +12,38 @@ const weatherCache = new Map<string, { timestamp: number, data: any }>();
 const geocodeCache = new Map<string, { lat: number, long: number } | null>();
 const CACHE_TTL = 1000 * 60 * 60 * 2; // 2 hours
 
+const HARDCODED_COORDS: Record<string, {lat: number, long: number}> = {
+  'velocitta': { lat: -22.2855, long: -46.8973 },
+  'interlagos': { lat: -23.7013, long: -46.6974 },
+  'rafaela': { lat: -31.2185, long: -61.4795 },
+  'termas de rio hondo': { lat: -27.5029, long: -64.9150 },
+  'termas de río hondo': { lat: -27.5029, long: -64.9150 },
+  'buenos aires': { lat: -34.6943, long: -58.4593 }, // Autódromo Gálvez
+  'viedma': { lat: -40.8340, long: -62.9772 },
+  'concepcion del uruguay': { lat: -32.4839, long: -58.2917 },
+  'concepción del uruguay': { lat: -32.4839, long: -58.2917 },
+  'san nicolas': { lat: -33.3644, long: -60.1869 },
+  'san nicolás': { lat: -33.3644, long: -60.1869 },
+  'toay': { lat: -36.6997, long: -64.3168 },
+  'el calafate': { lat: -50.2851, long: -72.2238 },
+  'posadas': { lat: -27.4245, long: -55.9329 },
+  'parana': { lat: -31.7825, long: -60.4851 },
+  'paraná': { lat: -31.7825, long: -60.4851 },
+  'rosario': { lat: -32.9069, long: -60.7788 },
+  'alta gracia': { lat: -31.6961, long: -64.4414 },
+  'centenario': { lat: -38.7905, long: -68.1256 },
+  'concordia': { lat: -31.3323, long: -58.0163 }
+};
+
 export async function getCoordinatesForLocation(locationName: string): Promise<{lat: number, long: number} | null> {
   if (!locationName) return null;
   const key = locationName.toLowerCase().trim();
+  
+  // 1. Check hardcoded dictionary for racing circuits not in Geocoding API
+  for (const [circuit, coords] of Object.entries(HARDCODED_COORDS)) {
+    if (key.includes(circuit)) return coords;
+  }
+
   if (geocodeCache.has(key)) return geocodeCache.get(key) || null;
 
   try {

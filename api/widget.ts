@@ -297,21 +297,56 @@ export default async function handler(req: any, res: any) {
 
     // 1. Geocode any missing coordinates
     const geocodePromises = [];
+    const HARDCODED_COORDS: Record<string, {lat: number, long: number}> = {
+      'velocitta': { lat: -22.2855, long: -46.8973 },
+      'interlagos': { lat: -23.7013, long: -46.6974 },
+      'rafaela': { lat: -31.2185, long: -61.4795 },
+      'termas de rio hondo': { lat: -27.5029, long: -64.9150 },
+      'termas de río hondo': { lat: -27.5029, long: -64.9150 },
+      'buenos aires': { lat: -34.6943, long: -58.4593 },
+      'viedma': { lat: -40.8340, long: -62.9772 },
+      'concepcion del uruguay': { lat: -32.4839, long: -58.2917 },
+      'concepción del uruguay': { lat: -32.4839, long: -58.2917 },
+      'san nicolas': { lat: -33.3644, long: -60.1869 },
+      'san nicolás': { lat: -33.3644, long: -60.1869 },
+      'toay': { lat: -36.6997, long: -64.3168 },
+      'el calafate': { lat: -50.2851, long: -72.2238 },
+      'posadas': { lat: -27.4245, long: -55.9329 },
+      'parana': { lat: -31.7825, long: -60.4851 },
+      'paraná': { lat: -31.7825, long: -60.4851 },
+      'rosario': { lat: -32.9069, long: -60.7788 },
+      'alta gracia': { lat: -31.6961, long: -64.4414 },
+      'centenario': { lat: -38.7905, long: -68.1256 },
+      'concordia': { lat: -31.3323, long: -58.0163 }
+    };
+
     for (const sched of finalSchedules) {
       if (!sched.lat || !sched.long) {
         const locName = sched.event || sched.circuit;
         if (locName) {
-          geocodePromises.push(
-            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locName)}&count=1&language=es&format=json`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.results && data.results.length > 0) {
-                  sched.lat = data.results[0].latitude;
-                  sched.long = data.results[0].longitude;
-                }
-              })
-              .catch(() => {})
-          );
+          const key = locName.toLowerCase().trim();
+          let found = false;
+          for (const [circuit, coords] of Object.entries(HARDCODED_COORDS)) {
+            if (key.includes(circuit)) {
+              sched.lat = coords.lat;
+              sched.long = coords.long;
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            geocodePromises.push(
+              fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locName)}&count=1&language=es&format=json`)
+                .then(res => res.json())
+                .then(data => {
+                  if (data.results && data.results.length > 0) {
+                    sched.lat = data.results[0].latitude;
+                    sched.long = data.results[0].longitude;
+                  }
+                })
+                .catch(() => {})
+            );
+          }
         }
       }
     }
