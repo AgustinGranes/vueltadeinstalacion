@@ -258,7 +258,9 @@ export default async function handler(req: any, res: any) {
           name: sched.name || sched.title || 'Evento',
           startAt: startTs,
           time: timeStr,
-          color: race.categoryColor || '#ff3b30'
+          color: race.categoryColor || '#ff3b30',
+          lat: race.lat,
+          long: race.long
         });
       }
     }
@@ -289,10 +291,64 @@ export default async function handler(req: any, res: any) {
       return a.startAt - b.startAt;
     });
 
+    const finalSchedules = upcomingSchedules.slice(0, 35); // Up to 35 for pagination
+
+    // Fetch weather for each unique lat/long in finalSchedules
+    const weatherCache = new Map<string, any>();
+    const weatherPromises = [];
+
+    for (const sched of finalSchedules) {
+      if (sched.lat && sched.long && !weatherCache.has(`${sched.lat},${sched.long}`)) {
+        const key = `${sched.lat},${sched.long}`;
+        weatherCache.set(key, null);
+        weatherPromises.push(
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${sched.lat}&longitude=${sched.long}&hourly=temperature_2m,weathercode,is_day&timezone=UTC`)
+            .then(res => res.json())
+            .then(data => { weatherCache.set(key, data); })
+            .catch(() => {})
+        );
+      }
+    }
+    await Promise.allSettled(weatherPromises);
+
+    for (const sched of finalSchedules) {
+      if (sched.lat && sched.long) {
+        const data = weatherCache.get(`${sched.lat},${sched.long}`);
+        if (data && data.hourly && data.hourly.time) {
+          let closestIdx = -1;
+          let minDiff = Infinity;
+          for (let i = 0; i < data.hourly.time.length; i++) {
+             const timeStr = data.hourly.time[i];
+             const hourTimestamp = new Date(timeStr + 'Z').getTime();
+             const diff = Math.abs(hourTimestamp - sched.startAt);
+             if (diff < minDiff) { minDiff = diff; closestIdx = i; }
+          }
+          if (closestIdx !== -1) {
+             const code = data.hourly.weathercode[closestIdx];
+             const isDay = data.hourly.is_day[closestIdx] === 1;
+             
+             let icon = '☁️';
+             if (code === 0) icon = isDay ? '☀️' : '🌙';
+             else if (code === 1 || code === 2) icon = isDay ? '⛅' : '☁️';
+             else if (code === 3) icon = '☁️';
+             else if (code === 45 || code === 48) icon = '🌫️';
+             else if (code >= 51 && code <= 57) icon = '🌧️';
+             else if (code >= 61 && code <= 67) icon = '🌧️';
+             else if (code >= 71 && code <= 77) icon = '❄️';
+             else if (code >= 80 && code <= 82) icon = '🌦️';
+             else if (code >= 85 && code <= 86) icon = '🌨️';
+             else if (code >= 95 && code <= 99) icon = '⛈️';
+             
+             sched.weather = `${icon} ${Math.round(data.hourly.temperature_2m[closestIdx])}°C`;
+          }
+        }
+      }
+    }
+
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
-    res.status(200).json(upcomingSchedules.slice(0, 15));
+    res.status(200).json(finalSchedules);
 
   } catch (error) {
     console.error('[widget] Fatal error:', error);
