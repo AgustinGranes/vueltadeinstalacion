@@ -600,17 +600,13 @@ const App = () => {
       setWeeklyRaces(weekly);
       loadedDataRef.current.add('home');
       
-      // Preload weather data silently in the background (sequentially to avoid 429 Rate Limit)
-      setTimeout(async () => {
-        for (const item of weekly) {
-          if (item.lat && item.long && item.schedules && item.schedules.length > 0) {
-            try {
-              await getWeatherForSession(item.lat, item.long, item.schedules[0].startAt);
-              await new Promise(r => setTimeout(r, 250)); // 250ms delay between requests
-            } catch (e) {}
-          }
+      // Preload weather data silently in the background
+      weekly.forEach(item => {
+        if (item.lat && item.long && item.schedules && item.schedules.length > 0) {
+          // Fire and forget, weatherService will cache the response
+          getWeatherForSession(item.lat, item.long, item.schedules[0].startAt).catch(() => {});
         }
-      }, 500);
+      });
     } catch (e) {
       console.error('Home fetch error:', e);
     } finally {
