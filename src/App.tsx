@@ -1283,9 +1283,14 @@ const App = () => {
                           </div>
                           
                           {/* Middle Row: Circuit Name */}
-                          <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
-                            {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
-                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
+                              {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
+                            </h3>
+                            {item.lat && item.long && !hideWeatherWeekly && (
+                              <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                            )}
+                          </div>
 
                           {/* Bottom Row: Date/Time (Left) and Relative Time (Right) */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
@@ -1294,9 +1299,6 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
-                               {item.lat && item.long && !hideWeatherWeekly && (
-                                 <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
-                               )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                {isLive(item) ? (
@@ -1357,9 +1359,14 @@ const App = () => {
                             <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff', textAlign: 'right' }}>{item.name}</span>
                           </div>
                           
-                          <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
-                            {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
-                          </h3>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
+                              {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
+                            </h3>
+                            {item.lat && item.long && !hideWeatherWeekly && (
+                              <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                            )}
+                          </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -1367,9 +1374,6 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
-                               {item.lat && item.long && !hideWeatherWeekly && (
-                                 <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
-                               )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                <span>Finalizado</span>
