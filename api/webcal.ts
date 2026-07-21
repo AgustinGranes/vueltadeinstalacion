@@ -251,9 +251,12 @@ export default async function handler(req: any, res: any) {
 
     for (const race of filteredRaces) {
       const schedules: any[] = race.schedules || [];
-      let category: string = race.category || race.name || 'Motorsport';
+      let category = race.category || race.name || 'Motorsport';
       if (category === 'Super Formula Japonesa' || category === 'Super Fórmula Japonesa') category = 'Super Formula';
       if (category === 'World Rally Championship') category = 'WRC';
+      if (category === 'Fórmula 4 Brasil' || category === 'Formula 4 Brasil') category = 'F4 Brazil';
+      if (category === 'NASCAR México' || category === 'NASCAR Mexico') category = 'NASCAR Mexico';
+      if (category === 'Stock Car Brasil') category = 'Stock Car Pro';
       const event: string = (race.completeName || race.name || category)
         .replace(/\s*[–—-]+\s*$/, '').trim();
       const circuit: string = typeof race.circuit === 'string'

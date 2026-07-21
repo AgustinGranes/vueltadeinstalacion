@@ -238,82 +238,88 @@ const App = () => {
   const [tempHiddenCalCategories, setTempHiddenCalCategories] = useState<string[]>([]);
   const [isCalFilterOpen, setIsCalFilterOpen] = useState(false);
 
-  const syncSettingsToCloud = async (filters: string[], hwWeekly: boolean, hwCat: boolean) => {
+  const updateSettings = async (updates: Partial<{ hiddenCalCategories: string[], hideWeatherWeekly: boolean, hideWeatherCategory: boolean }>) => {
+    // Optimistic UI updates
+    if (updates.hiddenCalCategories !== undefined) {
+      setHiddenCalCategories(updates.hiddenCalCategories);
+      localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(updates.hiddenCalCategories));
+    }
+    if (updates.hideWeatherWeekly !== undefined) {
+      setHideWeatherWeekly(updates.hideWeatherWeekly);
+      localStorage.setItem('hideWeatherWeekly', updates.hideWeatherWeekly.toString());
+    }
+    if (updates.hideWeatherCategory !== undefined) {
+      setHideWeatherCategory(updates.hideWeatherCategory);
+      localStorage.setItem('hideWeatherCategory', updates.hideWeatherCategory.toString());
+    }
+    
     if (!user) return;
     try {
-      await setDoc(doc(db, 'users', user.uid), { 
-        hiddenCalCategories: filters,
-        hideWeatherWeekly: hwWeekly,
-        hideWeatherCategory: hwCat
-      }, { merge: true });
+      await setDoc(doc(db, 'users', user.uid), updates, { merge: true });
     } catch(e) {
       console.error('Error saving settings to cloud:', e);
     }
   };
 
   useEffect(() => {
-    localStorage.setItem('hideWeatherWeekly', hideWeatherWeekly.toString());
-    if (user) syncSettingsToCloud(hiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
-  }, [hideWeatherWeekly, user]);
-
-  useEffect(() => {
-    localStorage.setItem('hideWeatherCategory', hideWeatherCategory.toString());
-    if (user) syncSettingsToCloud(hiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
-  }, [hideWeatherCategory, user]);
-
-  useEffect(() => {
+    let unsubscribeSnapshot: () => void;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         try {
           const userRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(userRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            if (data.hiddenCalCategories) {
-              const cloudFilters = data.hiddenCalCategories;
-              setHiddenCalCategories(cloudFilters);
-              localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(cloudFilters));
-            }
-            if (typeof data.hideWeatherWeekly === 'boolean') {
-              setHideWeatherWeekly(data.hideWeatherWeekly);
-              localStorage.setItem('hideWeatherWeekly', data.hideWeatherWeekly.toString());
-            }
-            if (typeof data.hideWeatherCategory === 'boolean') {
-              setHideWeatherCategory(data.hideWeatherCategory);
-              localStorage.setItem('hideWeatherCategory', data.hideWeatherCategory.toString());
-            }
-            
-            // Si le faltan campos (ej. usuario viejo que no tenía clima guardado), forzamos un sync
-            if (data.hiddenCalCategories === undefined || data.hideWeatherWeekly === undefined || data.hideWeatherCategory === undefined) {
+          unsubscribeSnapshot = onSnapshot(userRef, async (docSnap) => {
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              if (data.hiddenCalCategories) {
+                setHiddenCalCategories(data.hiddenCalCategories);
+                localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(data.hiddenCalCategories));
+              }
+              if (typeof data.hideWeatherWeekly === 'boolean') {
+                setHideWeatherWeekly(data.hideWeatherWeekly);
+                localStorage.setItem('hideWeatherWeekly', data.hideWeatherWeekly.toString());
+              }
+              if (typeof data.hideWeatherCategory === 'boolean') {
+                setHideWeatherCategory(data.hideWeatherCategory);
+                localStorage.setItem('hideWeatherCategory', data.hideWeatherCategory.toString());
+              }
+              
+              // Si le faltan campos, forzamos un sync inicial
+              if (data.hiddenCalCategories === undefined || data.hideWeatherWeekly === undefined || data.hideWeatherCategory === undefined) {
+                const savedF = localStorage.getItem(CALENDAR_FILTER_KEY);
+                const locF = savedF ? JSON.parse(savedF) : [];
+                const hwW = localStorage.getItem('hideWeatherWeekly') === 'true';
+                const hwC = localStorage.getItem('hideWeatherCategory') === 'true';
+                await setDoc(userRef, { 
+                  hiddenCalCategories: data.hiddenCalCategories || locF,
+                  hideWeatherWeekly: data.hideWeatherWeekly !== undefined ? data.hideWeatherWeekly : hwW,
+                  hideWeatherCategory: data.hideWeatherCategory !== undefined ? data.hideWeatherCategory : hwC
+                }, { merge: true });
+              }
+            } else {
+              // New user, push local settings to cloud
               const savedF = localStorage.getItem(CALENDAR_FILTER_KEY);
               const locF = savedF ? JSON.parse(savedF) : [];
               const hwW = localStorage.getItem('hideWeatherWeekly') === 'true';
               const hwC = localStorage.getItem('hideWeatherCategory') === 'true';
               await setDoc(userRef, { 
-                hiddenCalCategories: data.hiddenCalCategories || locF,
-                hideWeatherWeekly: data.hideWeatherWeekly !== undefined ? data.hideWeatherWeekly : hwW,
-                hideWeatherCategory: data.hideWeatherCategory !== undefined ? data.hideWeatherCategory : hwC
+                hiddenCalCategories: locF,
+                hideWeatherWeekly: hwW,
+                hideWeatherCategory: hwC
               }, { merge: true });
             }
-          } else {
-            // New user, push local settings to cloud
-            const savedF = localStorage.getItem(CALENDAR_FILTER_KEY);
-            const locF = savedF ? JSON.parse(savedF) : [];
-            const hwW = localStorage.getItem('hideWeatherWeekly') === 'true';
-            const hwC = localStorage.getItem('hideWeatherCategory') === 'true';
-            await setDoc(userRef, { 
-              hiddenCalCategories: locF,
-              hideWeatherWeekly: hwW,
-              hideWeatherCategory: hwC
-            }, { merge: true });
-          }
+          });
         } catch(e) {
           console.error('Error syncing filters:', e);
         }
+      } else {
+        if (unsubscribeSnapshot) unsubscribeSnapshot();
       }
     });
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
   const fetchCategoryCalendar = useCallback(async (cat: CategoryType) => {
@@ -1260,12 +1266,13 @@ const App = () => {
                   <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories([])}>Mostrar Todas</button>
                 </div>
                 <div className="filter-actions" style={{ padding: '16px', paddingTop: '0' }}>
-                  <button className="filter-btn filter-apply-btn" style={{ width: '100%' }} onClick={() => {
-                    setHiddenCalCategories(tempHiddenCalCategories);
-                    localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(tempHiddenCalCategories));
-                    syncSettingsToCloud(tempHiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
-                    setIsCalFilterOpen(false);
-                  }}>Aplicar Filtros</button>
+                  <button 
+                    onClick={() => {
+                      updateSettings({ hiddenCalCategories: tempHiddenCalCategories });
+                      setIsCalFilterOpen(false);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium py-3 px-4 rounded-xl transition-all shadow-md active:scale-95"
+                  >Aplicar Filtros</button>
                 </div>
               </motion.div>
             )}
@@ -1791,8 +1798,10 @@ const App = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista semanal</span>
                     <button 
-                      className={`settings-toggle ${hideWeatherWeekly ? 'active' : ''}`}
-                      onClick={() => setHideWeatherWeekly(!hideWeatherWeekly)}
+                      onClick={() => updateSettings({ hideWeatherWeekly: !hideWeatherWeekly })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        hideWeatherWeekly ? 'bg-red-600' : 'bg-gray-600'
+                      }`}
                     >
                       <div className="settings-toggle-knob"></div>
                     </button>
@@ -1801,8 +1810,10 @@ const App = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista por categoría</span>
                     <button 
-                      className={`settings-toggle ${hideWeatherCategory ? 'active' : ''}`}
-                      onClick={() => setHideWeatherCategory(!hideWeatherCategory)}
+                      onClick={() => updateSettings({ hideWeatherCategory: !hideWeatherCategory })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        hideWeatherCategory ? 'bg-red-600' : 'bg-gray-600'
+                      }`}
                     >
                       <div className="settings-toggle-knob"></div>
                     </button>
