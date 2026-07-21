@@ -1332,8 +1332,8 @@ const App = () => {
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
                               {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
                             </h3>
-                            {item.lat && item.long && !hideWeatherWeekly && (
-                              <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                            {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
+                              <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
                             )}
                           </div>
 
@@ -1408,8 +1408,8 @@ const App = () => {
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
                               {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
                             </h3>
-                            {item.lat && item.long && !hideWeatherWeekly && (
-                              <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                            {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
+                              <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
                             )}
                           </div>
 
@@ -1511,8 +1511,8 @@ const App = () => {
                       <div key={si} className="schedule-row-mini">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className="sched-name">{s.name}</span>
-                          {race.lat && race.long && !hideWeatherCategory && (
-                            <WeatherWidget lat={race.lat} long={race.long} timestamp={s.startAt} />
+                          {(!hideWeatherCategory && (race.lat || race.circuit || race.event)) && (
+                            <WeatherWidget lat={race.lat} long={race.long} locationName={race.circuit || race.event} timestamp={s.startAt} />
                           )}
                         </div>
                         <span className="sched-time">{s.time}</span>

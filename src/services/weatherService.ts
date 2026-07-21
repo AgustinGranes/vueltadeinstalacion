@@ -7,22 +7,60 @@ export interface WeatherData {
 }
 
 // Memory cache to avoid hitting the API multiple times for the same location
+// Memory cache to avoid hitting the API multiple times for the same location
 const weatherCache = new Map<string, { timestamp: number, data: any }>();
+const geocodeCache = new Map<string, { lat: number, long: number } | null>();
 const CACHE_TTL = 1000 * 60 * 60 * 2; // 2 hours
 
-export async function getWeatherForSession(lat: number, long: number, sessionTimestamp: number): Promise<WeatherData | null> {
-  if (typeof lat !== 'number' || typeof long !== 'number' || isNaN(lat) || isNaN(long)) {
-    return null;
+export async function getCoordinatesForLocation(locationName: string): Promise<{lat: number, long: number} | null> {
+  if (!locationName) return null;
+  const key = locationName.toLowerCase().trim();
+  if (geocodeCache.has(key)) return geocodeCache.get(key) || null;
+
+  try {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(key)}&count=1&language=es&format=json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Geocoding fetch failed');
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const coords = { lat: data.results[0].latitude, long: data.results[0].longitude };
+      geocodeCache.set(key, coords);
+      return coords;
+    }
+  } catch (e) {
+    console.warn('Failed to fetch geocoding from Open-Meteo:', e);
+  }
+  
+  geocodeCache.set(key, null);
+  return null;
+}
+
+export async function getWeatherForSession(lat: number | undefined, long: number | undefined, sessionTimestamp: number, locationName?: string): Promise<WeatherData | null> {
+  let finalLat = lat;
+  let finalLong = long;
+
+  if (typeof finalLat !== 'number' || typeof finalLong !== 'number' || isNaN(finalLat) || isNaN(finalLong)) {
+    if (locationName) {
+      const coords = await getCoordinatesForLocation(locationName);
+      if (coords) {
+        finalLat = coords.lat;
+        finalLong = coords.long;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
   }
 
-  // Only fetch weather for sessions within the next 7 days and past 2 days (Open-Meteo limits)
+  // Only fetch weather for sessions within the next 14 days and past 2 days (Open-Meteo limits)
   const now = Date.now();
   const daysDiff = (sessionTimestamp - now) / (1000 * 60 * 60 * 24);
-  if (daysDiff > 7 || daysDiff < -2) {
+  if (daysDiff > 14 || daysDiff < -2) {
     return null;
   }
 
-  const cacheKey = `${lat.toFixed(2)},${long.toFixed(2)}`;
+  const cacheKey = `${finalLat.toFixed(2)},${finalLong.toFixed(2)}`;
   
   let forecastData = null;
   
@@ -31,7 +69,7 @@ export async function getWeatherForSession(lat: number, long: number, sessionTim
     forecastData = cached.data;
   } else {
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&hourly=temperature_2m,precipitation_probability,precipitation,weathercode,is_day&timezone=UTC`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${finalLat}&longitude=${finalLong}&hourly=temperature_2m,precipitation_probability,precipitation,weathercode,is_day&timezone=UTC&forecast_days=16`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Weather fetch failed');
       forecastData = await res.json();

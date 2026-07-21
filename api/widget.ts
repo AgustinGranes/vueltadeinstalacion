@@ -295,7 +295,29 @@ export default async function handler(req: any, res: any) {
 
     const finalSchedules = upcomingSchedules.slice(0, 35); // Up to 35 for pagination
 
-    // Fetch weather for each unique lat/long in finalSchedules
+    // 1. Geocode any missing coordinates
+    const geocodePromises = [];
+    for (const sched of finalSchedules) {
+      if (!sched.lat || !sched.long) {
+        const locName = sched.event || sched.circuit;
+        if (locName) {
+          geocodePromises.push(
+            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locName)}&count=1&language=es&format=json`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.results && data.results.length > 0) {
+                  sched.lat = data.results[0].latitude;
+                  sched.long = data.results[0].longitude;
+                }
+              })
+              .catch(() => {})
+          );
+        }
+      }
+    }
+    await Promise.allSettled(geocodePromises);
+
+    // 2. Fetch weather for each unique lat/long in finalSchedules
     const weatherCache = new Map<string, any>();
     const weatherPromises = [];
 
@@ -304,7 +326,7 @@ export default async function handler(req: any, res: any) {
         const key = `${sched.lat},${sched.long}`;
         weatherCache.set(key, null);
         weatherPromises.push(
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${sched.lat}&longitude=${sched.long}&hourly=temperature_2m,weathercode,is_day&timezone=UTC`)
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${sched.lat}&longitude=${sched.long}&hourly=temperature_2m,weathercode,is_day&timezone=UTC&forecast_days=16`)
             .then(res => res.json())
             .then(data => { weatherCache.set(key, data); })
             .catch(() => {})

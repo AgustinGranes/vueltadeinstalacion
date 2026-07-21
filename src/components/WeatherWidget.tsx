@@ -9,12 +9,13 @@ import { getWeatherForSession, getWeatherConditionName } from '../services/weath
 import type { WeatherData } from '../services/weatherService';
 
 interface WeatherWidgetProps {
-  lat: number;
-  long: number;
+  lat?: number;
+  long?: number;
+  locationName?: string;
   timestamp: number;
 }
 
-export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
+export function WeatherWidget({ lat, long, locationName, timestamp }: WeatherWidgetProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    getWeatherForSession(lat, long, timestamp).then(data => {
+    getWeatherForSession(lat, long, timestamp, locationName).then(data => {
       if (mounted) {
         setWeather(data);
         setLoading(false);
@@ -35,7 +36,7 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
     });
 
     return () => { mounted = false; };
-  }, [lat, long, timestamp]);
+  }, [lat, long, locationName, timestamp]);
 
   const calcPosition = useCallback(() => {
     if (!btnRef.current || !tooltipRef.current) return;
