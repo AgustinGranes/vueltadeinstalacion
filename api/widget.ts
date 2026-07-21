@@ -341,7 +341,7 @@ export default async function handler(req: any, res: any) {
         const key = `${sched.lat},${sched.long}`;
         weatherCache.set(key, null);
         weatherPromises.push(
-          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${sched.lat}&longitude=${sched.long}&hourly=temperature_2m,weathercode,is_day&timezone=UTC&forecast_days=16`)
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${sched.lat}&longitude=${sched.long}&hourly=temperature_2m,precipitation_probability,weathercode,is_day&timezone=UTC&forecast_days=16`)
             .then(res => res.json())
             .then(data => { weatherCache.set(key, data); })
             .catch(() => {})
@@ -366,19 +366,36 @@ export default async function handler(req: any, res: any) {
              const code = data.hourly.weathercode[closestIdx];
              const isDay = data.hourly.is_day[closestIdx] === 1;
              
-             let icon = '☁️';
-             if (code === 0) icon = isDay ? '☀️' : '🌙';
-             else if (code === 1 || code === 2) icon = isDay ? '⛅' : '☁️';
-             else if (code === 3) icon = '☁️';
-             else if (code === 45 || code === 48) icon = '🌫️';
-             else if (code >= 51 && code <= 57) icon = '🌧️';
-             else if (code >= 61 && code <= 67) icon = '🌧️';
-             else if (code >= 71 && code <= 77) icon = '❄️';
-             else if (code >= 80 && code <= 82) icon = '🌦️';
-             else if (code >= 85 && code <= 86) icon = '🌨️';
-             else if (code >= 95 && code <= 99) icon = '⛈️';
+             let sfSymbol = 'cloud.fill';
+             if (code === 0) sfSymbol = isDay ? 'sun.max.fill' : 'moon.stars.fill';
+             else if (code === 1 || code === 2) sfSymbol = isDay ? 'cloud.sun.fill' : 'cloud.moon.fill';
+             else if (code === 3) sfSymbol = 'cloud.fill';
+             else if (code === 45 || code === 48) sfSymbol = 'cloud.fog.fill';
+             else if (code >= 51 && code <= 57) sfSymbol = 'cloud.drizzle.fill';
+             else if (code >= 61 && code <= 67) sfSymbol = 'cloud.rain.fill';
+             else if (code >= 71 && code <= 77) sfSymbol = 'cloud.snow.fill';
+             else if (code >= 80 && code <= 82) sfSymbol = isDay ? 'cloud.sun.rain.fill' : 'cloud.moon.rain.fill';
+             else if (code >= 85 && code <= 86) sfSymbol = 'cloud.snow.fill';
+             else if (code >= 95 && code <= 99) sfSymbol = 'cloud.bolt.rain.fill';
+
+             const temp = Math.round(data.hourly.temperature_2m[closestIdx]);
+             const rain = data.hourly.precipitation_probability ? data.hourly.precipitation_probability[closestIdx] : 0;
              
-             sched.weather = `${icon} ${Math.round(data.hourly.temperature_2m[closestIdx])}°C`;
+             // Fallback for simple string if needed
+             let fallbackIcon = '☁️';
+             if (code === 0) fallbackIcon = isDay ? '☀️' : '🌙';
+             else if (code === 1 || code === 2) fallbackIcon = isDay ? '⛅' : '☁️';
+             else if (code >= 51 && code <= 67) fallbackIcon = '🌧️';
+             else if (code >= 71 && code <= 86) fallbackIcon = '❄️';
+             else if (code >= 95) fallbackIcon = '⛈️';
+
+             sched.weather = `${fallbackIcon} ${temp}°C`;
+             sched.weatherData = {
+               temp,
+               rain,
+               sfSymbol,
+               isDay
+             };
           }
         }
       }

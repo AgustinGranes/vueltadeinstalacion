@@ -120,11 +120,38 @@ try {
       bottom.centerAlignContent();
       
       let locTextStr = ev.event || ev.circuit || "";
-      if (ev.weather) locTextStr += `  ${ev.weather}`;
       let locText = bottom.addText(locTextStr);
       locText.font = Font.systemFont(dateSize);
       locText.textColor = Color.gray();
       locText.lineLimit = 1;
+
+      if (ev.weatherData) {
+        bottom.addSpacer(8);
+        try {
+          let sym = SFSymbol.named(ev.weatherData.sfSymbol);
+          if (sym) {
+            let wImg = bottom.addImage(sym.image);
+            wImg.imageSize = new Size(dateSize, dateSize);
+            wImg.tintColor = Color.white();
+            bottom.addSpacer(4);
+          }
+        } catch(e) {}
+        
+        let tempText = bottom.addText(`${ev.weatherData.temp}°C`);
+        tempText.font = Font.boldSystemFont(dateSize);
+        tempText.textColor = Color.white();
+        
+        if (ev.weatherData.rain > 0) {
+          bottom.addSpacer(4);
+          let rainText = bottom.addText(`${ev.weatherData.rain}%`);
+          rainText.font = Font.boldSystemFont(dateSize);
+          rainText.textColor = new Color("60a5fa"); // Celeste claro
+        }
+      } else if (ev.weather) {
+        let wText = bottom.addText(`  ${ev.weather}`);
+        wText.font = Font.systemFont(dateSize);
+        wText.textColor = Color.white();
+      }
       
       bottom.addSpacer();
       
