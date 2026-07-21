@@ -163,7 +163,8 @@ try {
     }
     
     if (isUpcoming && evList.length > maxCount) {
-      container.addSpacer(); // Flexible spacer pushes down
+      container.addSpacer(8);
+      container.addSpacer();
       let pagRow = container.addStack();
       pagRow.layoutHorizontally();
       pagRow.centerAlignContent();
