@@ -1270,7 +1270,7 @@ const App = () => {
                           
                           {/* Middle Row: Circuit Name */}
                           <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
-                            {item.event} {item.circuit ? `- ${item.circuit}` : ''}
+                            {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
                           </h3>
 
                           {/* Bottom Row: Date/Time (Left) and Relative Time (Right) */}
@@ -1341,7 +1341,7 @@ const App = () => {
                           </div>
                           
                           <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: '4px 0 8px 0', opacity: 0.9 }}>
-                            {item.event} {item.circuit ? `- ${item.circuit}` : ''}
+                            {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
                           </h3>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '14px', marginTop: 'auto' }}>
@@ -1437,7 +1437,7 @@ const App = () => {
                 )}
                 {races.map((race, ri) => (
                   <div key={ri} className="cat-event-body">
-                    <h4 className="cat-event-name">{race.event}</h4>
+                    <h4 className="cat-event-name">{race.id && String(race.id).includes('horarios-') ? (race.circuit || race.event) : race.event}</h4>
                     {race.schedules.map((s, si) => (
                       <div key={si} className="schedule-row-mini">
                         <span className="sched-name">{s.name}</span>
