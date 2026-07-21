@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock, Settings, LogOut, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { WeatherWidget } from './components/WeatherWidget';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -1099,6 +1100,8 @@ const App = () => {
         circuitImage: race.circuitImage,
         watchLinks: race.watchLinks,
         ticketLink: race.ticketLink,
+        lat: race.lat,
+        long: race.long,
         raceId: race.id,
       }))
     ).sort((a, b) => a.startAt - b.startAt);
@@ -1280,6 +1283,9 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
+                               {item.lat && item.long && (
+                                 <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                               )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                {isLive(item) ? (
@@ -1350,6 +1356,9 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
+                               {item.lat && item.long && (
+                                 <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
+                               )}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                <span>Finalizado</span>
@@ -1440,7 +1449,12 @@ const App = () => {
                     <h4 className="cat-event-name">{race.id && String(race.id).includes('horarios-') ? (race.circuit || race.event) : race.event}</h4>
                     {race.schedules.map((s, si) => (
                       <div key={si} className="schedule-row-mini">
-                        <span className="sched-name">{s.name}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="sched-name">{s.name}</span>
+                          {race.lat && race.long && (
+                            <WeatherWidget lat={race.lat} long={race.long} timestamp={s.startAt} />
+                          )}
+                        </div>
                         <span className="sched-time">{s.time}</span>
                       </div>
                     ))}
