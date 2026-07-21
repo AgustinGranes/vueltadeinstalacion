@@ -238,22 +238,28 @@ const App = () => {
   const [tempHiddenCalCategories, setTempHiddenCalCategories] = useState<string[]>([]);
   const [isCalFilterOpen, setIsCalFilterOpen] = useState(false);
 
-  const syncFiltersToCloud = async (filters: string[]) => {
+  const syncSettingsToCloud = async (filters: string[], hwWeekly: boolean, hwCat: boolean) => {
     if (!user) return;
     try {
-      await setDoc(doc(db, 'users', user.uid), { hiddenCalCategories: filters }, { merge: true });
+      await setDoc(doc(db, 'users', user.uid), { 
+        hiddenCalCategories: filters,
+        hideWeatherWeekly: hwWeekly,
+        hideWeatherCategory: hwCat
+      }, { merge: true });
     } catch(e) {
-      console.error('Error saving filters to cloud:', e);
+      console.error('Error saving settings to cloud:', e);
     }
   };
 
   useEffect(() => {
     localStorage.setItem('hideWeatherWeekly', hideWeatherWeekly.toString());
-  }, [hideWeatherWeekly]);
+    if (user) syncSettingsToCloud(hiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
+  }, [hideWeatherWeekly, user]);
 
   useEffect(() => {
     localStorage.setItem('hideWeatherCategory', hideWeatherCategory.toString());
-  }, [hideWeatherCategory]);
+    if (user) syncSettingsToCloud(hiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
+  }, [hideWeatherCategory, user]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -262,15 +268,45 @@ const App = () => {
         try {
           const userRef = doc(db, 'users', currentUser.uid);
           const docSnap = await getDoc(userRef);
-          if (docSnap.exists() && docSnap.data().hiddenCalCategories) {
-            const cloudFilters = docSnap.data().hiddenCalCategories;
-            setHiddenCalCategories(cloudFilters);
-            localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(cloudFilters));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.hiddenCalCategories) {
+              const cloudFilters = data.hiddenCalCategories;
+              setHiddenCalCategories(cloudFilters);
+              localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(cloudFilters));
+            }
+            if (typeof data.hideWeatherWeekly === 'boolean') {
+              setHideWeatherWeekly(data.hideWeatherWeekly);
+              localStorage.setItem('hideWeatherWeekly', data.hideWeatherWeekly.toString());
+            }
+            if (typeof data.hideWeatherCategory === 'boolean') {
+              setHideWeatherCategory(data.hideWeatherCategory);
+              localStorage.setItem('hideWeatherCategory', data.hideWeatherCategory.toString());
+            }
+            
+            // Si le faltan campos (ej. usuario viejo que no tenía clima guardado), forzamos un sync
+            if (data.hiddenCalCategories === undefined || data.hideWeatherWeekly === undefined || data.hideWeatherCategory === undefined) {
+              const savedF = localStorage.getItem(CALENDAR_FILTER_KEY);
+              const locF = savedF ? JSON.parse(savedF) : [];
+              const hwW = localStorage.getItem('hideWeatherWeekly') === 'true';
+              const hwC = localStorage.getItem('hideWeatherCategory') === 'true';
+              await setDoc(userRef, { 
+                hiddenCalCategories: data.hiddenCalCategories || locF,
+                hideWeatherWeekly: data.hideWeatherWeekly !== undefined ? data.hideWeatherWeekly : hwW,
+                hideWeatherCategory: data.hideWeatherCategory !== undefined ? data.hideWeatherCategory : hwC
+              }, { merge: true });
+            }
           } else {
-            // New user, push local filters to cloud
-            const saved = localStorage.getItem(CALENDAR_FILTER_KEY);
-            const localFilters = saved ? JSON.parse(saved) : [];
-            await setDoc(userRef, { hiddenCalCategories: localFilters }, { merge: true });
+            // New user, push local settings to cloud
+            const savedF = localStorage.getItem(CALENDAR_FILTER_KEY);
+            const locF = savedF ? JSON.parse(savedF) : [];
+            const hwW = localStorage.getItem('hideWeatherWeekly') === 'true';
+            const hwC = localStorage.getItem('hideWeatherCategory') === 'true';
+            await setDoc(userRef, { 
+              hiddenCalCategories: locF,
+              hideWeatherWeekly: hwW,
+              hideWeatherCategory: hwC
+            }, { merge: true });
           }
         } catch(e) {
           console.error('Error syncing filters:', e);
@@ -1227,7 +1263,7 @@ const App = () => {
                   <button className="filter-btn filter-apply-btn" style={{ width: '100%' }} onClick={() => {
                     setHiddenCalCategories(tempHiddenCalCategories);
                     localStorage.setItem(CALENDAR_FILTER_KEY, JSON.stringify(tempHiddenCalCategories));
-                    syncFiltersToCloud(tempHiddenCalCategories);
+                    syncSettingsToCloud(tempHiddenCalCategories, hideWeatherWeekly, hideWeatherCategory);
                     setIsCalFilterOpen(false);
                   }}>Aplicar Filtros</button>
                 </div>
