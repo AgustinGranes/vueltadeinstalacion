@@ -125,7 +125,7 @@ try {
       locText.textColor = Color.gray();
       locText.lineLimit = 1;
 
-      if (ev.weatherData) {
+      if (!isSplit && ev.weatherData) {
         bottom.addSpacer(8);
         try {
           let sym = SFSymbol.named(ev.weatherData.sfSymbol);
@@ -147,7 +147,7 @@ try {
           rainText.font = Font.boldSystemFont(dateSize);
           rainText.textColor = new Color("60a5fa"); // Celeste claro
         }
-      } else if (ev.weather) {
+      } else if (!isSplit && ev.weather) {
         let wText = bottom.addText(`  ${ev.weather}`);
         wText.font = Font.systemFont(dateSize);
         wText.textColor = Color.white();
