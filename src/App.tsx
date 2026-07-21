@@ -1737,33 +1737,28 @@ const App = () => {
                 className="news-filter-dropdown"
                 style={{ overflow: 'hidden' }}
               >
-                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   
-                  {/* Toggles for Weather */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <h3 style={{ margin: '0', fontSize: '16px', color: 'var(--accent-blue)' }}>Clima</h3>
-                    
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Desactivar clima en la vista semanal</span>
-                      <button 
-                        className={`toggle-btn ${hideWeatherWeekly ? 'active' : ''}`}
-                        onClick={() => setHideWeatherWeekly(!hideWeatherWeekly)}
-                      >
-                        <div className="toggle-knob"></div>
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Desactivar clima en la vista por categoría</span>
-                      <button 
-                        className={`toggle-btn ${hideWeatherCategory ? 'active' : ''}`}
-                        onClick={() => setHideWeatherCategory(!hideWeatherCategory)}
-                      >
-                        <div className="toggle-knob"></div>
-                      </button>
-                    </div>
-
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista semanal</span>
+                    <button 
+                      className={`settings-toggle ${hideWeatherWeekly ? 'active' : ''}`}
+                      onClick={() => setHideWeatherWeekly(!hideWeatherWeekly)}
+                    >
+                      <div className="settings-toggle-knob"></div>
+                    </button>
                   </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista por categoría</span>
+                    <button 
+                      className={`settings-toggle ${hideWeatherCategory ? 'active' : ''}`}
+                      onClick={() => setHideWeatherCategory(!hideWeatherCategory)}
+                    >
+                      <div className="settings-toggle-knob"></div>
+                    </button>
+                  </div>
+
                 </div>
               </motion.div>
             )}

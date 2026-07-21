@@ -1836,6 +1836,41 @@
   }
 }
 
+/* Settings Toggle (iOS style) */
+.settings-toggle {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  min-width: 48px;
+  background: #3a3a3c;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease;
+  flex-shrink: 0;
+}
+
+.settings-toggle.active {
+  background: var(--accent-blue, #3b82f6);
+}
+
+.settings-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.settings-toggle.active .settings-toggle-knob {
+  transform: translateX(20px);
+}
+
 /* PWA Prompt */
 .pwa-prompt-overlay {
   position: fixed;
