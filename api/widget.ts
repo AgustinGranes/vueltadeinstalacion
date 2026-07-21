@@ -85,11 +85,10 @@ export default async function handler(req: any, res: any) {
 
             const firstSession = groupSessions[0];
             const circuitObj = firstSession?.circuit || {};
-            const circuitName = [
-              circuitObj.circuit,
-              circuitObj.layout && circuitObj.layout !== 'N/A' ? circuitObj.layout : null,
-              circuitObj.emoji || circuitObj.country
-            ].filter(Boolean).join(' · ');
+            let circuitName = circuitObj.circuit || '';
+            if (circuitName.includes(' - ')) {
+              circuitName = circuitName.split(' - ').pop()?.trim() || circuitName;
+            }
 
             const schedulesList = groupSessions.map((s: any, idx: number) => ({
               id: `horarios-${ev.eventId}-${s.id || idx}`,

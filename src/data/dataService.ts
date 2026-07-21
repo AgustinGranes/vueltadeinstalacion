@@ -679,11 +679,10 @@ export const dataService = {
 
           const firstSession = groupSessions[0];
           const circuitObj = firstSession?.circuit || {};
-          const circuitParts: string[] = [];
-          if (circuitObj.circuit) circuitParts.push(circuitObj.circuit);
-          if (circuitObj.layout && circuitObj.layout !== 'N/A') circuitParts.push(circuitObj.layout);
-          if (circuitObj.country) circuitParts.push(circuitObj.country);
-          const circuitName = circuitParts.join(' · ');
+          let circuitName = circuitObj.circuit || '';
+          if (circuitName.includes(' - ')) {
+            circuitName = circuitName.split(' - ').pop()?.trim() || circuitName;
+          }
 
           const schedulesList = groupSessions.map((s: any, idx: number) => {
             const d = new Date(s.date);
