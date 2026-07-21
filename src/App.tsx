@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import mediumLargeWidgetCode from './widgets/widget.js?raw';
 import lockscreenWidgetCode from './widgets/lockscreen_widget.js?raw';
 import { dataService, getCategoryColor } from './data/dataService';
+import { getWeatherForSession } from './services/weatherService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
@@ -556,6 +557,14 @@ const App = () => {
       const weekly = await dataService.getWeeklyCalendar();
       setWeeklyRaces(weekly);
       loadedDataRef.current.add('home');
+      
+      // Preload weather data silently in the background
+      weekly.forEach(item => {
+        if (item.lat && item.long && item.schedules && item.schedules.length > 0) {
+          // Fire and forget, weatherService will cache the response
+          getWeatherForSession(item.lat, item.long, item.schedules[0].startAt).catch(() => {});
+        }
+      });
     } catch (e) {
       console.error('Home fetch error:', e);
     } finally {
