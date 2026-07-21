@@ -702,6 +702,11 @@ export const dataService = {
 
           const ticketLink = ev.affiliate?.ticketLinkURL || seriesInfo?.affiliate?.ticketLinkURL || '';
 
+          let eventName = ev.eventName || categoryName;
+          if (eventName.includes(' - ')) {
+            eventName = eventName.split(' - ').pop()?.trim() || eventName;
+          }
+
           races.push({
             id: `horarios-${ev.eventId}-${seriesId}`,
             categoryId: seriesId,
@@ -709,7 +714,7 @@ export const dataService = {
             categoryShort: categoryName,
             categoryColor,
             categoryImage: CATEGORY_LOCAL_LOGOS[categoryFullName] || CATEGORY_LOCAL_LOGOS[categoryName] || '',
-            event: ev.eventName || categoryName,
+            event: eventName,
             circuit: circuitName,
             circuitImage: '',
             platforms: watchLinks.map(w => w.platform),

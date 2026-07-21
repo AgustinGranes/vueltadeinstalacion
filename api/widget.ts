@@ -100,12 +100,17 @@ export default async function handler(req: any, res: any) {
             // Sort schedules within this group
             schedulesList.sort((a, b) => a.startAt - b.startAt);
 
+            let eventName = ev.eventName || categoryName;
+            if (eventName.includes(' - ')) {
+              eventName = eventName.split(' - ').pop()?.trim() || eventName;
+            }
+
             horariosRaces.push({
               id: `horarios-${ev.eventId}-${seriesId}`,
               categoryId: seriesId,
               category: categoryFullName,
               categoryShort: categoryName,
-              event: ev.eventName || categoryName,
+              event: eventName,
               circuit: circuitName,
               schedules: schedulesList,
             });
