@@ -35,14 +35,12 @@ export async function getCoordinatesForLocation(locationName: string): Promise<{
       geocodeCache.set(key, coords);
       return coords;
     }
-    // Sucessful response but no results found
-    geocodeCache.set(key, null);
-    return null;
   } catch (e) {
     console.warn('Failed to fetch geocoding from Open-Meteo:', e);
-    // DO NOT cache null if it was a rate limit or network error
-    return null;
   }
+  
+  geocodeCache.set(key, null);
+  return null;
 }
 
 export async function getWeatherForSession(lat: number | undefined, long: number | undefined, sessionTimestamp: number, locationName?: string): Promise<WeatherData | null> {

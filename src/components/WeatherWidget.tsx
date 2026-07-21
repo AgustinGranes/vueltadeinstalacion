@@ -25,33 +25,15 @@ export function WeatherWidget({ lat, long, locationName, timestamp }: WeatherWid
 
   useEffect(() => {
     let mounted = true;
-    let retryCount = 0;
-    
-    const fetchWeather = () => {
-      setLoading(true);
-      getWeatherForSession(lat, long, timestamp, locationName).then(data => {
-        if (!mounted) return;
-        if (data) {
-          setWeather(data);
-          setLoading(false);
-        } else if (retryCount < 3) {
-          retryCount++;
-          setTimeout(fetchWeather, 2000); // Retry after 2 seconds
-        } else {
-          setLoading(false);
-        }
-      }).catch(() => {
-        if (!mounted) return;
-        if (retryCount < 3) {
-          retryCount++;
-          setTimeout(fetchWeather, 2000);
-        } else {
-          setLoading(false);
-        }
-      });
-    };
-    
-    fetchWeather();
+    setLoading(true);
+    getWeatherForSession(lat, long, timestamp, locationName).then(data => {
+      if (mounted) {
+        setWeather(data);
+        setLoading(false);
+      }
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
 
     return () => { mounted = false; };
   }, [lat, long, locationName, timestamp]);
