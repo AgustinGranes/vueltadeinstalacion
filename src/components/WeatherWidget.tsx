@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sun, Moon, CloudSun, CloudMoon, Cloud, CloudFog, 
@@ -17,6 +18,7 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,12 +40,41 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        // Also check if they clicked inside the portal tooltip
+        const tooltipEl = document.getElementById('weather-tooltip-portal');
+        if (tooltipEl && tooltipEl.contains(event.target as Node)) {
+          return;
+        }
         setIsOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Calculate and update portal position
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setCoords({
+          top: rect.top + window.scrollY - 8,
+          left: rect.left + window.scrollX + rect.width / 2
+        });
+      }
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
 
   if (loading || !weather) return null;
 
@@ -59,7 +90,6 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
     if (code >= 95 && code <= 99) return <CloudLightning size={size} color={color} />;
     return <Cloud size={size} color={color} />;
   };
-
   return (
     <div className="weather-widget-container" ref={containerRef} style={{ position: 'relative', display: 'inline-flex' }}>
       <button 
@@ -91,66 +121,70 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
         )}
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 5, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 8px)',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: '#0d1621',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              padding: '12px',
-              minWidth: '160px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-              zIndex: 100,
-              cursor: 'default'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-              {renderIcon(20)}
-              <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#fff' }}>
-                {getWeatherConditionName(weather.weatherCode)}
-              </span>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#9ca3af' }}>Temperatura</span>
-                <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.temperature}°C</span>
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              id="weather-tooltip-portal"
+              initial={{ opacity: 0, y: 5, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'absolute',
+                top: `${coords.top}px`,
+                left: `${coords.left}px`,
+                transform: 'translate(-50%, -100%)',
+                background: '#0d1621',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '8px',
+                padding: '12px',
+                minWidth: '160px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                zIndex: 99999,
+                cursor: 'default'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                {renderIcon(20)}
+                <span style={{ fontWeight: 'bold', fontSize: '15px', color: '#fff' }}>
+                  {getWeatherConditionName(weather.weatherCode)}
+                </span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#9ca3af' }}>Prob. Lluvia</span>
-                <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainChance}%</span>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#9ca3af' }}>Temperatura</span>
+                  <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.temperature}°C</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#9ca3af' }}>Prob. Lluvia</span>
+                  <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainChance}%</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: '#9ca3af' }}>Precipitación</span>
+                  <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainfall} mm</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                <span style={{ color: '#9ca3af' }}>Precipitación</span>
-                <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainfall} mm</span>
-              </div>
-            </div>
-            
-            {/* Tooltip Arrow */}
-            <div style={{
-              position: 'absolute',
-              bottom: '-5px',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(45deg)',
-              width: '10px',
-              height: '10px',
-              background: '#0d1621',
-              borderBottom: '1px solid rgba(255,255,255,0.1)',
-              borderRight: '1px solid rgba(255,255,255,0.1)'
-            }} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+              
+              {/* Tooltip Arrow */}
+              <div style={{
+                position: 'absolute',
+                bottom: '-5px',
+                left: '50%',
+                transform: 'translateX(-50%) rotate(45deg)',
+                width: '10px',
+                height: '10px',
+                background: '#0d1621',
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                borderRight: '1px solid rgba(255,255,255,0.1)'
+              }} />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
