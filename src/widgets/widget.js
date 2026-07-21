@@ -98,7 +98,7 @@ try {
       let cat = titleRow.addText(ev.category);
       cat.font = Font.boldSystemFont(catSize);
       cat.lineLimit = 1;
-      cat.textColor = ev.isLive ? new Color(ev.color ? ev.color.replace('#','') : "ff3b30") : Color.gray();
+      cat.textColor = ev.isLive ? new Color(ev.color ? ev.color.replace('#','') : "ff3b30") : Color.dynamic(Color.black(), Color.white());
       
       let sep = titleRow.addText(" - ");
       sep.font = Font.boldSystemFont(catSize);
@@ -106,7 +106,7 @@ try {
       
       let sessName = titleRow.addText(ev.name);
       sessName.font = Font.boldSystemFont(eventSize);
-      sessName.textColor = Color.dynamic(Color.black(), Color.white());
+      sessName.textColor = Color.gray();
       sessName.lineLimit = 1;
       
       top.addSpacer();

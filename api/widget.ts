@@ -112,6 +112,8 @@ export default async function handler(req: any, res: any) {
               categoryShort: categoryName,
               event: eventName,
               circuit: circuitName,
+              lat: circuitObj.lat,
+              long: circuitObj.long,
               schedules: schedulesList,
             });
           }
