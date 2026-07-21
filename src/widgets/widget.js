@@ -168,13 +168,21 @@ try {
       pagRow.layoutHorizontally();
       pagRow.centerAlignContent();
       
-      let leftArr = pagRow.addText("◀");
-      leftArr.font = Font.boldSystemFont(14);
-      leftArr.textColor = Color.dynamic(Color.black(), Color.white());
+      let leftSym = null;
+      try { leftSym = SFSymbol.named("chevron.left"); } catch(e) {}
+      let leftArr = leftSym ? pagRow.addImage(leftSym.image) : pagRow.addText("◀");
+      if (leftSym) {
+        leftArr.imageSize = new Size(12, 12);
+        leftArr.tintColor = Color.dynamic(Color.black(), Color.white());
+      } else {
+        leftArr.font = Font.boldSystemFont(14);
+        leftArr.textColor = Color.dynamic(Color.black(), Color.white());
+      }
       if (currentPage > 0 && Script.name()) {
         leftArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=prev";
       } else {
-        leftArr.textColor = Color.gray();
+        if (leftSym) leftArr.tintColor = Color.gray();
+        else leftArr.textColor = Color.gray();
       }
       
       pagRow.addSpacer();
@@ -185,13 +193,21 @@ try {
       
       pagRow.addSpacer();
       
-      let rightArr = pagRow.addText("▶");
-      rightArr.font = Font.boldSystemFont(14);
-      rightArr.textColor = Color.dynamic(Color.black(), Color.white());
+      let rightSym = null;
+      try { rightSym = SFSymbol.named("chevron.right"); } catch(e) {}
+      let rightArr = rightSym ? pagRow.addImage(rightSym.image) : pagRow.addText("▶");
+      if (rightSym) {
+        rightArr.imageSize = new Size(12, 12);
+        rightArr.tintColor = Color.dynamic(Color.black(), Color.white());
+      } else {
+        rightArr.font = Font.boldSystemFont(14);
+        rightArr.textColor = Color.dynamic(Color.black(), Color.white());
+      }
       if (currentPage < totalPages - 1 && Script.name()) {
         rightArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=next";
       } else {
-        rightArr.textColor = Color.gray();
+        if (rightSym) rightArr.tintColor = Color.gray();
+        else rightArr.textColor = Color.gray();
       }
     }
   }
