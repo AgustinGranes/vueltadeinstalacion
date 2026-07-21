@@ -68,6 +68,9 @@ const App = () => {
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isWhereToPitOpen, setIsWhereToPitOpen] = useState(false);
+  const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
+  const [hideWeatherWeekly, setHideWeatherWeekly] = useState(() => localStorage.getItem('hideWeatherWeekly') === 'true');
+  const [hideWeatherCategory, setHideWeatherCategory] = useState(() => localStorage.getItem('hideWeatherCategory') === 'true');
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -242,6 +245,14 @@ const App = () => {
       console.error('Error saving filters to cloud:', e);
     }
   };
+
+  useEffect(() => {
+    localStorage.setItem('hideWeatherWeekly', hideWeatherWeekly.toString());
+  }, [hideWeatherWeekly]);
+
+  useEffect(() => {
+    localStorage.setItem('hideWeatherCategory', hideWeatherCategory.toString());
+  }, [hideWeatherCategory]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -1283,7 +1294,7 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
-                               {item.lat && item.long && (
+                               {item.lat && item.long && !hideWeatherWeekly && (
                                  <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
                                )}
                             </div>
@@ -1356,7 +1367,7 @@ const App = () => {
                                   <Clock size={15} />
                                   <span>{item.time}</span>
                                </div>
-                               {item.lat && item.long && (
+                               {item.lat && item.long && !hideWeatherWeekly && (
                                  <WeatherWidget lat={item.lat} long={item.long} timestamp={item.startAt} />
                                )}
                             </div>
@@ -1451,7 +1462,7 @@ const App = () => {
                       <div key={si} className="schedule-row-mini">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span className="sched-name">{s.name}</span>
-                          {race.lat && race.long && (
+                          {race.lat && race.long && !hideWeatherCategory && (
                             <WeatherWidget lat={race.lat} long={race.long} timestamp={s.startAt} />
                           )}
                         </div>
@@ -1708,6 +1719,57 @@ const App = () => {
             )}
           </AnimatePresence>
         </div>
+
+        <div className="news-filter-container">
+          <button className="news-filter-toggle" onClick={() => setIsCustomizationOpen(!isCustomizationOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🎨</span>
+              <span>Personalización</span>
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isCustomizationOpen ? 'open' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {isCustomizationOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="news-filter-dropdown"
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  {/* Toggles for Weather */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <h3 style={{ margin: '0', fontSize: '16px', color: 'var(--accent-blue)' }}>Clima</h3>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Desactivar clima en la vista semanal</span>
+                      <button 
+                        className={`toggle-btn ${hideWeatherWeekly ? 'active' : ''}`}
+                        onClick={() => setHideWeatherWeekly(!hideWeatherWeekly)}
+                      >
+                        <div className="toggle-knob"></div>
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--text-primary)' }}>Desactivar clima en la vista por categoría</span>
+                      <button 
+                        className={`toggle-btn ${hideWeatherCategory ? 'active' : ''}`}
+                        onClick={() => setHideWeatherCategory(!hideWeatherCategory)}
+                      >
+                        <div className="toggle-knob"></div>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
       </motion.div>
     );
   };
