@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -18,8 +18,9 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, arrowLeft: 0 });
 
   useEffect(() => {
     let mounted = true;
@@ -36,44 +37,63 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
     return () => { mounted = false; };
   }, [lat, long, timestamp]);
 
-  // Handle clicking outside to close
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        // Also check if they clicked inside the portal tooltip
-        const tooltipEl = document.getElementById('weather-tooltip-portal');
-        if (tooltipEl && tooltipEl.contains(event.target as Node)) {
-          return;
-        }
-        setIsOpen(false);
-      }
+  const calcPosition = useCallback(() => {
+    if (!btnRef.current || !tooltipRef.current) return;
+    const btnRect = btnRef.current.getBoundingClientRect();
+    const tipRect = tooltipRef.current.getBoundingClientRect();
+    const ARROW_GAP = 8;
+
+    // Center of the button in viewport
+    const btnCenterX = btnRect.left + btnRect.width / 2;
+
+    // Ideal left = button center - half tooltip width
+    let idealLeft = btnCenterX - tipRect.width / 2;
+
+    // Clamp so it doesn't go off-screen (8px margin)
+    const margin = 8;
+    if (idealLeft < margin) idealLeft = margin;
+    if (idealLeft + tipRect.width > window.innerWidth - margin) {
+      idealLeft = window.innerWidth - margin - tipRect.width;
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    // Arrow offset inside tooltip pointing at button center
+    const arrowLeft = btnCenterX - idealLeft;
+
+    setPos({
+      top: btnRect.top - tipRect.height - ARROW_GAP,
+      left: idealLeft,
+      arrowLeft: Math.max(12, Math.min(arrowLeft, tipRect.width - 12)),
+    });
   }, []);
 
-  // Calculate and update portal position
+  // Recalculate on open and on scroll/resize
   useEffect(() => {
     if (!isOpen) return;
+    // Use RAF to wait for the tooltip to render and get measured
+    const raf = requestAnimationFrame(() => calcPosition());
 
-    const updatePosition = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setCoords({
-          top: rect.top + window.scrollY - 8,
-          left: rect.left + window.scrollX + rect.width / 2
-        });
-      }
-    };
-
-    updatePosition();
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
+    const onScrollOrResize = () => calcPosition();
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
 
     return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
     };
+  }, [isOpen, calcPosition]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClick(e: MouseEvent) {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target)) return;
+      if (tooltipRef.current?.contains(target)) return;
+      setIsOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
   if (loading || !weather) return null;
@@ -90,9 +110,11 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
     if (code >= 95 && code <= 99) return <CloudLightning size={size} color={color} />;
     return <Cloud size={size} color={color} />;
   };
+
   return (
-    <div className="weather-widget-container" ref={containerRef} style={{ position: 'relative', display: 'inline-flex' }}>
+    <div className="weather-widget-container" style={{ position: 'relative', display: 'inline-flex' }}>
       <button 
+        ref={btnRef}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -125,24 +147,24 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              id="weather-tooltip-portal"
-              initial={{ opacity: 0, y: 5, scale: 0.95 }}
+              ref={tooltipRef}
+              initial={{ opacity: 0, y: 5, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 5, scale: 0.95 }}
+              exit={{ opacity: 0, y: 5, scale: 0.97 }}
               transition={{ duration: 0.15 }}
               style={{
-                position: 'absolute',
-                top: `${coords.top}px`,
-                left: `${coords.left}px`,
-                transform: 'translate(-50%, -100%)',
+                position: 'fixed',
+                top: `${pos.top}px`,
+                left: `${pos.left}px`,
                 background: '#0d1621',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: '8px',
                 padding: '12px',
-                minWidth: '160px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                minWidth: '180px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
                 zIndex: 99999,
-                cursor: 'default'
+                cursor: 'default',
+                pointerEvents: 'auto',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -154,31 +176,31 @@ export function WeatherWidget({ lat, long, timestamp }: WeatherWidgetProps) {
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', gap: '16px' }}>
                   <span style={{ color: '#9ca3af' }}>Temperatura</span>
                   <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.temperature}°C</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', gap: '16px' }}>
                   <span style={{ color: '#9ca3af' }}>Prob. Lluvia</span>
                   <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainChance}%</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', gap: '16px' }}>
                   <span style={{ color: '#9ca3af' }}>Precipitación</span>
                   <span style={{ color: '#fff', fontWeight: 'bold' }}>{weather.rainfall} mm</span>
                 </div>
               </div>
               
-              {/* Tooltip Arrow */}
+              {/* Arrow — positioned to point exactly at button center */}
               <div style={{
                 position: 'absolute',
                 bottom: '-5px',
-                left: '50%',
+                left: `${pos.arrowLeft}px`,
                 transform: 'translateX(-50%) rotate(45deg)',
                 width: '10px',
                 height: '10px',
                 background: '#0d1621',
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
-                borderRight: '1px solid rgba(255,255,255,0.1)'
+                borderRight: '1px solid rgba(255,255,255,0.1)',
               }} />
             </motion.div>
           )}
