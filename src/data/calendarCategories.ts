@@ -1,6 +1,6 @@
 export const MASTER_CALENDAR_CATEGORIES: Record<string, string[]> = {
   "SINGLE SEATERS": [
-    "Formula 1", "Formula 2", "Formula 3", "F1 Academy", "Formula E", "IndyCar",
+    "Formula 1", "Formula 2", "Formula 3", "F1 Academy", "Formula E", "IndyCar Series",
     "Indy NXT", "Super Formula", "Super Formula Lights", "FR Euro Champ", "FR America",
     "FR Japan", "FR Middle East", "FR Oceania", "Euroformula Open", "GB3", "GB4",
     "Ultimate Formula Cup", "Formula Winter Series", "Eurocup-3", "E4", "British F4",
