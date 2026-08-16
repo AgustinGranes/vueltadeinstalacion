@@ -1792,8 +1792,8 @@ const App = () => {
                     <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista semanal</span>
                     <button 
                       onClick={() => updateSettings({ hideWeatherWeekly: !hideWeatherWeekly })}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        hideWeatherWeekly ? 'bg-red-600' : 'bg-gray-600'
+                      className={`settings-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        hideWeatherWeekly ? 'bg-red-600 active' : 'bg-gray-600'
                       }`}
                     >
                       <div className="settings-toggle-knob"></div>
@@ -1804,8 +1804,8 @@ const App = () => {
                     <span style={{ fontSize: '14px', color: '#ccc', fontFamily: "'Inter', sans-serif" }}>Desactivar clima en la vista por categoría</span>
                     <button 
                       onClick={() => updateSettings({ hideWeatherCategory: !hideWeatherCategory })}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                        hideWeatherCategory ? 'bg-red-600' : 'bg-gray-600'
+                      className={`settings-toggle relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        hideWeatherCategory ? 'bg-red-600 active' : 'bg-gray-600'
                       }`}
                     >
                       <div className="settings-toggle-knob"></div>

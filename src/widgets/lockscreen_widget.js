@@ -45,8 +45,8 @@ try {
     row3.centerAlignContent();
     
     const d = new Date(ev.startAt);
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const days = ["dom.", "lun.", "mar.", "mié.", "jue.", "vie.", "sáb."];
+    const months = ["ene.", "feb.", "mar.", "abr.", "may.", "jun.", "jul.", "ago.", "sep.", "oct.", "nov.", "dic."];
     let dateStr = `${days[d.getDay()]} ${months[d.getMonth()]} ${d.getDate()}`;
     let dateText = row3.addText(dateStr);
     dateText.font = Font.systemFont(13);

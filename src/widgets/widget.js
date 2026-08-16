@@ -29,7 +29,20 @@ try {
   let url = "https://vueltadeinstalacion.vercel.app/api/widget";
   if (args.widgetParameter) url += "?hidden=" + encodeURIComponent(args.widgetParameter);
   
-  const events = await new Request(url).loadJSON();
+  const cachePath = fm.joinPath(fm.documentsDirectory(), "vdi_widget_cache.json");
+  let events = [];
+  try {
+    const req = new Request(url);
+    req.timeoutInterval = 10;
+    events = await req.loadJSON();
+    fm.writeString(cachePath, JSON.stringify(events));
+  } catch (err) {
+    if (fm.fileExists(cachePath)) {
+      events = JSON.parse(fm.readString(cachePath));
+    } else {
+      throw err;
+    }
+  }
   
   const liveEvents = events.filter(e => e.isLive);
   const upcomingEvents = events.filter(e => !e.isLive);
@@ -70,12 +83,12 @@ try {
       msg.textColor = Color.gray();
       return;
     }
-    
     let maxCount = isUpcoming ? maxEventsUpcoming : maxEventsLive;
     let totalPages = Math.ceil(evList.length / maxCount);
-    if (isUpcoming && currentPage >= totalPages) currentPage = Math.max(0, totalPages - 1);
-    
-    let startIndex = isUpcoming ? currentPage * maxCount : 0;
+    // Remove the global reset here because the other column might have more pages
+    // Instead, cap the start index so we don't go out of bounds, but still show the last page
+    let effectivePage = Math.min(currentPage, Math.max(0, totalPages - 1));
+    let startIndex = effectivePage * maxCount;
     let displayList = evList.slice(startIndex, startIndex + maxCount);
     
     for (let i = 0; i < displayList.length; i++) {
@@ -162,7 +175,7 @@ try {
       if (i < displayList.length - 1) container.addSpacer(spacerEvent);
     }
     
-    if (isUpcoming && evList.length > maxCount) {
+    if (evList.length > maxCount) {
       container.addSpacer(8);
       container.addSpacer();
       let pagRow = container.addStack();
@@ -179,7 +192,7 @@ try {
         leftArr.font = Font.boldSystemFont(14);
         leftArr.textColor = Color.dynamic(Color.black(), Color.white());
       }
-      if (currentPage > 0 && Script.name()) {
+      if (effectivePage > 0 && Script.name()) {
         leftArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=prev";
       } else {
         if (leftSym) leftArr.tintColor = Color.gray();
@@ -188,7 +201,7 @@ try {
       
       pagRow.addSpacer();
       
-      let pagText = pagRow.addText(`${currentPage + 1} / ${totalPages}`);
+      let pagText = pagRow.addText(`${effectivePage + 1} / ${totalPages}`);
       pagText.font = Font.boldSystemFont(12);
       pagText.textColor = Color.dynamic(Color.black(), Color.white());
       
@@ -204,7 +217,7 @@ try {
         rightArr.font = Font.boldSystemFont(14);
         rightArr.textColor = Color.dynamic(Color.black(), Color.white());
       }
-      if (currentPage < totalPages - 1 && Script.name()) {
+      if (effectivePage < totalPages - 1 && Script.name()) {
         rightArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=next";
       } else {
         if (rightSym) rightArr.tintColor = Color.gray();

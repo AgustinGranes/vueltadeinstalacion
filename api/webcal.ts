@@ -36,6 +36,11 @@ export default async function handler(req: any, res: any) {
       if (apiRes.ok) {
         const data = await apiRes.json();
         vrRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
+        vrRaces = vrRaces.filter((r: any) => {
+          const cat = (r.category || r.name || '').toLowerCase();
+          const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks', 'indycar', 'indycar series'];
+          return !blockedCategories.includes(cat);
+        });
       }
     } catch (fetchErr) {
       console.error('[webcal] VueltaRapida fetch error:', fetchErr);
@@ -75,8 +80,13 @@ export default async function handler(req: any, res: any) {
 
           for (const [seriesId, groupSessions] of Object.entries(sessionsBySeries)) {
             const seriesInfo = seriesMap[seriesId] || null;
-            const categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
-            const categoryFullName = seriesInfo?.details?.name || categoryName;
+            let categoryName = seriesInfo?.details?.shortName || seriesInfo?.details?.name || seriesId.toUpperCase() || 'Motorsport';
+            let categoryFullName = seriesInfo?.details?.name || categoryName;
+            
+            if (categoryName.toLowerCase() === 'indycar') {
+              categoryName = 'IndyCar Series';
+              categoryFullName = 'IndyCar Series';
+            }
 
             const c = (categoryFullName || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
             if (c === 'formula1' || c === 'f1' || c === 'formula2' || c === 'f2' || c === 'formula3' || c === 'f3') {

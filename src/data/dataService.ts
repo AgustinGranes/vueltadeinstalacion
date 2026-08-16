@@ -30,6 +30,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'WRC': '#0066CC',
   'WRC2': '#f57c00',
   'IndyCar': '#0057B8',
+  'IndyCar Series': '#0057B8',
   'NASCAR': '#FFD659',
   'WEC': '#0288d1',
   'TN': '#1c7c3b',
@@ -79,6 +80,7 @@ const CATEGORY_LOCAL_LOGOS: Record<string, string> = {
   'Formula 3': '/categories/f3.png',
   'F3': '/categories/f3.png',
   'IndyCar': '/categories/indycar.png',
+  'IndyCar Series': '/categories/indycar.png',
   'Indy NXT': '/categories/indynxt.png',
   'Super Formula': '/categories/superformula.png',
   'British F4': '/categories/britishf4.png',
@@ -479,7 +481,7 @@ export const dataService = {
       // Block Formula 1, 2, 3, BTCC, DTM, NASCAR, Porsche Supercup from vueltarapida to use JSON instead
       races = races.filter((r: any) => {
         const cat = (r.category || r.name || '').toLowerCase();
-        const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks', 'porsche mobil 1 supercup'];
+        const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks', 'porsche mobil 1 supercup', 'indycar', 'indycar series'];
         return !blockedCategories.includes(cat);
       });
       
@@ -687,6 +689,11 @@ export const dataService = {
           if (categoryFullName.toLowerCase() === 'nascar trucks' || categoryFullName.toLowerCase().includes('craftsman truck')) {
             categoryFullName = 'NASCAR Truck';
             categoryName = 'NASCAR Truck';
+            categoryFullName = 'NASCAR Truck';
+          }
+          if (categoryName.toLowerCase() === 'indycar') {
+            categoryName = 'IndyCar Series';
+            categoryFullName = 'IndyCar Series';
           }
 
           const watchLinks: { platform: string; url: string }[] = [];
