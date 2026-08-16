@@ -7,7 +7,7 @@ import { signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEma
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import mediumLargeWidgetCode from './widgets/widget.js?raw';
 import lockscreenWidgetCode from './widgets/lockscreen_widget.js?raw';
-import { dataService, getCategoryColor, CATEGORY_LOCAL_LOGOS } from './data/dataService';
+import { dataService, getCategoryColor } from './data/dataService';
 
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
@@ -27,7 +27,7 @@ const F3_LOGO = '/F3.png';
 const TC_LOGO = '/TC.png';
 const TCP_LOGO = '/TCP.png';
 const TCPK_LOGO = '/TCPK.png';
-const INDYCAR_LOGO = '/INDYCAR.png';
+const INDYCAR_LOGO = '/categories/indycar.png';
 const WEC_LOGO = '/WEC.png';
 const IMSA_LOGO = '/IMSA.png';
 const FE_LOGO = '/FE.png';
@@ -750,7 +750,7 @@ const App = () => {
         <button className="cat-card indycar-card" onClick={() => handleCategoryClick('IndyCar')}>
           <div className="cat-card-glow" />
           <img 
-            src={CATEGORY_LOCAL_LOGOS['IndyCar Series'] || CATEGORY_LOCAL_LOGOS['IndyCar'] || INDYCAR_LOGO} 
+            src={INDYCAR_LOGO} 
             alt="IndyCar" 
             className="cat-logo indycar-logo" 
             referrerPolicy="no-referrer"
@@ -1093,7 +1093,7 @@ const App = () => {
     if (c === 'MOTOGP' || c.includes('MOTOGP') || c.includes('MOTO GP')) return MotoGP_LOGO;
     if (c === 'WRC2' || c.includes('WRC2')) return WRC2_LOGO;
     if (c === 'WRC' || c.includes('WRC') || c.includes('WORLD RALLY')) return WRC_LOGO;
-    if (c.includes('INDYCAR') || c.includes('INDY NXT') || c.includes('INDYNXT')) return CATEGORY_LOCAL_LOGOS['IndyCar Series'] || CATEGORY_LOCAL_LOGOS['IndyCar'] || INDYCAR_LOGO;
+    if (c.includes('INDYCAR') || c.includes('INDY NXT') || c.includes('INDYNXT')) return INDYCAR_LOGO;
     if (c.includes('NASCAR TRUCK') || c === 'NASCART' || c.includes('CRAFTSMAN TRUCK')) return NASCART_LOGO;
     if (c.includes('O REILLY') || c === 'NASCARO' || c.includes('XFINITY')) return NASCARO_LOGO;
     if (c === 'NASCAR' || c.includes('NASCAR CUP')) return NASCAR_LOGO;
@@ -1145,7 +1145,7 @@ const App = () => {
         categoryImage: (() => {
           const c = (race.category || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
           if (c === 'INDYCAR' || c === 'INDYCAR SERIES' || c === 'NTT INDYCAR SERIES') {
-            return CATEGORY_LOCAL_LOGOS['IndyCar Series'] || CATEGORY_LOCAL_LOGOS['IndyCar'] || INDYCAR_LOGO;
+            return INDYCAR_LOGO;
           }
           return race.categoryImage;
         })(),
