@@ -562,13 +562,23 @@ const App = () => {
       dataService.getTCRSANews,
     ];
 
+    let pending = fetchers.length;
+
     fetchers.forEach(fn => {
       fn().then(items => {
         if (items && items.length > 0) {
-          setGlobalNewsFeed(prev => [...prev, ...items]);
+          setGlobalNewsFeed(prev => {
+            const existing = new Set(prev.map(i => i.link));
+            const fresh = items.filter(i => !existing.has(i.link));
+            return [...prev, ...fresh];
+          });
+        }
+      }).catch(() => {}).finally(() => {
+        pending--;
+        if (pending <= 0) {
           setIsGlobalNewsLoading(false);
         }
-      }).catch(() => {});
+      });
     });
   }, []);
 
@@ -2049,12 +2059,7 @@ const App = () => {
           </AnimatePresence>
         </div>
 
-        {isGlobalNewsLoading ? (
-          <div className="tab-loading-wrap">
-            {renderLoadingCircle()}
-          </div>
-        ) : (
-          <div className="news-feed">
+        <div className="news-feed">
           {allNewsList.map((item, idx) => (
             <a key={idx} href={item.link} target="_blank" rel="noopener noreferrer" className="news-card-item">
               <div className="news-card-body">
@@ -2064,9 +2069,18 @@ const App = () => {
               <ExternalLink size={16} className="news-ext-icon" />
             </a>
           ))}
-          {allNewsList.length === 0 && !isGlobalNewsLoading && <p className="empty-msg">No hay noticias disponibles.</p>}
-          </div>
-        )}
+          {isGlobalNewsLoading && (
+            <div className="loading-circle-container" style={{ padding: '24px 0' }}>
+              <div className="loading-circle" style={{ width: '24px', height: '24px' }}></div>
+              <p className="loading-circle-text" style={{ fontSize: '12px' }}>
+                {allNewsList.length === 0 ? 'Cargando noticias...' : 'Cargando más noticias...'}
+              </p>
+            </div>
+          )}
+          {allNewsList.length === 0 && !isGlobalNewsLoading && (
+            <p className="empty-msg">No hay noticias disponibles.</p>
+          )}
+        </div>
       </motion.div>
     );
   };
