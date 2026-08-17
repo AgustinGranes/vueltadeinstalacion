@@ -142,6 +142,7 @@ const App = () => {
   const [feStandingsTab, setFEStandingsTab] = useState<'drivers' | 'teams'>('drivers');
 
   const [f1StandingsTab, setF1StandingsTab] = useState<'drivers' | 'constructors'>('drivers');
+  const [globalNewsFeed, setGlobalNewsFeed] = useState<NewsItem[]>([]);
   const [f1News, setF1News] = useState<NewsItem[]>([]);
   const [wrcNews, setWrcNews] = useState<NewsItem[]>([]);
   const [wrc2News, setWrc2News] = useState<NewsItem[]>([]);
@@ -532,66 +533,44 @@ const App = () => {
 
   const fetchGlobalNews = useCallback(async () => {
     if (loadedDataRef.current.has('globalNews')) return;
+    loadedDataRef.current.add('globalNews');
     setIsGlobalNewsLoading(true);
-    try {
-      const results = await Promise.allSettled([
-        dataService.getF1News(),
-        dataService.getWRCNews(),
-        dataService.getWRC2News(),
-        dataService.getTCNews(),
-        dataService.getIndyCarNews(),
-        dataService.getNascarNews(),
-        dataService.getTC2000News(),
-        dataService.getTNC3News(),
-        dataService.getNascarTruckNews(),
-        dataService.getWECNews(),
-        dataService.getIMSANews(),
-        dataService.getF2News(),
-        dataService.getF3News(),
-        dataService.getFENews(),
-        dataService.getF1AcademyNews(),
-        dataService.getBTCCNews(),
-        dataService.getSUPERCARSNews(),
-        dataService.getMotoGPNews(),
-        dataService.getDTMNews(),
-        dataService.getSFNews(),
-        dataService.getELMSNews(),
-        dataService.getWorldSBKNews(),
-        dataService.getWTCRNews(),
-        dataService.getTCRSANews(),
-      ]);
-      
-      if (results[0].status === 'fulfilled') setF1News(results[0].value);
-      if (results[1].status === 'fulfilled') setWrcNews(results[1].value);
-      if (results[2].status === 'fulfilled') setWrc2News(results[2].value as NewsItem[]);
-      if (results[3].status === 'fulfilled') setTcNews(results[3].value as NewsItem[]);
-      if (results[4].status === 'fulfilled') setIndyNews(results[4].value);
-      if (results[5].status === 'fulfilled') setNascarNews(results[5].value);
-      if (results[6].status === 'fulfilled') setTc2000News(results[6].value);
-      if (results[7].status === 'fulfilled') setTnc3News(results[7].value);
-      if (results[8].status === 'fulfilled') setNascarTNews(results[8].value);
-      if (results[9].status === 'fulfilled') setWecNews(results[9].value);
-      if (results[10].status === 'fulfilled') setImsaNews(results[10].value);
-      if (results[11].status === 'fulfilled') setF2News(results[11].value);
-      if (results[12].status === 'fulfilled') setF3News(results[12].value);
-      if (results[13].status === 'fulfilled') setFENews(results[13].value);
-      if (results[14].status === 'fulfilled') setF1aNews(results[14].value as NewsItem[]);
-      if (results[15].status === 'fulfilled') setBtccNews(results[15].value as NewsItem[]);
-      if (results[16].status === 'fulfilled') setSupercarsNews(results[16].value as NewsItem[]);
-      if (results[17].status === 'fulfilled') setMotoGPNews(results[17].value as NewsItem[]);
-      if (results[18].status === 'fulfilled') setDtmNews(results[18].value as NewsItem[]);
-      if (results[19].status === 'fulfilled') setSfNews(results[19].value as NewsItem[]);
-      if (results[20].status === 'fulfilled') setElmsNews(results[20].value as NewsItem[]);
-      if (results[21]?.status === 'fulfilled') setWorldSBKNews((results[21] as any).value);
-      if (results[22]?.status === 'fulfilled') setWtcrNews((results[22] as any).value);
-      if (results[23]?.status === 'fulfilled') setTcrsaNews((results[23] as any).value);
 
-      loadedDataRef.current.add('globalNews');
-    } catch (e) {
-      console.error('Global news fetch error:', e);
-    } finally {
-      setIsGlobalNewsLoading(false);
-    }
+    const fetchers = [
+      dataService.getF1News,
+      dataService.getWRCNews,
+      dataService.getWRC2News,
+      dataService.getTCNews,
+      dataService.getIndyCarNews,
+      dataService.getNascarNews,
+      dataService.getTC2000News,
+      dataService.getTNC3News,
+      dataService.getNascarTruckNews,
+      dataService.getWECNews,
+      dataService.getIMSANews,
+      dataService.getF2News,
+      dataService.getF3News,
+      dataService.getFENews,
+      dataService.getF1AcademyNews,
+      dataService.getBTCCNews,
+      dataService.getSUPERCARSNews,
+      dataService.getMotoGPNews,
+      dataService.getDTMNews,
+      dataService.getSFNews,
+      dataService.getELMSNews,
+      dataService.getWorldSBKNews,
+      dataService.getWTCRNews,
+      dataService.getTCRSANews,
+    ];
+
+    fetchers.forEach(fn => {
+      fn().then(items => {
+        if (items && items.length > 0) {
+          setGlobalNewsFeed(prev => [...prev, ...items]);
+          setIsGlobalNewsLoading(false);
+        }
+      }).catch(() => {});
+    });
   }, []);
 
   const fetchHomeData = useCallback(async () => {
@@ -1737,38 +1716,7 @@ const App = () => {
           </AnimatePresence>
         </div>
 
-        <div className="news-filter-container">
-          <button className="news-filter-toggle" onClick={() => setIsWhereToPitOpen(!isWhereToPitOpen)}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '18px' }}>📺</span>
-              <span>¿Dónde veo las carreras?</span>
-            </div>
-            <ChevronRight size={18} className={`filter-chevron ${isWhereToPitOpen ? 'open' : ''}`} />
-          </button>
-          <AnimatePresence>
-            {isWhereToPitOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="news-filter-dropdown"
-                style={{ overflow: 'hidden' }}
-              >
-                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px', color: '#ccc', fontSize: '15px', lineHeight: '1.6' }}>
-                  <p style={{ margin: 0 }}>
-                    ¿Cansado de buscar dónde transmiten tu categoría favorita? Descubrí <strong>WhereToPit</strong>, la guía definitiva para los fanáticos del automovilismo.
-                  </p>
-                  <p style={{ margin: 0 }}>
-                    Encontrá al instante en qué canal o plataforma oficial podés ver la Fórmula 1, WEC, MotoGP, TC, IndyCar y más de 40 categorías. Además, usá nuestra calculadora integrada para sumar tus suscripciones y saber exactamente cuánto te cuesta por mes seguir tu pasión.
-                  </p>
-                  <p style={{ margin: 0 }}>
-                    En <a href="https://wheretopit.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-blue)', textDecoration: 'none', fontWeight: 'bold' }}>wheretopit.vercel.app</a>, todo el Motorsport en un solo lugar. ¡Empezá a usarla gratis hoy!
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+
 
         <div className="news-filter-container">
           <button className="news-filter-toggle" onClick={() => setIsCustomizationOpen(!isCustomizationOpen)}>
@@ -2048,21 +1996,7 @@ const App = () => {
   };
 
   const renderNoticias = () => {
-    // Interleave news based on Home Grid Order: F1, WRC, WEC, IMSA, NASCAR, NASCAR O REILLY, IndyCar, TC, TCP, TCM, TCPM, TCPK, TCPPK, TC2000
-    const sourceArrays = [
-      f1News, f2News, f3News, f1aNews, btccNews, supercarsNews, gtwcNews, motoGPNews, sfNews,
-      wrcNews, wrc2News, wecNews, imsaNews, nascarNews, nascarONews, nascarTNews, indyNews,
-      tcNews, tnc3News, tcpNews, tcmNews, tcpmNews, tcpkNews, tcppkNews, tc2000News, feNews,
-      worldSBKNews, elmsNews, wtcrNews
-    ];
-
-    let allNewsList: NewsItem[] = [];
-    const maxLen = Math.max(...sourceArrays.map(arr => arr.length));
-    for (let i = 0; i < maxLen; i++) {
-      for (const arr of sourceArrays) {
-        if (arr[i]) allNewsList.push(arr[i]);
-      }
-    }
+    let allNewsList: NewsItem[] = globalNewsFeed;
 
     if (selectedNewsCategories.length < NEWS_CATEGORIES.length) {
       allNewsList = allNewsList.filter(item => item.category ? selectedNewsCategories.includes(item.category) : false);
