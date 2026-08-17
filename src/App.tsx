@@ -69,7 +69,6 @@ const App = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isWidgetsOpen, setIsWidgetsOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isWhereToPitOpen, setIsWhereToPitOpen] = useState(false);
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
   const [hideWeatherWeekly, setHideWeatherWeekly] = useState(() => localStorage.getItem('hideWeatherWeekly') === 'true');
   const [hideWeatherCategory, setHideWeatherCategory] = useState(() => localStorage.getItem('hideWeatherCategory') === 'true');
