@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock, Settings, LogOut, User as UserIcon } from 'lucide-react';
+import { Calendar, Home, Newspaper, ArrowLeft, ExternalLink, Trophy, ChevronRight, Clock, Settings, LogOut, User as UserIcon, Tv, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WeatherWidget } from './components/WeatherWidget';
 import { auth, googleProvider, db } from './firebase';
@@ -12,9 +12,10 @@ import { dataService, getCategoryColor } from './data/dataService';
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
+import { PLATFORMS as WTP_PLATFORMS, CATEGORIES as WTP_CATEGORIES, LOGO_MAP as WTP_LOGO_MAP, GROUP_ORDER as WTP_GROUP_ORDER, convertToARS, formatPrice, sortPlatforms } from './data/whereToWatch';
 
 type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK' | 'WTCR' | 'TCRSA';
-type MainTab = 'home' | 'calendario' | 'noticias' | 'configuracion';
+type MainTab = 'home' | 'calendario' | 'noticias' | 'configuracion' | 'dondeVer';
 type CalendarViewMode = 'semanal' | 'categoria';
 type CategorySubTab = 'standings' | 'results' | 'calendar' | 'news';
 
@@ -1822,6 +1823,202 @@ const App = () => {
     );
   };
 
+  // ── DÓNDE VER (WhereToPit) ──────────────────────────────────────────────────
+  const [wtpSearch, setWtpSearch] = useState('');
+  const [wtpModalCat, setWtpModalCat] = useState<typeof WTP_CATEGORIES[number] | null>(null);
+  const [wtpModalPlatforms, setWtpModalPlatforms] = useState<{key: string; name: string; type: string; priceStr: string; url: string | null; typeClass: string}[]>([]);
+  const [wtpModalLoading, setWtpModalLoading] = useState(false);
+  const wtpScrollRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const openWtpModal = useCallback(async (cat: typeof WTP_CATEGORIES[number]) => {
+    setWtpModalCat(cat);
+    setWtpModalLoading(true);
+    setWtpModalPlatforms([]);
+
+    const sorted = sortPlatforms(cat.platforms);
+    const results = await Promise.all(sorted.map(async (key) => {
+      const p = WTP_PLATFORMS[key];
+      if (!p) return null;
+      const isGratis = p.price == null || p.price === 0;
+      const isPirata = p.type === 'Pirata';
+      const isPago = p.type.toLowerCase().includes('pago');
+
+      let priceStr = isGratis ? 'Gratis' : '';
+      let typeClass = 'wtp-type-gratis';
+
+      if (p.type.toLowerCase().includes('vpn')) typeClass = 'wtp-type-vpn';
+      if (isPago) {
+        typeClass = 'wtp-type-pago';
+        if (isGratis) {
+          priceStr = p.type.toLowerCase().includes('cable') ? 'Cable' : 'Sin precio';
+        } else {
+          const ars = await convertToARS(p.price!, p.cur || 'ARS');
+          priceStr = formatPrice(ars);
+        }
+      }
+      if (isPirata) { typeClass = 'wtp-type-pirata'; priceStr = 'Pirata'; }
+
+      return { key, name: p.name, type: p.type, priceStr, url: p.url || null, typeClass };
+    }));
+
+    setWtpModalPlatforms(results.filter(Boolean) as any);
+    setWtpModalLoading(false);
+  }, []);
+
+  const closeWtpModal = useCallback(() => {
+    setWtpModalCat(null);
+    setWtpModalPlatforms([]);
+  }, []);
+
+  const wtpScrollBy = useCallback((group: string, dir: number) => {
+    const el = wtpScrollRefs.current[group];
+    if (!el) return;
+    const step = Math.max(el.clientWidth - 50, 180);
+    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+  }, []);
+
+  const renderDondeVer = () => {
+    const q = wtpSearch.toLowerCase().trim();
+    const isSearching = q.length > 0;
+
+    const filteredCats = isSearching
+      ? WTP_CATEGORIES.filter(c => c.name.toLowerCase().includes(q))
+      : [];
+
+    return (
+      <motion.div key="dondeVer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="wtp-view">
+        {/* Search */}
+        <div className="wtp-search-container">
+          <input
+            className="wtp-search-input"
+            type="text"
+            placeholder="Buscar categoría..."
+            value={wtpSearch}
+            onChange={e => setWtpSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Search Results */}
+        {isSearching ? (
+          <div className="wtp-search-grid">
+            {filteredCats.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,0.35)', gridColumn: '1 / -1', textAlign: 'center', padding: '32px 0' }}>No se encontraron categorías.</p>
+            ) : (
+              filteredCats.map(cat => {
+                const logoFile = WTP_LOGO_MAP[cat.id];
+                return (
+                  <div key={cat.id} className="wtp-card" onClick={() => openWtpModal(cat)}>
+                    {logoFile && (
+                      <img
+                        src={`/categories/${logoFile}`}
+                        alt={cat.name}
+                        className="wtp-card-logo"
+                        referrerPolicy="no-referrer"
+                        onError={e => (e.currentTarget.style.display = 'none')}
+                      />
+                    )}
+                    <span className="wtp-card-name">{cat.name}</span>
+                    <span className="wtp-card-group">{cat.group}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          /* Category Rows */
+          <>
+            {WTP_GROUP_ORDER.map(group => {
+              let cats: typeof WTP_CATEGORIES;
+              if (group === 'Todos') {
+                cats = [...WTP_CATEGORIES].sort((a, b) => a.name.localeCompare(b.name));
+              } else {
+                cats = WTP_CATEGORIES.filter(c => c.group === group);
+              }
+              if (cats.length === 0) return null;
+
+              return (
+                <div key={group} className="wtp-row">
+                  <div className="wtp-row-header">
+                    <h3 className="wtp-row-title">
+                      {group} <span className="wtp-row-count">{cats.length} categorías</span>
+                    </h3>
+                    <div className="wtp-row-arrows">
+                      <button className="wtp-row-arrow" onClick={() => wtpScrollBy(group, -1)} aria-label="Anterior">‹</button>
+                      <button className="wtp-row-arrow" onClick={() => wtpScrollBy(group, 1)} aria-label="Siguiente">›</button>
+                    </div>
+                  </div>
+                  <div className="wtp-row-scroll-wrap">
+                    <div
+                      className="wtp-row-scroll"
+                      ref={el => { wtpScrollRefs.current[group] = el; }}
+                    >
+                      {cats.map(cat => {
+                        const logoFile = WTP_LOGO_MAP[cat.id];
+                        return (
+                          <div key={cat.id} className="wtp-card" onClick={() => openWtpModal(cat)}>
+                            {logoFile && (
+                              <img
+                                src={`/categories/${logoFile}`}
+                                alt={cat.name}
+                                className="wtp-card-logo"
+                                referrerPolicy="no-referrer"
+                                onError={e => (e.currentTarget.style.display = 'none')}
+                              />
+                            )}
+                            <span className="wtp-card-name">{cat.name}</span>
+                            <span className="wtp-card-group">{cat.group}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* Modal */}
+        <div className={`wtp-modal-backdrop ${wtpModalCat ? 'open' : ''}`} onClick={closeWtpModal} />
+        <div className={`wtp-modal ${wtpModalCat ? 'open' : ''}`}>
+          <div className="wtp-modal-handle" />
+          <div className="wtp-modal-header">
+            <span className="wtp-modal-title">{wtpModalCat?.name || ''}</span>
+            <button className="wtp-modal-close" onClick={closeWtpModal}>
+              <X size={18} />
+            </button>
+          </div>
+          <div className="wtp-modal-body">
+            {wtpModalLoading ? (
+              <p className="wtp-loading">Cargando precios...</p>
+            ) : (
+              wtpModalPlatforms.map(plat => {
+                const isCable = plat.priceStr === 'Cable';
+                const hasLink = plat.url && !isCable;
+                return (
+                  <div key={plat.key} className="wtp-plat-item">
+                    <div className="wtp-plat-info">
+                      <div className="wtp-plat-name">{plat.name}</div>
+                      <div className="wtp-plat-meta">
+                        <span className={`wtp-plat-type ${plat.typeClass}`}>{plat.type}</span>
+                        <span className="wtp-plat-price">{plat.priceStr}</span>
+                      </div>
+                    </div>
+                    {hasLink ? (
+                      <a href={plat.url!} target="_blank" rel="noopener noreferrer" className="wtp-plat-btn">VER</a>
+                    ) : (
+                      <span className="wtp-plat-btn disabled">Sin link</span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   const renderNoticias = () => {
     // Interleave news based on Home Grid Order: F1, WRC, WEC, IMSA, NASCAR, NASCAR O REILLY, IndyCar, TC, TCP, TCM, TCPM, TCPK, TCPPK, TC2000
     const sourceArrays = [
@@ -3426,6 +3623,7 @@ const App = () => {
                       {mainTab === 'calendario' && renderCalendario()}
                       {mainTab === 'noticias' && renderNoticias()}
                       {mainTab === 'configuracion' && renderSettings()}
+                      {mainTab === 'dondeVer' && renderDondeVer()}
                     </>
                   )}
                 </AnimatePresence>
@@ -3442,9 +3640,13 @@ const App = () => {
                   <Newspaper size={22} />
                   <span>Noticias</span>
                 </button>
+                <button className={`tab-btn ${mainTab === 'dondeVer' ? 'active' : ''}`} onClick={() => setMainTab('dondeVer')}>
+                  <Tv size={22} />
+                  <span>Dónde Ver</span>
+                </button>
                 <button className={`tab-btn ${mainTab === 'configuracion' ? 'active' : ''}`} onClick={() => setMainTab('configuracion')}>
                   <Settings size={22} />
-                  <span>Configuración</span>
+                  <span>Ajustes</span>
                 </button>
               </nav>
             )}

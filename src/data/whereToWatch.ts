@@ -1,0 +1,316 @@
+export interface Platform {
+  name: string;
+  type: string;
+  price?: number;
+  cur?: string;
+  url: string | null;
+}
+
+export interface WTPCategory {
+  id: string;
+  name: string;
+  group: string;
+  platforms: string[];
+}
+
+export const PLATFORMS: Record<string, Platform> = {
+  // GRATIS/YOUTUBE
+  itvx: { name:'ITVX', type:'Gratis (VPN UK)', url:'https://www.itv.com' },
+  redbulltv: { name:'Red Bull TV', type:'Gratis', url:'https://www.redbull.com/int-en/discover' },
+  servustv: { name:'ServusTV', type:'Gratis (VPN Austria)', url:'https://www.servustv.com' },
+  band: { name:'Band', type:'Gratis (VPN Brasil)', url:'https://www.band.uol.com.br' },
+  lequipe: { name:"L'Equipe", type:'Gratis (VPN Francia)', url:'https://live.lequipe.fr' },
+  somos_fox: { name:'Somos Fox', type:'Gratis (YouTube)', url:'https://www.youtube.com/@somos_fox' },
+  cwnetwork: { name:'CW Network', type:'Gratis (VPN EEUU)', url:'https://www.cwtv.com' },
+  srf: { name:'SRF / RTS / RSI', type:'Gratis (VPN Suiza)', url:'https://www.srf.ch/play/tv' },
+  rtbf: { name:'RTBF', type:'Gratis (VPN Bélgica)', url:'https://auvio.rtbf.be' },
+  orf: { name:'ORF', type:'Gratis (VPN Austria)', url:'https://tvthek.orf.at' },
+  btcc_yt: { name:'BTCC YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@OfficialBTCC' },
+  itvsport_yt: { name:'ITV Sport Extra', type:'Gratis (YouTube)', url:'https://www.youtube.com/@ITVSportExtra' },
+  erx_yt: { name:'FIA Rallycross YT', type:'Gratis (YouTube)', url:'https://www.youtube.com/@fiarallycross' },
+  gtworld_yt: { name:'GT World YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@GTWorld' },
+  adac_yt: { name:'ADAC YouTube', type:'Gratis (YouTube)', url:'http://youtube.com/@ADACMotorsports' },
+  tcrtv_yt: { name:'TCR TV YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@TCRTV' },
+  dtm_yt: { name:'DTM YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@DTM' },
+  nurb_yt: { name:'Nürburgring YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@n%C3%BCrburgring_official' },
+  f4ita_yt: { name:'Italian F4 YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@Italianf4-Euro4' },
+  imsatv: { name:'IMSA.tv', type:'Gratis', url:'https://www.imsa.com/tvlive' },
+  elms_yt: { name:'ELMS YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@EuropeanLeMansSeries' },
+  alms_yt: { name:'ALMS YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@AsianLeMansSeries' },
+  stockcar_yt: { name:'Stock Car YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@stockcarchannel' },
+  speedtour_tv: { name:'Speed Tour TV', type:'Gratis (YouTube)', url:'https://www.youtube.com/@SpeedTourTV' },
+  rtve: { name:'RTVE / Teledeporte', type:'Gratis (VPN España)', url:'https://www.rtve.es/play/deportes' },
+  fdrift_yt: { name:'Formula Drift YT', type:'Gratis (YouTube)', url:'https://www.youtube.com/@FormulaDrift' },
+  driftm_yt: { name:'Drift Masters YT', type:'Gratis (YouTube)', url:'https://www.youtube.com/@DriftMastersGrandPrix' },
+  btrc_yt: { name:'BTRC YouTube', type:'Gratis (YouTube)', url:'https://www.youtube.com/@OfficialTruckSportUK' },
+  tiktok: { name:'TikTok', type:'Gratis', url:'https://www.tiktok.com' },
+  rande: { name:'ran.de / ProSieben', type:'Gratis (VPN Alemania)', url:'https://www.ran.de' },
+  abema: { name:'Abema', type:'Gratis (VPN Japón)', url:'https://abema.tv' },
+  motorsporttv_f: { name:'Motorsport.tv', type:'Gratis', url:'https://motorsport.tv' },
+  tycsports_g: { name:'TyC Sports', type:'Gratis', url:null },
+  elnueve_c: { name:'El Nueve (Cable)', type:'Pago (Cable)', price:0, cur:'ARS', url:null },
+  tycsports_c: { name:'TyC Sports (Cable)', type:'Pago (Cable)', price:0, cur:'ARS', url:null },
+  tycsports_play: { name:'TyC Sports Play', type:'Pago (Cable)', price:0, cur:'ARS', url:'https://play.tycsports.com/' },
+  // PIRATAS
+  acestrlms: { name:'Acestrlms', type:'Pirata', url:'https://acestrlms.pages.dev/' },
+  rbtv77: { name:'RBTV77', type:'Pirata', url:null },
+  pitsport: { name:'PitSport', type:'Pirata', url:'https://pitsport.xyz/schedule' },
+  // PAGOS — Oficiales Motorsport
+  rallytv_m: { name:'Rally.tv Mensual', type:'Pago', price:12.99, cur:'EUR', url:'https://www.rally.tv' },
+  rallytv_a: { name:'Rally.tv Anual', type:'Pago', price:119.99, cur:'EUR', url:'https://www.rally.tv' },
+  rallytv_m_jp: { name:'Rally.tv Mensual (Japan)', type:'Pago', price:1500, cur:'JPY', url:'https://www.rally.tv' },
+  rallytv_a_jp: { name:'Rally.tv Anual (Japan)', type:'Pago', price:14000, cur:'JPY', url:'https://www.rally.tv' },
+  f1tv_m: { name:'F1TV Pro Mensual', type:'Pago', price:7.99, cur:'USD', url:'https://f1tv.formula1.com' },
+  f1tv_a: { name:'F1TV Pro Anual', type:'Pago', price:69.99, cur:'USD', url:'https://f1tv.formula1.com' },
+  fiawec_r: { name:'FIAWEC.TV (1 Carrera)', type:'Pago', price:8.99, cur:'EUR', url:'https://fiawec.tv' },
+  fiawec_s: { name:'FIAWEC.TV (Temporada)', type:'Pago', price:49.99, cur:'EUR', url:'https://fiawec.tv' },
+  fiawec_le: { name:'FIAWEC.TV (24h Le Mans)', type:'Pago', price:17.99, cur:'EUR', url:'https://fiawec.tv' },
+  vp_moto_s: { name:'VideoPass MotoGP (Temp.)', type:'Pago', price:148.99, cur:'EUR', url:'https://www.motogp.com/en/videopass' },
+  vp_moto_t: { name:'VideoPass MotoGP + Timing', type:'Pago', price:157.99, cur:'EUR', url:'https://www.motogp.com/en/videopass' },
+  vp_sbk: { name:'VideoPass WorldSBK', type:'Pago', price:69.99, cur:'EUR', url:'https://www.worldsbk.com/en/videopass' },
+  msptv_m: { name:'Motorsport.tv Mensual', type:'Pago', price:5.99, cur:'USD', url:'https://motorsport.tv' },
+  msptv_a: { name:'Motorsport.tv Anual', type:'Pago', price:49.99, cur:'USD', url:'https://motorsport.tv' },
+  floracing: { name:'FloRacing (Anual)', type:'Pago', price:150.00, cur:'USD', url:'https://www.floracing.com' },
+  indycar_m: { name:'IndyCar Live Mensual', type:'Pago', price:5.99, cur:'USD', url:'https://www.indycarlive.com' },
+  indycar_s: { name:'IndyCar Live Temporada', type:'Pago', price:29.99, cur:'USD', url:'https://www.indycarlive.com' },
+  sfgo_m: { name:'SFGO Mensual', type:'Pago', price:1480, cur:'JPY', url:'https://sfgo.jp' },
+  sfgo_a: { name:'SFGO Anual', type:'Pago', price:11880, cur:'JPY', url:'https://sfgo.jp' },
+  superview: { name:'SuperView Temporada', type:'Pago', price:60.00, cur:'AUD', url:'https://www.supercars.com/superview' },
+  supercars_yt: { name:'Supercars YT Membresía', type:'Pago', price:150, cur:'ARS', url:'https://www.youtube.com/@supercars' },
+  ttplus: { name:'TT+ (Live Pass)', type:'Pago', price:14.99, cur:'GBP', url:'https://ttplus.iomttraces.com' },
+  tcrtv_vip: { name:'TCR TV VIP (Temporada)', type:'Pago', price:30.00, cur:'EUR', url:'https://tcr-series.tv' },
+  rx_plus: { name:'RX+', type:'Pago', price:9.99, cur:'EUR', url:'https://rxplus.tv' },
+  motorplay: { name:'Motorplay', type:'Pago', price:6900, cur:'ARS', url:'https://motorplay.tv/' },
+  // PAGOS — Streaming General
+  dp_std: { name:'Disney+ Estándar', type:'Pago', price:19834, cur:'ARS', url:'https://www.disneyplus.com' },
+  dp_prem: { name:'Disney+ Premium', type:'Pago', price:19834, cur:'ARS', url:'https://www.disneyplus.com' },
+  max_basic: { name:'Max Basic (con anuncios)', type:'Pago (VPN EEUU)', price:10.99, cur:'USD', url:'https://www.max.com' },
+  max_std: { name:'Max Standard', type:'Pago (VPN EEUU)', price:18.49, cur:'USD', url:'https://www.max.com' },
+  max_prem: { name:'Max Premium (4K)', type:'Pago (VPN EEUU)', price:22.99, cur:'USD', url:'https://www.max.com' },
+  peacock_s: { name:'Peacock Select', type:'Pago', price:7.99, cur:'USD', url:'https://www.peacocktv.com' },
+  peacock_p: { name:'Peacock Premium', type:'Pago', price:10.99, cur:'USD', url:'https://www.peacocktv.com' },
+  peacock_pp: { name:'Peacock Premium Plus', type:'Pago', price:16.99, cur:'USD', url:'https://www.peacocktv.com' },
+  espnplus: { name:'ESPN+', type:'Pago', price:10.99, cur:'USD', url:'https://plus.espn.com' },
+  viaplay: { name:'Viaplay', type:'Pago', price:15.99, cur:'EUR', url:'https://viaplay.com' },
+  dazn_motor: { name:'DAZN Motor', type:'Pago', price:19.99, cur:'EUR', url:'https://www.dazn.com' },
+  dazn_full: { name:'DAZN Esencial', type:'Pago', price:29.99, cur:'EUR', url:'https://www.dazn.com' },
+  tntsports: { name:'TNT Sports UK', type:'Pago', price:30.99, cur:'GBP', url:'https://www.tntsports.co.uk' },
+  kayo_std: { name:'Kayo Sports Standard', type:'Pago', price:29.99, cur:'AUD', url:'https://kayosports.com.au' },
+  kayo_prem: { name:'Kayo Sports Premium', type:'Pago', price:45.99, cur:'AUD', url:'https://kayosports.com.au' },
+  stan_basic: { name:'Stan Sport Basic', type:'Pago', price:32.00, cur:'AUD', url:'https://www.stan.com.au/sport' },
+  stan_std: { name:'Stan Sport Standard', type:'Pago', price:37.00, cur:'AUD', url:'https://www.stan.com.au/sport' },
+  stan_prem: { name:'Stan Sport Premium', type:'Pago', price:42.00, cur:'AUD', url:'https://www.stan.com.au/sport' },
+  skysports: { name:'Sky Sports UK', type:'Pago', price:34.99, cur:'GBP', url:'https://www.skysports.com' },
+  skynz: { name:'Sky Sport NZ', type:'Pago', price:49.99, cur:'NZD', url:'https://www.sky.co.nz' },
+  globoplay: { name:'Globoplay + Canales', type:'Pago', price:54.90, cur:'BRL', url:'https://globoplay.globo.com' },
+  canalplus: { name:'Canal+ Sport Francia', type:'Pago', price:29.99, cur:'EUR', url:'https://www.canalplus.com' },
+  jsports: { name:'J Sports Motor Pack', type:'Pago', price:1980, cur:'JPY', url:'https://jod.jsports.co.jp' },
+  sling: { name:'Sling TV Blue', type:'Pago', price:40.00, cur:'USD', url:'https://www.sling.com' },
+  youtubetv: { name:'YouTube TV', type:'Pago', price:72.99, cur:'USD', url:'https://tv.youtube.com' },
+  espn_ar: { name:'ESPN (Cable)', type:'Pago', price:0, cur:'ARS', url:'https://www.espn.com.ar' },
+  hulu_live: { name:'Hulu + Live TV', type:'Pago (VPN EEUU)', price:82.99, cur:'USD', url:'https://www.hulu.com/live-tv' },
+  fubotv: { name:'FuboTV', type:'Pago (VPN EEUU)', price:84.99, cur:'USD', url:'https://www.fubo.tv' },
+  tsn: { name:'TSN / TSN+ (Canadá)', type:'Pago (VPN Canadá)', price:29.99, cur:'CAD', url:'https://www.tsn.ca' },
+  skysport_de: { name:'Sky Sport Germany', type:'Pago (VPN Alemania)', price:25.00, cur:'EUR', url:'https://www.sky.de/sport' },
+  skysport_it: { name:'Sky Sport Italia', type:'Pago (VPN Italia)', price:20.00, cur:'EUR', url:'https://sport.sky.it' },
+  motorvision_p: { name:'Motorvision+', type:'Pago (VPN Alemania)', price:4.99, cur:'EUR', url:'https://motorvision.tv' },
+  movistar_p: { name:'Movistar+ (España)', type:'Pago (VPN España)', price:30.00, cur:'EUR', url:'https://www.movistar.es' },
+  ziggo_sport: { name:'Ziggo Sport (Holanda)', type:'Pago (VPN Países Bajos)', price:16.95, cur:'EUR', url:'https://www.ziggosport.nl' },
+  gaora: { name:'Gaora (Japón)', type:'Pago (VPN Japón)', price:1500, cur:'JPY', url:'https://www.gaora.co.jp' },
+  sporttv_pt: { name:'Sport TV (Portugal)', type:'Pago (VPN Portugal)', price:10.00, cur:'EUR', url:'https://www.sporttv.pt' },
+  voosport: { name:'Voo Sport (Bélgica)', type:'Pago (VPN Bélgica)', price:15.00, cur:'EUR', url:'https://www.voosport.be' },
+  ssport: { name:'S Sport', type:'Pago (VPN)', price:0, cur:'USD', url:'https://www.ssportplus.com' },
+  network4: { name:'Network 4 (Hungría)', type:'Pago (VPN Hungría)', price:0, cur:'HUF', url:'https://net4.network4.hu' },
+  tvcultura: { name:'TV Cultura', type:'Gratis (VPN Brasil)', url:'https://cultura.uol.com.br' },
+  ninenetwork: { name:'Nine Network (9Now)', type:'Gratis (VPN Australia)', url:'https://www.9now.com.au' },
+  f1tv_pro_r: { name:'F1TV Pro (Highlights/Replays)', type:'Pago (VPN)', price:7.99, cur:'USD', url:'https://f1tv.formula1.com' },
+  apple_tv_usa: { name:'Apple TV+ (EEUU)', type:'Pago (VPN EEUU)', price:9.99, cur:'USD', url:'https://tv.apple.com' },
+  band_br: { name:'Band (TV Abierta)', type:'Gratis (VPN Brasil)', url:'https://www.band.uol.com.br' },
+  bandsports_br: { name:'BandSports / BandPlay', type:'Pago (VPN Brasil)', url:'https://www.band.uol.com.br' },
+  dazn_es: { name:'DAZN España', type:'Pago (VPN España)', price:19.99, cur:'EUR', url:'https://www.dazn.com' },
+  eurosport_max_eu: { name:'Eurosport / Max Europa', type:'Pago (VPN Europa)', price:15.00, cur:'EUR', url:'https://www.eurosport.com' },
+  discovery_plus_uk: { name:'Discovery+ / TNT Sports UK', type:'Pago (VPN UK)', price:30.99, cur:'GBP', url:'https://www.discoveryplus.com' },
+  imsa_yt: { name:'YouTube IMSA', type:'Gratis (YouTube)', url:'https://www.youtube.com/@imsaracing' },
+  nls_yt: { name:'YouTube NLS / N24', type:'Gratis (YouTube)', url:'https://www.youtube.com/@nls_official' },
+  gulf12h_yt: { name:'YouTube Gulf 12H', type:'Gratis (YouTube)', url:'https://www.youtube.com/@gulf12hours' },
+  racer_network: { name:'Racer Network', type:'Gratis (VPN EEUU)', url:'https://www.racer.com' },
+  rev_tv_ca: { name:'REV TV / Sportsnet+ (Canadá)', type:'Pago (VPN Canadá)', price:29.99, cur:'CAD', url:'https://revtv.ca' },
+  seven_network: { name:'Seven Network', type:'Gratis (VPN Australia)', url:'https://www.7plus.com.au' },
+  px_sports: { name:'PX Sports', type:'Pago (Cable)', url:'https://pxsports.com' },
+  prime_video_usa: { name:'Prime Video (EEUU)', type:'Pago (VPN EEUU)', price:14.99, cur:'USD', url:'https://www.amazon.com/prime' },
+  the_cw_app: { name:'The CW / CW App', type:'Gratis (VPN EEUU)', url:'https://www.cwtv.com' },
+  foxone_mx: { name:'FOX One (México)', type:'Pago (VPN México)', price:0, cur:'MXN', url:null },
+  prime_foxone_mx: { name:'Prime Video (FOX One MX)', type:'Pago (VPN México)', price:0, cur:'MXN', url:'https://www.primevideo.com' },
+  fox_latam: { name:'FOX (México/Centroamérica)', type:'Pago (VPN México)', price:0, cur:'MXN', url:null },
+  fox_usa: { name:'FOX / FS1 / FS2 (EEUU)', type:'Pago (VPN EEUU)', price:0, cur:'USD', url:'https://www.foxsports.com' },
+};
+
+export const CATEGORIES: WTPCategory[] = [
+  { id:'wrc', name:'WRC', group:'Rally', platforms:['rallytv_m','canalplus','eurosport_max_eu','fox_latam','acestrlms','pitsport','rbtv77'] },
+  { id:'erx', name:'World RX', group:'Rally', platforms:['rallytv_m'] },
+  { id:'f1', name:'Formula 1', group:'Fórmula', platforms:['dp_prem','f1tv_pro_r','apple_tv_usa','skysports','canalplus','viaplay','skysport_it','skysport_de','band_br','bandsports_br','kayo_std','dazn_es','acestrlms','pitsport','rbtv77'] },
+  { id:'f2', name:'Formula 2', group:'Fórmula', platforms:['dp_prem','apple_tv_usa','skysports','f1tv_pro_r','skysport_it','skysport_de','band_br','bandsports_br','kayo_std','dazn_es','acestrlms','pitsport','rbtv77'] },
+  { id:'f3', name:'Formula 3', group:'Fórmula', platforms:['dp_prem','apple_tv_usa','skysports','f1tv_pro_r','skysport_it','skysport_de','band_br','bandsports_br','kayo_std','dazn_es','acestrlms','pitsport','rbtv77'] },
+  { id:'f4ita', name:'Italian F4', group:'Fórmula', platforms:['skysport_it','canalplus','f1tv_m','f4ita_yt','acestrlms'] },
+  { id:'indynxt', name:'IndyNXT', group:'Fórmula', platforms:['dp_prem','indycar_s','fox_usa','bandsports_br','movistar_p','sling','youtubetv','tsn','acestrlms','pitsport','rbtv77'] },
+  { id:'superf', name:'Super Formula', group:'Fórmula', platforms:['sfgo_m','jsports','acestrlms'] },
+  { id:'indycar', name:'IndyCar', group:'Fórmula', platforms:['dp_prem','peacock_p','fox_usa','bandsports_br','sling','youtubetv','hulu_live','fubotv','tsn','skysports','skysport_de','skysport_it','motorvision_p','movistar_p','viaplay','ziggo_sport','canalplus','gaora','sporttv_pt','stan_basic','skynz','voosport','ssport','network4','tvcultura','ninenetwork','espn_ar','acestrlms','pitsport','rbtv77'] },
+  { id:'f2arg', name:'Formula 2 Argentina', group:'Fórmula', platforms:['motorplay','elnueve_c'] },
+  { id:'f3arg', name:'Formula 3 Argentina', group:'Fórmula', platforms:['motorplay','elnueve_c'] },
+  { id:'fnac', name:'Formula Nacional', group:'Fórmula', platforms:['tycsports_c','tycsports_play'] },
+  { id:'wec', name:'WEC', group:'Resistencia', platforms:['fiawec_s','eurosport_max_eu','tntsports','discovery_plus_uk','jsports','max_basic','max_std','max_prem','msptv_m','fox_latam','somos_fox','acestrlms'] },
+  { id:'imsa', name:'IMSA', group:'Resistencia', platforms:['imsa_yt','peacock_p','foxone_mx','prime_foxone_mx','somos_fox','sling','youtubetv','viaplay','msptv_m','acestrlms','pitsport','rbtv77'] },
+  { id:'elms', name:'ELMS', group:'Resistencia', platforms:['fiawec_s','elms_yt','acestrlms'] },
+  { id:'alms', name:'ALMS', group:'Resistencia', platforms:['alms_yt','msptv_m','acestrlms'] },
+  { id:'nls', name:'NLS / N24', group:'Resistencia', platforms:['nls_yt','nurb_yt','acestrlms'] },
+  { id:'ewc', name:'FIM EWC', group:'Resistencia', platforms:['eurosport_max_eu','discovery_plus_uk','msptv_m','jsports','kayo_std','racer_network','acestrlms'] },
+  { id:'gulf12', name:'Gulf 12 Hours', group:'Resistencia', platforms:['gulf12h_yt','msptv_m','acestrlms'] },
+  { id:'motogp', name:'MotoGP', group:'Motos', platforms:['vp_moto_s','dp_prem','dazn_es','skysports','canalplus','viaplay','kayo_std','ziggo_sport','sporttv_pt','rev_tv_ca','acestrlms','pitsport','rbtv77'] },
+  { id:'moto2', name:'Moto2', group:'Motos', platforms:['vp_moto_s','dp_prem','dazn_es','skysports','canalplus','viaplay','kayo_std','ziggo_sport','sporttv_pt','rev_tv_ca','acestrlms','pitsport','rbtv77'] },
+  { id:'moto3', name:'Moto3', group:'Motos', platforms:['vp_moto_s','dp_prem','dazn_es','skysports','canalplus','viaplay','kayo_std','ziggo_sport','sporttv_pt','rev_tv_ca','acestrlms','pitsport','rbtv77'] },
+  { id:'wsbk', name:'World SBK', group:'Motos', platforms:['vp_sbk','dp_prem','skysport_it','kayo_std','eurosport_max_eu','acestrlms'] },
+  { id:'iomtt', name:'Isle of Man TT', group:'Motos', platforms:['ttplus','itvx','acestrlms'] },
+  { id:'gtworld', name:'GT World Tour', group:'GTs', platforms:['gtworld_yt','tiktok','kayo_std','skysports','sling','acestrlms'] },
+  { id:'gtwce', name:'GTWC Europe', group:'GTs', platforms:['gtworld_yt','skysports','motorsporttv_f','rtbf','acestrlms'] },
+  { id:'gtwca', name:'GTWC America', group:'GTs', platforms:['gtworld_yt','max_std','motorsporttv_f','acestrlms'] },
+  { id:'adac', name:'ADAC GT Masters', group:'GTs', platforms:['adac_yt','rande','msptv_m','acestrlms'] },
+  { id:'dtm', name:'DTM', group:'GTs', platforms:['msptv_m','rande','viaplay','dtm_yt','acestrlms'] },
+  { id:'nascar_cup', name:'NASCAR Cup', group:'Stock Cars', platforms:['dp_prem','foxone_mx','prime_foxone_mx','somos_fox','sling','youtubetv','prime_video_usa','max_basic','max_std','max_prem','discovery_plus_uk','acestrlms','pitsport','rbtv77'] },
+  { id:'nascar_truck', name:'NASCAR Truck', group:'Stock Cars', platforms:['max_basic','max_std','max_prem','foxone_mx','prime_foxone_mx','somos_fox','sling','youtubetv','acestrlms','pitsport','rbtv77'] },
+  { id:'nascar_or', name:"NASCAR O'Reilly", group:'Stock Cars', platforms:['max_basic','max_std','max_prem','the_cw_app','foxone_mx','prime_foxone_mx','somos_fox','acestrlms','pitsport','rbtv77'] },
+  { id:'arca', name:'ARCA Menards', group:'Stock Cars', platforms:['floracing','foxone_mx','prime_foxone_mx','somos_fox','sling','youtubetv','acestrlms'] },
+  { id:'stock', name:'Stock Car Brasil', group:'Stock Cars', platforms:['band_br','bandsports_br','stockcar_yt','globoplay','acestrlms'] },
+  { id:'tc', name:'TC', group:'Stock Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'tcp', name:'TC Pista', group:'Stock Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'tcm', name:'TC Mouras', group:'Stock Cars', platforms:['elnueve_c'] },
+  { id:'tcpm', name:'TC Pista Mouras', group:'Stock Cars', platforms:['elnueve_c'] },
+  { id:'tcpk', name:'TC Pick Up', group:'Stock Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'tcppk', name:'TC Pista Pick Up', group:'Stock Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'tn', name:'Turismo Nacional', group:'Stock Cars', platforms:['elnueve_c'] },
+  { id:'tp', name:'Turismo Pista', group:'Stock Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'procar', name:'Procar 4000', group:'Stock Cars', platforms:['tycsports_c','tycsports_play'] },
+  { id:'toprace', name:'Top Race', group:'Stock Cars', platforms:['tycsports_c','tycsports_play'] },
+  { id:'supercars', name:'Supercars', group:'Touring Cars', platforms:['kayo_std','seven_network','superview','supercars_yt','tntsports','acestrlms'] },
+  { id:'btcc', name:'BTCC', group:'Touring Cars', platforms:['btcc_yt','itvx','racer_network','acestrlms'] },
+  { id:'tc2000', name:'TC2000', group:'Touring Cars', platforms:['tycsports_c','tycsports_play'] },
+  { id:'fiat', name:'Fiat Competizione', group:'Touring Cars', platforms:['motorplay','elnueve_c'] },
+  { id:'tcr_world', name:'TCR World Tour', group:'Touring Cars', platforms:['tcrtv_yt','msptv_m','acestrlms'] },
+  { id:'tcr_eu', name:'TCR Europe', group:'Touring Cars', platforms:['tcrtv_yt','msptv_m','acestrlms'] },
+  { id:'tcr_am', name:'TCR America', group:'Touring Cars', platforms:['tcrtv_yt','msptv_m','acestrlms'] },
+  { id:'btrc', name:'British Truck Racing', group:'Touring Cars', platforms:['btcc_yt','itvx','acestrlms'] },
+  { id:'fdrift', name:'Formula Drift', group:'Drift', platforms:['racer_network','fdrift_yt','floracing','px_sports','acestrlms'] },
+  { id:'driftm', name:'Drift Masters', group:'Drift', platforms:['driftm_yt','redbulltv','acestrlms'] },
+];
+
+export const LOGO_MAP: Record<string, string> = {
+  'wrc': 'wrc.png', 'erx': 'erx.svg', 'f1': 'f1.png', 'f2': 'f2.png', 'f3': 'f3.png',
+  'f4ita': 'f4italian.png', 'indynxt': 'indynxt.png', 'superf': 'superformula.png',
+  'indycar': 'indycar.png', 'wec': 'wec.png', 'imsa': 'imsa.png', 'elms': 'elms.png',
+  'alms': 'alms.png', 'nls': 'nls.png', 'ewc': 'ewc.png', 'gulf12': 'gulf12hours.png',
+  'motogp': 'motogp.png', 'moto2': 'moto2.png', 'moto3': 'moto3.png', 'wsbk': 'worldsbk.png',
+  'iomtt': 'ttisleoftheman.png', 'gtworld': 'gtwc.png', 'gtwce': 'gtwceurope.png',
+  'gtwca': 'gtwcamerica.svg', 'adac': 'adacgtmasters.png', 'dtm': 'dtm.png',
+  'nascar_cup': 'nascarcup.png', 'nascar_truck': 'nascartruck.png', 'nascar_or': 'nascaroreilly.png',
+  'arca': 'arca.png', 'f2arg': 'formula2arg.png', 'f3arg': 'formula3arg.png',
+  'fnac': 'formulanacional.png', 'fiat': 'fiatcompetizione.svg', 'procar': 'procar.png',
+  'toprace': 'toprace.png', 'stock': 'stockcar.png', 'supercars': 'supercars.png',
+  'btcc': 'btcc.png', 'tcr_world': 'tcrworldtour.png', 'tcr_eu': 'tcreurope.png',
+  'tcr_am': 'tcrsouthamerica.png', 'btrc': 'btrc.png', 'fdrift': 'formuladrift.png',
+  'driftm': 'driftmasters.png', 'tc': 'TC.png', 'tc2000': 'TC2000.png', 'tcm': 'TCM.png',
+  'tcp': 'TCP.png', 'tn': 'turismonacional.png', 'tp': 'turismopista.png',
+  'tcpk': 'TCPK.png', 'tcpm': 'TCPM.png', 'tcppk': 'TCPPK.png'
+};
+
+export const GROUP_ORDER: string[] = ['Todos','Fórmula','Resistencia','Motos','GTs','Rally','Stock Cars','Touring Cars','Drift'];
+
+const FX_API_KEY = 'fxr_live_a11627c992803c65baf4ada7ed8a3c8e8691';
+
+let cachedRates: Record<string, number> = {};
+let ratesTimestamp = 0;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
+
+async function fetchRates() {
+  const now = Date.now();
+  if (now - ratesTimestamp < CACHE_DURATION && Object.keys(cachedRates).length > 0) {
+    return;
+  }
+
+  try {
+    let usdToArs = 1434;
+    try {
+      const dolarRes = await fetch('https://dolarapi.com/v1/dolares/tarjeta');
+      if (dolarRes.ok) {
+        const dolarData = await dolarRes.json();
+        usdToArs = dolarData.venta || 1434;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch DolarAPI, using fallback", e);
+    }
+
+    const fxRes = await fetch(`https://api.fxratesapi.com/latest?api_key=${FX_API_KEY}&base=USD`);
+    if (fxRes.ok) {
+      const fxData = await fxRes.json();
+      if (fxData && fxData.rates) {
+        cachedRates = fxData.rates;
+        cachedRates['ARS_TARJETA'] = usdToArs;
+        ratesTimestamp = now;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch rates", error);
+  }
+}
+
+export async function convertToARS(amount: number, currency: string): Promise<number> {
+  if (currency === 'ARS') return amount;
+  
+  await fetchRates();
+  
+  if (!cachedRates['ARS_TARJETA'] || !cachedRates[currency]) {
+    // Fallback multiplier estimates if API fails
+    const fallbacks: Record<string, number> = {
+      'USD': 1434,
+      'EUR': 1550,
+      'GBP': 1800,
+      'JPY': 9.5,
+      'AUD': 950,
+      'NZD': 880,
+      'BRL': 280,
+      'CAD': 1050,
+      'MXN': 85,
+      'HUF': 4,
+    };
+    const rate = fallbacks[currency] || 1;
+    return amount * rate; 
+  }
+
+  const usdAmount = amount / cachedRates[currency];
+  return usdAmount * cachedRates['ARS_TARJETA'];
+}
+
+export function formatPrice(ars: number): string {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(ars);
+}
+
+function getPlatformWeight(key: string): number {
+  if (key === 'rbtv77') return 999;
+  
+  const p = PLATFORMS[key];
+  if (!p) return 100;
+  
+  const type = p.type.toLowerCase();
+  
+  // Sort priority: Gratis > Pago > Cable/no-url > Pirata
+  if (type.includes('gratis')) return 1;
+  if (type.includes('pago') && p.url && !type.includes('cable')) return 2;
+  if (type.includes('cable') || !p.url) return 3;
+  if (type.includes('pirata')) return 4;
+  
+  return 5;
+}
+
+export function sortPlatforms(platformKeys: string[]): string[] {
+  return [...platformKeys].sort((a, b) => {
+    return getPlatformWeight(a) - getPlatformWeight(b);
+  });
+}
