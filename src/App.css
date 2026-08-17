@@ -339,9 +339,9 @@
 }
 
 .toggle-btn.active {
-  background: var(--accent-blue);
-  color: white;
-  box-shadow: 0 2px 12px rgba(10, 132, 255, 0.3);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.2);
 }
 
 /* Weekly cards */
@@ -448,15 +448,15 @@
   gap: 4px;
   padding: 5px 10px;
   border-radius: 100px;
-  background: rgba(10, 132, 255, 0.12);
-  color: var(--accent-blue);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
   font-size: 11px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s;
 }
 
-.watch-chip:active { background: rgba(10, 132, 255, 0.25); }
+.watch-chip:active { background: rgba(255, 255, 255, 0.25); }
 
 .ticket-chip {
   display: inline-flex;
@@ -553,7 +553,7 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
   margin-bottom: 4px;
-  color: var(--accent-red);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .news-headline {
@@ -637,9 +637,9 @@
 }
 
 .cat-tab.active {
-  background: var(--accent-blue);
-  color: white;
-  box-shadow: 0 2px 12px rgba(10, 132, 255, 0.3);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.2);
 }
 
 .cat-content { display: flex; flex-direction: column; gap: 12px; }
@@ -866,9 +866,9 @@
 }
 
 .section-header-btn.active {
-  background: rgba(10, 132, 255, 0.08);
-  border-color: rgba(10, 132, 255, 0.4);
-  color: var(--accent-blue);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 .finished-section .section-header-btn.active {
@@ -1302,7 +1302,7 @@
   justify-content: center;
 }
 
-.tab-btn.active { color: var(--accent-blue); }
+.tab-btn.active { color: #ffffff; }
 
 .tab-btn.active::before {
   content: '';
@@ -1312,7 +1312,7 @@
   transform: translateX(-50%);
   width: 24px;
   height: 2px;
-  background: var(--accent-blue);
+  background: #ffffff;
   border-radius: 2px;
 }
 
@@ -1693,8 +1693,8 @@
 }
 
 .filter-badge-count {
-  background: var(--accent-blue);
-  color: white;
+  background: #ffffff;
+  color: #000000;
   font-size: 12px;
   font-weight: 800;
   padding: 2px 8px;
@@ -1735,9 +1735,9 @@
 }
 
 .filter-chip.active {
-  background: var(--accent-blue);
-  color: white;
-  border-color: var(--accent-blue);
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
 }
 
 .filter-actions {
@@ -1769,8 +1769,8 @@
 }
 
 .filter-apply-btn {
-  background: var(--accent-blue);
-  color: white;
+  background: #ffffff;
+  color: #000000;
 }
 
 /* =============== RESPONSIVE DESKTOP =============== */
@@ -2244,7 +2244,8 @@
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 16px;
   -webkit-overflow-scrolling: touch;
   padding: 0 16px;
   scrollbar-width: none;

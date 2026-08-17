@@ -1874,7 +1874,10 @@ const App = () => {
     const el = wtpScrollRefs.current[group];
     if (!el) return;
     const step = Math.max(el.clientWidth - 50, 180);
-    el.scrollBy({ left: dir * step, behavior: 'smooth' });
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const targetScroll = el.scrollLeft + (dir * step);
+    const clampedScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+    el.scrollTo({ left: clampedScroll, behavior: 'smooth' });
   }, []);
 
   const renderDondeVer = () => {
@@ -1889,13 +1892,38 @@ const App = () => {
       <motion.div key="dondeVer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="wtp-view">
         {/* Search */}
         <div className="wtp-search-container">
-          <input
-            className="wtp-search-input"
-            type="text"
-            placeholder="Buscar categoría..."
-            value={wtpSearch}
-            onChange={e => setWtpSearch(e.target.value)}
-          />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input
+              className="wtp-search-input"
+              type="text"
+              placeholder="Buscar categoría..."
+              value={wtpSearch}
+              onChange={e => setWtpSearch(e.target.value)}
+              style={{ paddingRight: wtpSearch ? '40px' : '16px' }}
+            />
+            {wtpSearch && (
+              <button
+                onClick={() => setWtpSearch('')}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify-content: 'center',
+                  padding: '4px'
+                }}
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search Results */}
