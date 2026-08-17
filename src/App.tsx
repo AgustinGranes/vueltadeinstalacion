@@ -1915,7 +1915,7 @@ const App = () => {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justify-content: 'center',
+                  justifyContent: 'center',
                   padding: '4px'
                 }}
                 aria-label="Limpiar búsqueda"
