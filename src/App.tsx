@@ -535,45 +535,48 @@ const App = () => {
     loadedDataRef.current.add('globalNews');
     setIsGlobalNewsLoading(true);
 
-    const fetchers = [
-      dataService.getF1News,
-      dataService.getWRCNews,
-      dataService.getWRC2News,
-      dataService.getTCNews,
-      dataService.getIndyCarNews,
-      dataService.getNascarNews,
-      dataService.getTC2000News,
-      dataService.getTNC3News,
-      dataService.getNascarTruckNews,
-      dataService.getWECNews,
-      dataService.getIMSANews,
-      dataService.getF2News,
-      dataService.getF3News,
-      dataService.getFENews,
-      dataService.getF1AcademyNews,
-      dataService.getBTCCNews,
-      dataService.getSUPERCARSNews,
-      dataService.getMotoGPNews,
-      dataService.getDTMNews,
-      dataService.getSFNews,
-      dataService.getELMSNews,
-      dataService.getWorldSBKNews,
-      dataService.getWTCRNews,
-      dataService.getTCRSANews,
+    const fetchers: { fn: () => Promise<NewsItem[]>; setter: (items: NewsItem[]) => void }[] = [
+      { fn: () => dataService.getF1News(), setter: setF1News },
+      { fn: () => dataService.getWRCNews(), setter: setWrcNews },
+      { fn: () => dataService.getWRC2News(), setter: (items) => setWrc2News(items as NewsItem[]) },
+      { fn: () => dataService.getTCNews(), setter: (items) => setTcNews(items as NewsItem[]) },
+      { fn: () => dataService.getIndyCarNews(), setter: setIndyNews },
+      { fn: () => dataService.getNascarNews(), setter: setNascarNews },
+      { fn: () => dataService.getTC2000News(), setter: setTc2000News },
+      { fn: () => dataService.getTNC3News(), setter: setTnc3News },
+      { fn: () => dataService.getNascarTruckNews(), setter: setNascarTNews },
+      { fn: () => dataService.getWECNews(), setter: setWecNews },
+      { fn: () => dataService.getIMSANews(), setter: setImsaNews },
+      { fn: () => dataService.getF2News(), setter: setF2News },
+      { fn: () => dataService.getF3News(), setter: setF3News },
+      { fn: () => dataService.getFENews(), setter: setFENews },
+      { fn: () => dataService.getF1AcademyNews(), setter: (items) => setF1aNews(items as NewsItem[]) },
+      { fn: () => dataService.getBTCCNews(), setter: (items) => setBtccNews(items as NewsItem[]) },
+      { fn: () => dataService.getSUPERCARSNews(), setter: (items) => setSupercarsNews(items as NewsItem[]) },
+      { fn: () => dataService.getMotoGPNews(), setter: (items) => setMotoGPNews(items as NewsItem[]) },
+      { fn: () => dataService.getDTMNews(), setter: (items) => setDtmNews(items as NewsItem[]) },
+      { fn: () => dataService.getSFNews(), setter: (items) => setSfNews(items as NewsItem[]) },
+      { fn: () => dataService.getELMSNews(), setter: (items) => setElmsNews(items as NewsItem[]) },
+      { fn: () => dataService.getWorldSBKNews(), setter: (items) => setWorldSBKNews(items as NewsItem[]) },
+      { fn: () => dataService.getWTCRNews(), setter: (items) => setWtcrNews(items as NewsItem[]) },
+      { fn: () => dataService.getTCRSANews(), setter: (items) => setTcrsaNews(items as NewsItem[]) },
     ];
 
     let pending = fetchers.length;
 
-    fetchers.forEach(fn => {
+    fetchers.forEach(({ fn, setter }) => {
       fn().then(items => {
         if (items && items.length > 0) {
+          setter(items);
           setGlobalNewsFeed(prev => {
             const existing = new Set(prev.map(i => i.link));
             const fresh = items.filter(i => !existing.has(i.link));
             return [...prev, ...fresh];
           });
         }
-      }).catch(() => {}).finally(() => {
+      }).catch(err => {
+        console.error('Error fetching news category:', err);
+      }).finally(() => {
         pending--;
         if (pending <= 0) {
           setIsGlobalNewsLoading(false);
