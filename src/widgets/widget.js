@@ -53,40 +53,38 @@ try {
   }
   
   if (config.widgetFamily === "large" || config.widgetFamily === "extraLarge") {
-    widget.setPadding(20, 20, 20, 20);
+    widget.setPadding(16, 18, 16, 18);
   } else {
     if (isSplit) {
-      widget.setPadding(14, 14, 14, 14);
+      widget.setPadding(12, 12, 12, 12);
     } else {
-      widget.setPadding(20, 18, 20, 18);
+      widget.setPadding(18, 16, 18, 16);
     }
   }
   
   const isLarge = config.widgetFamily === "large" || config.widgetFamily === "extraLarge";
-  // One row is reserved for pagination in the upcoming section
-  const maxEventsLive = isLarge ? 8 : 4;
-  const maxEventsUpcoming = isLarge ? 7 : 3; 
+  // Cap events per column to prevent overflow
+  const maxEventsLive = isLarge ? 6 : 3;
+  const maxEventsUpcoming = isLarge ? 6 : 3; 
   
-  const titleSize = isLarge ? 14 : 12;
-  const catSize = isLarge ? 12 : 10;
-  const eventSize = isLarge ? 12 : 10;
-  const dateSize = isLarge ? 11 : 9;
+  const titleSize = isLarge ? 13 : 11;
+  const catSize = isLarge ? 11 : 9.5;
+  const eventSize = isLarge ? 11 : 9.5;
+  const dateSize = isLarge ? 10 : 8.5;
   
-  const spacerTitle = isLarge ? 10 : 6;
-  const spacerEvent = isLarge ? 8 : 4;
+  const spacerTitle = isLarge ? 8 : 5;
+  const spacerEvent = isLarge ? 6 : 3;
   const spacerRow = isLarge ? 2 : 1;
 
-  function renderEvents(container, evList, isUpcoming = false) {
+  // Renders events into a column; returns { effectivePage, totalPages } for pagination info
+  function renderEvents(container, evList, maxCount) {
     if (evList.length === 0) {
       let msg = container.addText("Ninguno por ahora.");
-      msg.font = Font.systemFont(11);
+      msg.font = Font.systemFont(10);
       msg.textColor = Color.gray();
-      return;
+      return { effectivePage: 0, totalPages: 1 };
     }
-    let maxCount = isUpcoming ? maxEventsUpcoming : maxEventsLive;
     let totalPages = Math.ceil(evList.length / maxCount);
-    // Remove the global reset here because the other column might have more pages
-    // Instead, cap the start index so we don't go out of bounds, but still show the last page
     let effectivePage = Math.min(currentPage, Math.max(0, totalPages - 1));
     let startIndex = effectivePage * maxCount;
     let displayList = evList.slice(startIndex, startIndex + maxCount);
@@ -116,6 +114,7 @@ try {
       let sep = titleRow.addText(" - ");
       sep.font = Font.boldSystemFont(catSize);
       sep.textColor = Color.gray();
+      sep.lineLimit = 1;
       
       let sessName = titleRow.addText(ev.name);
       sessName.font = Font.boldSystemFont(eventSize);
@@ -127,6 +126,7 @@ try {
       let timeText = top.addText(timeStr);
       timeText.font = Font.systemFont(dateSize);
       timeText.textColor = Color.dynamic(Color.black(), Color.white());
+      timeText.lineLimit = 1;
       
       row.addSpacer(spacerRow);
       let bottom = row.addStack();
@@ -158,7 +158,7 @@ try {
           bottom.addSpacer(4);
           let rainText = bottom.addText(`${ev.weatherData.rain}%`);
           rainText.font = Font.boldSystemFont(dateSize);
-          rainText.textColor = new Color("60a5fa"); // Celeste claro
+          rainText.textColor = new Color("60a5fa");
         }
       } else if (!isSplit && ev.weather) {
         let wText = bottom.addText(`  ${ev.weather}`);
@@ -171,59 +171,60 @@ try {
       let dateText = bottom.addText(dateStr);
       dateText.font = Font.systemFont(dateSize);
       dateText.textColor = Color.gray();
+      dateText.lineLimit = 1;
       
       if (i < displayList.length - 1) container.addSpacer(spacerEvent);
     }
     
-    if (evList.length > maxCount) {
-      container.addSpacer(8);
-      container.addSpacer();
-      let pagRow = container.addStack();
-      pagRow.layoutHorizontally();
-      pagRow.centerAlignContent();
-      
-      let leftSym = null;
-      try { leftSym = SFSymbol.named("chevron.left"); } catch(e) {}
-      let leftArr = leftSym ? pagRow.addImage(leftSym.image) : pagRow.addText("◀");
-      if (leftSym) {
-        leftArr.imageSize = new Size(12, 12);
-        leftArr.tintColor = Color.dynamic(Color.black(), Color.white());
-      } else {
-        leftArr.font = Font.boldSystemFont(14);
-        leftArr.textColor = Color.dynamic(Color.black(), Color.white());
-      }
-      if (effectivePage > 0 && Script.name()) {
-        leftArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=prev";
-      } else {
-        if (leftSym) leftArr.tintColor = Color.gray();
-        else leftArr.textColor = Color.gray();
-      }
-      
-      pagRow.addSpacer();
-      
-      let pagText = pagRow.addText(`${effectivePage + 1} / ${totalPages}`);
-      pagText.font = Font.boldSystemFont(12);
-      pagText.textColor = Color.dynamic(Color.black(), Color.white());
-      
-      pagRow.addSpacer();
-      
-      let rightSym = null;
-      try { rightSym = SFSymbol.named("chevron.right"); } catch(e) {}
-      let rightArr = rightSym ? pagRow.addImage(rightSym.image) : pagRow.addText("▶");
-      if (rightSym) {
-        rightArr.imageSize = new Size(12, 12);
-        rightArr.tintColor = Color.dynamic(Color.black(), Color.white());
-      } else {
-        rightArr.font = Font.boldSystemFont(14);
-        rightArr.textColor = Color.dynamic(Color.black(), Color.white());
-      }
-      if (effectivePage < totalPages - 1 && Script.name()) {
-        rightArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=next";
-      } else {
-        if (rightSym) rightArr.tintColor = Color.gray();
-        else rightArr.textColor = Color.gray();
-      }
-      container.addSpacer(); // Flexible spacer at bottom to center it vertically
+    return { effectivePage, totalPages };
+  }
+
+  // Renders a pagination bar at the bottom of a column
+  function renderPagination(container, effectivePage, totalPages) {
+    let pagRow = container.addStack();
+    pagRow.layoutHorizontally();
+    pagRow.centerAlignContent();
+    
+    let leftSym = null;
+    try { leftSym = SFSymbol.named("chevron.left"); } catch(e) {}
+    let leftArr = leftSym ? pagRow.addImage(leftSym.image) : pagRow.addText("◀");
+    if (leftSym) {
+      leftArr.imageSize = new Size(10, 10);
+      leftArr.tintColor = Color.dynamic(Color.black(), Color.white());
+    } else {
+      leftArr.font = Font.boldSystemFont(12);
+      leftArr.textColor = Color.dynamic(Color.black(), Color.white());
+    }
+    if (effectivePage > 0 && Script.name()) {
+      leftArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=prev";
+    } else {
+      if (leftSym) leftArr.tintColor = Color.gray();
+      else leftArr.textColor = Color.gray();
+    }
+    
+    pagRow.addSpacer();
+    
+    let pagText = pagRow.addText(`${effectivePage + 1} / ${totalPages}`);
+    pagText.font = Font.boldSystemFont(10);
+    pagText.textColor = Color.dynamic(Color.black(), Color.white());
+    
+    pagRow.addSpacer();
+    
+    let rightSym = null;
+    try { rightSym = SFSymbol.named("chevron.right"); } catch(e) {}
+    let rightArr = rightSym ? pagRow.addImage(rightSym.image) : pagRow.addText("▶");
+    if (rightSym) {
+      rightArr.imageSize = new Size(10, 10);
+      rightArr.tintColor = Color.dynamic(Color.black(), Color.white());
+    } else {
+      rightArr.font = Font.boldSystemFont(12);
+      rightArr.textColor = Color.dynamic(Color.black(), Color.white());
+    }
+    if (effectivePage < totalPages - 1 && Script.name()) {
+      rightArr.url = "scriptable:///run/" + encodeURIComponent(Script.name()) + "?action=next";
+    } else {
+      if (rightSym) rightArr.tintColor = Color.gray();
+      else rightArr.textColor = Color.gray();
     }
   }
 
@@ -231,17 +232,27 @@ try {
     const mainStack = widget.addStack();
     mainStack.layoutHorizontally();
     
+    // ── Left column: EN VIVO ──
     const leftCol = mainStack.addStack();
     leftCol.layoutVertically();
-    if (!isLarge) leftCol.addSpacer(2);
     const leftTitle = leftCol.addText("EN VIVO:");
     leftTitle.font = Font.boldSystemFont(titleSize);
     leftTitle.textColor = Color.red();
-    leftCol.addSpacer(8);
-    renderEvents(leftCol, liveEvents, false);
+    leftCol.addSpacer(spacerTitle);
     
-    mainStack.addSpacer(10); 
+    const liveInfo = renderEvents(leftCol, liveEvents, maxEventsLive);
     
+    // Push pagination to the bottom
+    leftCol.addSpacer();
+    
+    const liveNeedsPag = liveEvents.length > maxEventsLive;
+    if (liveNeedsPag) {
+      renderPagination(leftCol, liveInfo.effectivePage, liveInfo.totalPages);
+    }
+    
+    mainStack.addSpacer(8); 
+    
+    // ── Center divider ──
     const centerDividerStack = mainStack.addStack();
     centerDividerStack.layoutVertically();
     centerDividerStack.centerAlignContent();
@@ -249,19 +260,28 @@ try {
     let divider = centerDividerStack.addStack();
     divider.backgroundColor = Color.dynamic(new Color("#d1d1d6"), new Color("#3a3a3c"));
     
-    let divHeight = isLarge ? 320 : 145;
+    let divHeight = isLarge ? 300 : 135;
     divider.size = new Size(1, divHeight);
     
-    mainStack.addSpacer(10); 
+    mainStack.addSpacer(8); 
     
+    // ── Right column: PRÓXIMO ──
     const rightCol = mainStack.addStack();
     rightCol.layoutVertically();
-    if (!isLarge) rightCol.addSpacer(2);
     const rightTitle = rightCol.addText("PRÓXIMO:");
     rightTitle.font = Font.boldSystemFont(titleSize);
     rightTitle.textColor = Color.dynamic(Color.black(), Color.white());
-    rightCol.addSpacer(8);
-    renderEvents(rightCol, upcomingEvents, true);
+    rightCol.addSpacer(spacerTitle);
+    
+    const upInfo = renderEvents(rightCol, upcomingEvents, maxEventsUpcoming);
+    
+    // Push pagination to the bottom (same level as left column)
+    rightCol.addSpacer();
+    
+    const upNeedsPag = upcomingEvents.length > maxEventsUpcoming;
+    if (upNeedsPag) {
+      renderPagination(rightCol, upInfo.effectivePage, upInfo.totalPages);
+    }
     
   } else {
     const titleText = (liveEvents.length > 0) ? "PRÓXIMO Y EN VIVO:" : "PRÓXIMO:";
@@ -275,7 +295,14 @@ try {
       msg.font = Font.systemFont(12);
       msg.textColor = Color.gray();
     } else {
-      renderEvents(widget, upcomingEvents.length > 0 ? upcomingEvents : events, true);
+      const allEvents = upcomingEvents.length > 0 ? upcomingEvents : events;
+      const maxSingle = isLarge ? 7 : 3;
+      const info = renderEvents(widget, allEvents, maxSingle);
+      
+      if (allEvents.length > maxSingle) {
+        widget.addSpacer();
+        renderPagination(widget, info.effectivePage, info.totalPages);
+      }
     }
   }
 } catch(e) {
