@@ -64,8 +64,8 @@ try {
   
   const isLarge = config.widgetFamily === "large" || config.widgetFamily === "extraLarge";
   // Cap events per column to prevent overflow
-  const maxEventsLive = isLarge ? 7 : 4;
-  const maxEventsUpcoming = isLarge ? 7 : 4; 
+  const maxEventsLive = isLarge ? 8 : 4;
+  const maxEventsUpcoming = isLarge ? 8 : 4; 
   
   const titleSize = isLarge ? 13 : 11;
   const catSize = isLarge ? 11 : 9.5;
