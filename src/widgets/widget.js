@@ -296,7 +296,7 @@ try {
       msg.textColor = Color.gray();
     } else {
       const allEvents = upcomingEvents.length > 0 ? upcomingEvents : events;
-      const maxSingle = isLarge ? 7 : 3;
+      const maxSingle = isLarge ? 8 : 3;
       const info = renderEvents(widget, allEvents, maxSingle);
       
       if (allEvents.length > maxSingle) {
