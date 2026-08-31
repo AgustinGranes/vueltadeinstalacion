@@ -638,7 +638,8 @@ async function getWeeklyCalendar() {
     const rawRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
     const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
-    const result = rawRaces.map((race: any) => {
+    const processedRaces: any[] = [];
+    for (const race of rawRaces) {
       const catInfo = categoriesMap[race.categoryId] || {};
       const validSchedules = (race.schedules || []).filter((s: any) => {
         if (s.confirmed === false) return false;
@@ -653,39 +654,108 @@ async function getWeeklyCalendar() {
         return {
           id: s._id || s.id || '',
           name: s.name || s.title || 'Sesión',
-          startAt: d.getTime(),
           time: `${dayStr}, ${rawTime}`,
           rawTime: rawTime,
+          startAt: d.getTime(),
           confirmed: true
         };
       });
 
-      if (validSchedules.length === 0) return null;
+      if (validSchedules.length === 0) continue;
+      validSchedules.sort((a: any, b: any) => a.startAt - b.startAt);
 
-      return {
+      let logo = '';
+      if (race.categoryId) {
+        logo = `https://api.vueltarapida.com/logos/${race.categoryId}.png`;
+      } else if (catInfo.categoryImage && !catInfo.categoryImage.startsWith('data:')) {
+        logo = catInfo.categoryImage;
+      } else if (race.categoryImage && !race.categoryImage.startsWith('data:')) {
+        logo = race.categoryImage;
+      }
+
+      const eventName = (race.completeName || race.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim();
+      const circuitName = (race.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim();
+
+      processedRaces.push({
         id: race._id || race.id || '',
         category: race.category || '',
         categoryShort: race.categoryShort || race.category || '',
         categoryColor: catInfo.categoryColor || race.categoryColor || '#ff3b30',
-        categoryImage: catInfo.categoryImage || race.categoryImage || (race.categoryId ? `https://api.vueltarapida.com/logos/${race.categoryId}.png` : ''),
-        event: (race.completeName || race.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
-        circuit: (race.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+        categoryLogo: logo,
+        event: eventName,
+        circuit: circuitName,
         circuitId: race.circuitId || '',
         circuitImage: race.circuitImage || '',
+        earliestSession: validSchedules[0].startAt,
         schedules: validSchedules,
         platforms: (race.links || []).filter((l: any) => l.displayName || l.platform || l.name).map((l: any) => l.displayName || l.platform || l.name || ''),
         watchLinks: (race.links || []).filter((l: any) => l.link || l.url).map((l: any) => ({
           platform: l.displayName || l.platform || l.name || 'Ver',
           url: l.link || l.url || ''
         }))
-      };
-    }).filter(Boolean);
+      });
+    }
 
-    setCached('weekly', result);
-    return result;
+    // Deduplicate identical category + event
+    const deduplicatedRaces: any[] = [];
+    for (const race of processedRaces) {
+      const key = `${race.category}::${race.event}`.toLowerCase();
+      const existing = deduplicatedRaces.find(r => `${r.category}::${r.event}`.toLowerCase() === key);
+      if (existing) {
+        if (race.schedules.length > existing.schedules.length) {
+          existing.schedules = race.schedules;
+        }
+        if (race.watchLinks.length > 0 && existing.watchLinks.length === 0) {
+          existing.watchLinks = race.watchLinks;
+          existing.platforms = race.platforms;
+        }
+      } else {
+        deduplicatedRaces.push(race);
+      }
+    }
+
+    deduplicatedRaces.sort((a, b) => a.earliestSession - b.earliestSession);
+
+    // Group by category
+    const categoriesGrouped: Record<string, any> = {};
+    for (const race of deduplicatedRaces) {
+      const catName = race.category || 'Otras';
+      if (!categoriesGrouped[catName]) {
+        categoriesGrouped[catName] = {
+          category: catName,
+          categoryShort: race.categoryShort,
+          categoryColor: race.categoryColor,
+          categoryLogo: race.categoryLogo,
+          events: []
+        };
+      }
+      categoriesGrouped[catName].events.push({
+        id: race.id,
+        event: race.event,
+        circuit: race.circuit,
+        schedules: race.schedules,
+        platforms: race.platforms,
+        watchLinks: race.watchLinks
+      });
+    }
+
+    const output = {
+      status: 'success',
+      week_range: {
+        from: monday.toLocaleDateString('es-AR'),
+        to: sunday.toLocaleDateString('es-AR')
+      },
+      total_categories: Object.keys(categoriesGrouped).length,
+      total_events: deduplicatedRaces.length,
+      categories: Object.values(categoriesGrouped),
+      data: deduplicatedRaces
+    };
+
+    setCached('weekly', output);
+    return output;
   } catch (err) {
     console.error('getWeeklyCalendar error:', err);
-    return [];
+    return { status: 'error', data: [], categories: [] };
   }
 }
 
@@ -704,6 +774,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const category = (parts[1] || '').toLowerCase();
   const type = (parts[2] || '').toLowerCase();
 
+  const sendJson = (statusCode: number, payload: any) => {
+    return res.status(statusCode).send(JSON.stringify(payload, null, 2));
+  };
+
   try {
     // ── ROOT /api ──────────────────────────────────────────────────────────────
     if (!category) {
@@ -718,7 +792,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           results_url: CATEGORY_RESULTS_URLS[cat],
         },
       }));
-      return res.status(200).json({
+      return sendJson(200, {
         status: 'online',
         api_version: '2.0.0',
         title: 'Vuelta de Instalación — Unified Motorsport API',
@@ -733,7 +807,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── /api/weekly ────────────────────────────────────────────────────────────
     if (category === 'weekly') {
-      return res.status(200).json({ data: await getWeeklyCalendar() });
+      const weeklyData = await getWeeklyCalendar();
+      return sendJson(200, weeklyData);
     }
 
     // ── /api/categories ────────────────────────────────────────────────────────
