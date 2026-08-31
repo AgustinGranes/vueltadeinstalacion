@@ -71,116 +71,7 @@ const CATEGORY_CALENDAR_SOURCES: Record<string, string> = {
   'NASCAR': 'https://lat.motorsport.com/nascar-cup/schedule/2026/?all_event_types=1',
 };
 
-const DOMAIN = 'https://vueltadeinstalacion.vercel.app';
 
-const CATEGORY_LOGOS: Record<string, string> = {
-  'F1': `${DOMAIN}/categories/f1.png`,
-  'WRC': `${DOMAIN}/categories/wrc.png`,
-  'WRC2': `${DOMAIN}/WRC2.png`,
-  'NASCAR': `${DOMAIN}/categories/nascarcup.png`,
-  'WEC': `${DOMAIN}/categories/wec.png`,
-  'IndyCar': `${DOMAIN}/categories/indycar.png`,
-  'TC': `${DOMAIN}/categories/TC.png`,
-  'TCP': `${DOMAIN}/categories/TCP.png`,
-  'TCM': `${DOMAIN}/categories/TCM.png`,
-  'TC2000': `${DOMAIN}/categories/TC2000.png`,
-  'IMSA': `${DOMAIN}/categories/imsa.png`,
-  'MotoGP': `${DOMAIN}/categories/motogp.png`,
-  'F2': `${DOMAIN}/categories/f2.png`,
-  'F3': `${DOMAIN}/categories/f3.png`,
-  'GTWC': `${DOMAIN}/categories/gtwc.png`,
-  'BTCC': `${DOMAIN}/categories/btcc.png`,
-  'DTM': `${DOMAIN}/categories/dtm.png`,
-  'SuperFormula': `${DOMAIN}/categories/superformula.png`,
-  'TCRSA': `${DOMAIN}/categories/tcrsouthamerica.png`,
-  'WorldSBK': `${DOMAIN}/categories/worldsbk.png`,
-};
-
-function resolveCategoryLogo(categoryId?: string, categoryName?: string, rawLogo?: string): string {
-  if (rawLogo && rawLogo.startsWith('http')) return rawLogo;
-  if (categoryId) {
-    return `https://api.vueltarapida.com/logos/${categoryId}.png`;
-  }
-  const c = (categoryName || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  const LOCAL_LOGOS: Record<string, string> = {
-    'formula 1': `${DOMAIN}/categories/f1.png`,
-    'f1': `${DOMAIN}/categories/f1.png`,
-    'formula 2': `${DOMAIN}/categories/f2.png`,
-    'f2': `${DOMAIN}/categories/f2.png`,
-    'formula 3': `${DOMAIN}/categories/f3.png`,
-    'f3': `${DOMAIN}/categories/f3.png`,
-    'formula e': `${DOMAIN}/FE.png`,
-    'formula 1 academy': `${DOMAIN}/F1A.png`,
-    'f1 academy': `${DOMAIN}/F1A.png`,
-    'indycar series': `${DOMAIN}/categories/indycar.png`,
-    'indycar': `${DOMAIN}/categories/indycar.png`,
-    'indy nxt': `${DOMAIN}/categories/indynxt.png`,
-    'super formula': `${DOMAIN}/categories/superformula.png`,
-    'super formula japonesa': `${DOMAIN}/categories/superformula.png`,
-    'wec': `${DOMAIN}/categories/wec.png`,
-    'world endurance championship': `${DOMAIN}/categories/wec.png`,
-    'imsa': `${DOMAIN}/categories/imsa.png`,
-    'imsa weathertech': `${DOMAIN}/categories/imsaweathertech.png`,
-    'imsa weathertech sportscar championship': `${DOMAIN}/categories/imsaweathertech.png`,
-    'asian le mans series': `${DOMAIN}/categories/alms.png`,
-    'european le mans series': `${DOMAIN}/categories/elms.png`,
-    'motogp': `${DOMAIN}/categories/motogp.png`,
-    'moto2': `${DOMAIN}/categories/moto2.png`,
-    'moto3': `${DOMAIN}/categories/moto3.png`,
-    'world sbk': `${DOMAIN}/categories/worldsbk.png`,
-    'world rally championship': `${DOMAIN}/categories/wrc.png`,
-    'wrc': `${DOMAIN}/categories/wrc.png`,
-    'rally dakar': `${DOMAIN}/categories/rallydakar.png`,
-    'dtm': `${DOMAIN}/categories/dtm.png`,
-    'btcc': `${DOMAIN}/categories/btcc.png`,
-    'supercars': `${DOMAIN}/categories/supercars.png`,
-    'nascar cup': `${DOMAIN}/categories/nascarcup.png`,
-    'nascar o\'reilly': `${DOMAIN}/categories/nascaroreilly.png`,
-    'nascar truck': `${DOMAIN}/categories/nascartruck.png`,
-    'nascar mexico': `${DOMAIN}/categories/nascarcup.png`,
-    'nascar brasil series': `${DOMAIN}/categories/nascarcup.png`,
-    'gt world challenge europe': `${DOMAIN}/categories/gtwceurope.png`,
-    'gtwc': `${DOMAIN}/categories/gtwc.png`,
-    'super gt': `${DOMAIN}/categories/supergt.png`,
-    'stock car brasil': `${DOMAIN}/categories/stockcar.png`,
-    'stock light brasil': `${DOMAIN}/categories/stockcar.png`,
-    'tcr world tour': `${DOMAIN}/categories/tcrworldtour.png`,
-    'tcr south america': `${DOMAIN}/categories/tcrsouthamerica.png`,
-    'tc2000': `${DOMAIN}/categories/TC2000.png`,
-    'turismo carretera': `${DOMAIN}/categories/TC.png`,
-    'tc pista': `${DOMAIN}/categories/TCP.png`,
-    'tc mouras': `${DOMAIN}/categories/TCM.png`,
-    'tc pick up': `${DOMAIN}/categories/TCPK.png`,
-    'turismo nacional c3': `${DOMAIN}/TNC3.jpg`,
-    'turismo nacional c2': `${DOMAIN}/TNC2.png`,
-    'turismo nacional brasil': `${DOMAIN}/categories/turismonacional.png`,
-    'turismo pista c3': `${DOMAIN}/categories/turismopista.png`,
-    'turismo pista c2': `${DOMAIN}/categories/turismopista.png`,
-    'turismo pista c1': `${DOMAIN}/categories/turismopista.png`,
-    'turismo carretera 2000': `${DOMAIN}/categories/TC2000.png`,
-    'top race': `${DOMAIN}/categories/toprace.png`,
-    'porsche mobil 1 supercup': `${DOMAIN}/categories/porschesupercup.png`,
-    'formula 2 argentina': `${DOMAIN}/categories/formula2arg.png`,
-    'formula 3 metropolitana': `${DOMAIN}/categories/formula3arg.png`,
-    'formula nacional argentina': `${DOMAIN}/categories/formulanacional.png`,
-    'formula 4 italiana': `${DOMAIN}/categories/f4italian.png`,
-    'formula 4 espanola': `${DOMAIN}/categories/spanishf4.png`,
-    'formula 4 cez': `${DOMAIN}/categories/f1.png`,
-    'formula 4 brasil': `${DOMAIN}/categories/f1.png`,
-    'euro cup 3': `${DOMAIN}/categories/f3.png`,
-    'freca': `${DOMAIN}/categories/f3.png`,
-    'gb 3': `${DOMAIN}/categories/f3.png`,
-    'gb 4': `${DOMAIN}/categories/f3.png`,
-    'hoosier formula cup': `${DOMAIN}/categories/f3.png`,
-    'simracing': `${DOMAIN}/categories/f1.png`,
-    '24 hs de nurburgring': `${DOMAIN}/categories/nls-nurburgring24.png`,
-    'nurburgring langstrecken-serie': `${DOMAIN}/categories/nls.png`,
-    'isle of man': `${DOMAIN}/categories/ttisleoftheman.png`,
-    'race of champions': `${DOMAIN}/categories/f1.png`,
-    'world cup 2026': `${DOMAIN}/categories/f1.png`
-  };
-  return LOCAL_LOGOS[c] || (categoryId ? `https://api.vueltarapida.com/logos/${categoryId}.png` : `${DOMAIN}/categories/f1.png`);
-}
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
 
@@ -752,8 +643,6 @@ async function getWeeklyCalendar() {
       if (validSchedules.length === 0) continue;
       validSchedules.sort((a: any, b: any) => a.startAt - b.startAt);
 
-      const logo = resolveCategoryLogo(race.categoryId, race.category, catInfo.categoryImage || race.categoryImage);
-
       const eventName = (race.completeName || race.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim();
       const circuitName = (race.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim();
 
@@ -762,11 +651,9 @@ async function getWeeklyCalendar() {
         category: race.category || '',
         categoryShort: race.categoryShort || race.category || '',
         categoryColor: catInfo.categoryColor || race.categoryColor || '#ff3b30',
-        categoryLogo: logo,
         event: eventName,
         circuit: circuitName,
         circuitId: race.circuitId || '',
-        circuitImage: race.circuitImage || '',
         earliestSession: validSchedules[0].startAt,
         schedules: validSchedules,
         platforms: (race.links || []).filter((l: any) => l.displayName || l.platform || l.name).map((l: any) => l.displayName || l.platform || l.name || ''),
@@ -806,7 +693,6 @@ async function getWeeklyCalendar() {
           category: catName,
           categoryShort: race.categoryShort,
           categoryColor: race.categoryColor,
-          categoryLogo: race.categoryLogo,
           events: []
         };
       }
@@ -925,7 +811,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       if (type === 'results') {
-        return res.status(200).json({ category: 'F1', logo: CATEGORY_LOGOS['F1'] || null, results_url: CATEGORY_RESULTS_URLS['F1'] });
+        return sendJson(200, { category: 'F1', results_url: CATEGORY_RESULTS_URLS['F1'] });
       }
       // Full F1 dump
       const [calendar, standings, news] = await Promise.all([
@@ -933,9 +819,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         getF1Standings(),
         scrapeNews('F1'),
       ]);
-      return res.status(200).json({
+      return sendJson(200, {
         category: 'Formula 1',
-        logo: CATEGORY_LOGOS['F1'] || null,
         results_url: CATEGORY_RESULTS_URLS['F1'],
         news_source: CATEGORY_NEWS_URLS['F1']?.url,
         calendar,
@@ -944,18 +829,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ── /api/<category>/logo ───────────────────────────────────────────────────
-    if (type === 'logo') {
-      return res.status(200).json({
-        category: catKey,
-        logo: CATEGORY_LOGOS[catKey] || null,
-      });
-    }
-
     // ── /api/<category>/news ───────────────────────────────────────────────────
     if (type === 'news') {
       const articles = await scrapeNews(catKey);
-      return res.status(200).json({
+      return sendJson(200, {
         category: catKey,
         source: CATEGORY_NEWS_URLS[catKey]?.source || null,
         source_url: CATEGORY_NEWS_URLS[catKey]?.url || null,
@@ -967,7 +844,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── /api/<category>/standings ──────────────────────────────────────────────
     if (type === 'standings') {
       const data = await scrapeStandings(catKey);
-      return res.status(200).json({
+      return sendJson(200, {
         category: catKey,
         data: data.length > 0 ? data : null,
         source_url: CATEGORY_STANDINGS_URLS[catKey] || null,
@@ -977,7 +854,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ── /api/<category>/calendar ───────────────────────────────────────────────
     if (type === 'calendar') {
       const data = await scrapeCalendar(catKey);
-      return res.status(200).json({
+      return sendJson(200, {
         category: catKey,
         data: data.length > 0 ? data : null,
         source_url: CATEGORY_CALENDAR_SOURCES[catKey] || null,
@@ -986,7 +863,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── /api/<category>/results ────────────────────────────────────────────────
     if (type === 'results') {
-      return res.status(200).json({
+      return sendJson(200, {
         category: catKey,
         results_url: CATEGORY_RESULTS_URLS[catKey],
       });
@@ -999,9 +876,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       scrapeCalendar(catKey)
     ]);
     
-    return res.status(200).json({
+    return sendJson(200, {
       category: catKey,
-      logo: CATEGORY_LOGOS[catKey] || null,
       results_url: CATEGORY_RESULTS_URLS[catKey],
       news_source: CATEGORY_NEWS_URLS[catKey]?.url || null,
       news: news.slice(0, 10),
