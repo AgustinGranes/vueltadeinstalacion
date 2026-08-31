@@ -477,13 +477,6 @@ export const dataService = {
       }
 
       let races = Array.isArray(data) ? data : (data?.races || data?.data || []);
-
-      // Block Formula 1, 2, 3, BTCC, DTM, NASCAR, Porsche Supercup, IndyCar from vueltarapida to use JSON instead
-      races = races.filter((r: any) => {
-        const cat = (r.category || r.name || '').toLowerCase();
-        const blockedCategories = ['fórmula 1', 'formula 1', 'f1', 'fórmula 2', 'formula 2', 'f2', 'fórmula 3', 'formula 3', 'f3', 'btcc', 'dtm', "nascar o'reilly", 'nascar cup', 'nascar truck', 'nascar trucks', 'porsche mobil 1 supercup', 'indycar', 'indycar series'];
-        return !blockedCategories.includes(cat);
-      });
       
       if (races && Array.isArray(races) && races.length > 0) {
         const racesWithImages = await Promise.all(races.map(async (r: any) => {
@@ -534,23 +527,13 @@ export const dataService = {
             circuitName = r.circuitId.split('_').filter(Boolean).map((s: string) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
           }
 
-          const _formatCategoryName = (cat: string) => {
-            if (!cat) return '';
-            if (cat === 'Super Formula Japonesa' || cat === 'Super Fórmula Japonesa') return 'Super Formula';
-            if (cat === 'World Rally Championship') return 'WRC';
-            if (cat === 'Fórmula 4 Brasil' || cat === 'Formula 4 Brasil') return 'F4 Brazil';
-            if (cat === 'NASCAR México' || cat === 'NASCAR Mexico') return 'NASCAR Mexico';
-            if (cat === 'Stock Car Brasil') return 'Stock Car Pro';
-            return cat;
-          };
-
           return {
             id: r._id || r.id || '',
             categoryId: r.categoryId || '',
             categoryColor: catInfo.categoryColor || r.categoryColor,
             categoryImage: catInfo.categoryImage || r.categoryImage || (r.categoryId ? `https://api.vueltarapida.com/logos/${r.categoryId}.png` : ''),
-            category: _formatCategoryName(r.category || r.name || ''),
-            categoryShort: _formatCategoryName(r.categoryShort || r.name || ''),
+            category: r.category || r.name || '',
+            categoryShort: r.categoryShort || r.category || r.name || '',
             event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuit: circuitName.replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuitId: r.circuitId,
@@ -562,16 +545,6 @@ export const dataService = {
             watchLinks,
           };
         }));
-
-        // Also fetch and merge horarios.json events (with deduplication)
-        try {
-          const horariosRaces = await this.getHorariosWeekly();
-          if (horariosRaces.length > 0) {
-            return _deduplicateRaces(racesWithImages, horariosRaces);
-          }
-        } catch (e) {
-          console.warn('[DataService] Failed to fetch horarios:', e);
-        }
 
         return racesWithImages;
       }
@@ -612,14 +585,6 @@ export const dataService = {
           watchLinks: [],
         });
       });
-
-      // Also add horarios.json events in fallback (with deduplication)
-      try {
-        const horariosRaces = await this.getHorariosWeekly();
-        return _deduplicateRaces(scrapedRaces, horariosRaces);
-      } catch (e) {
-        console.warn('[DataService] Failed to fetch horarios in fallback:', e);
-      }
 
       return scrapedRaces;
     } catch (e) {

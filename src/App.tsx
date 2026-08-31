@@ -1322,7 +1322,7 @@ const App = () => {
                           {/* Middle Row: Circuit Name */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
-                              {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
+                              {item.event}{item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}
                             </h3>
                             {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
                               <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
@@ -1398,7 +1398,7 @@ const App = () => {
                           
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
-                              {item.id && String(item.id).includes('horarios-') ? (item.circuit || item.event) : `${item.event}${item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}`}
+                              {item.event}{item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}
                             </h3>
                             {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
                               <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
@@ -1498,7 +1498,7 @@ const App = () => {
                 )}
                 {races.map((race, ri) => (
                   <div key={ri} className="cat-event-body">
-                    <h4 className="cat-event-name">{race.id && String(race.id).includes('horarios-') ? (race.circuit || race.event) : race.event}</h4>
+                    <h4 className="cat-event-name">{race.event}</h4>
                     {race.schedules.map((s, si) => (
                       <div key={si} className="schedule-row-mini">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
