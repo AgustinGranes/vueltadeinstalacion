@@ -28,7 +28,7 @@ export default async function handler(req: any, res: any) {
       const apiUrl = `https://api.vueltarapida.com/api/races?minDate=${from}&maxDate=${to}`;
       const apiRes = await fetch(apiUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; VueltaDeInstalacion/1.0)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'application/json',
           'Referer': 'https://vueltarapida.com/',
           'Origin': 'https://vueltarapida.com',
@@ -109,7 +109,7 @@ export default async function handler(req: any, res: any) {
     const uniqueSchedules: any[] = [];
     for (const sched of flatSchedules) {
       const isDup = uniqueSchedules.some(u => {
-        const catMatch = _normalizeCategoryKey(u.category) === _normalizeCategoryKey(sched.category);
+        const catMatch = (u.category || '').toLowerCase().trim() === (sched.category || '').toLowerCase().trim();
         const timeDiff = Math.abs(u.startAt - sched.startAt);
         // If same category and within 10 minutes, treat as duplicate
         return catMatch && timeDiff < 600000;
