@@ -600,36 +600,91 @@ async function getWeeklyCalendar() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
-    const r = await fetch(
-      `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`,
-      { headers: { 'Referer': 'https://vueltarapida.com/', 'Origin': 'https://vueltarapida.com' } }
-    );
-    const data = await r.json();
-    const result = (Array.isArray(data) ? data : []).map((race: any) => ({
-      id: race._id || race.id || '',
-      category: race.category || '',
-      categoryShort: race.categoryShort || race.category || '',
-      categoryColor: race.categoryColor || '',
-      categoryImage: race.categoryImage || (race.categoryId ? `https://api.vueltarapida.com/logos/${race.categoryId}.png` : ''),
-      event: race.completeName || race.name || '',
-      circuit: race.circuit || '',
-      circuitImage: race.circuitImage || '',
-      startDate: race.startAt ? new Date(race.startAt).toISOString() : '',
-      schedules: (race.schedules || []).map((s: any) => ({
-        id: s._id || s.id || '',
-        name: s.name || s.title || '',
-        startAt: s.startAt || s.start || null,
-        time: s.time || '',
-      })),
-      platforms: (race.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
-      watchLinks: (race.links || []).filter((l: any) => l.url || l.link).map((l: any) => ({
-        platform: l.platform || l.name || 'Ver',
-        url: l.url || l.link || ''
-      }))
-    }));
+
+    const [racesRes, catRes] = await Promise.all([
+      fetch(
+        `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Referer': 'https://vueltarapida.com/',
+            'Origin': 'https://vueltarapida.com'
+          }
+        }
+      ),
+      fetch(
+        `https://api.vueltarapida.com/api/categories`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Referer': 'https://vueltarapida.com/',
+            'Origin': 'https://vueltarapida.com'
+          }
+        }
+      ).catch(() => null)
+    ]);
+
+    const data = await racesRes.json();
+    let categoriesMap: Record<string, any> = {};
+    try {
+      const catData = catRes ? await catRes.json() : [];
+      if (Array.isArray(catData)) {
+        catData.forEach((c: any) => { if (c.categoryId) categoriesMap[c.categoryId] = c; });
+      }
+    } catch(e) {}
+
+    const rawRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
+    const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+    const result = rawRaces.map((race: any) => {
+      const catInfo = categoriesMap[race.categoryId] || {};
+      const validSchedules = (race.schedules || []).filter((s: any) => {
+        if (s.confirmed === false) return false;
+        if (s.time === '--:--' || s.time === '-' || s.time === '') return false;
+        const ts = s.startAt || s.start;
+        if (!ts || isNaN(new Date(ts).getTime())) return false;
+        return true;
+      }).map((s: any) => {
+        const d = new Date(s.startAt || s.start);
+        const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+        const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' });
+        return {
+          id: s._id || s.id || '',
+          name: s.name || s.title || 'Sesión',
+          startAt: d.getTime(),
+          time: `${dayStr}, ${rawTime}`,
+          rawTime: rawTime,
+          confirmed: true
+        };
+      });
+
+      if (validSchedules.length === 0) return null;
+
+      return {
+        id: race._id || race.id || '',
+        category: race.category || '',
+        categoryShort: race.categoryShort || race.category || '',
+        categoryColor: catInfo.categoryColor || race.categoryColor || '#ff3b30',
+        categoryImage: catInfo.categoryImage || race.categoryImage || (race.categoryId ? `https://api.vueltarapida.com/logos/${race.categoryId}.png` : ''),
+        event: (race.completeName || race.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+        circuit: (race.circuit || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
+        circuitId: race.circuitId || '',
+        circuitImage: race.circuitImage || '',
+        schedules: validSchedules,
+        platforms: (race.links || []).filter((l: any) => l.displayName || l.platform || l.name).map((l: any) => l.displayName || l.platform || l.name || ''),
+        watchLinks: (race.links || []).filter((l: any) => l.link || l.url).map((l: any) => ({
+          platform: l.displayName || l.platform || l.name || 'Ver',
+          url: l.link || l.url || ''
+        }))
+      };
+    }).filter(Boolean);
+
     setCached('weekly', result);
     return result;
-  } catch {
+  } catch (err) {
+    console.error('getWeeklyCalendar error:', err);
     return [];
   }
 }
