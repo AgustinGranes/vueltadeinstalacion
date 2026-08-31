@@ -606,10 +606,26 @@ async function getWeeklyCalendar() {
     );
     const data = await r.json();
     const result = (Array.isArray(data) ? data : []).map((race: any) => ({
+      id: race._id || race.id || '',
       category: race.category || '',
-      event: race.name || race.completeName || '',
+      categoryShort: race.categoryShort || race.category || '',
+      categoryColor: race.categoryColor || '',
+      categoryImage: race.categoryImage || (race.categoryId ? `https://api.vueltarapida.com/logos/${race.categoryId}.png` : ''),
+      event: race.completeName || race.name || '',
       circuit: race.circuit || '',
+      circuitImage: race.circuitImage || '',
       startDate: race.startAt ? new Date(race.startAt).toISOString() : '',
+      schedules: (race.schedules || []).map((s: any) => ({
+        id: s._id || s.id || '',
+        name: s.name || s.title || '',
+        startAt: s.startAt || s.start || null,
+        time: s.time || '',
+      })),
+      platforms: (race.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
+      watchLinks: (race.links || []).filter((l: any) => l.url || l.link).map((l: any) => ({
+        platform: l.platform || l.name || 'Ver',
+        url: l.url || l.link || ''
+      }))
     }));
     setCached('weekly', result);
     return result;
