@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { parseHTML } from 'linkedom';
+import { getTheRacingLineCalendar } from './theRacingLine.js';
 
 // ─── Static Data Maps ────────────────────────────────────────────────────────
 
@@ -577,10 +578,10 @@ async function getWeeklyCalendar() {
     monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
     monday.setHours(0, 0, 0, 0);
     const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+    sunday.setDate(monday.getDate() + 13); // 2-week window (this week + next week)
     sunday.setHours(23, 59, 59, 999);
 
-    const [racesRes, catRes] = await Promise.all([
+    const [vrRacesSettled, vrCatSettled, trlSettled] = await Promise.allSettled([
       fetch(
         `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`,
         {
@@ -589,9 +590,10 @@ async function getWeeklyCalendar() {
             'Accept': 'application/json',
             'Referer': 'https://vueltarapida.com/',
             'Origin': 'https://vueltarapida.com'
-          }
+          },
+          signal: AbortSignal.timeout(6000)
         }
-      ),
+      ).then(r => r.json()),
       fetch(
         `https://api.vueltarapida.com/api/categories`,
         {
@@ -600,21 +602,20 @@ async function getWeeklyCalendar() {
             'Accept': 'application/json',
             'Referer': 'https://vueltarapida.com/',
             'Origin': 'https://vueltarapida.com'
-          }
+          },
+          signal: AbortSignal.timeout(6000)
         }
-      ).catch(() => null)
+      ).then(r => r.json()).catch(() => null),
+      getTheRacingLineCalendar({ minDate: monday.getTime(), maxDate: sunday.getTime() })
     ]);
 
-    const data = await racesRes.json();
     let categoriesMap: Record<string, any> = {};
-    try {
-      const catData = catRes ? await catRes.json() : [];
-      if (Array.isArray(catData)) {
-        catData.forEach((c: any) => { if (c.categoryId) categoriesMap[c.categoryId] = c; });
-      }
-    } catch(e) {}
+    if (vrCatSettled.status === 'fulfilled' && Array.isArray(vrCatSettled.value)) {
+      vrCatSettled.value.forEach((c: any) => { if (c.categoryId) categoriesMap[c.categoryId] = c; });
+    }
 
-    const rawRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
+    const vrData = vrRacesSettled.status === 'fulfilled' ? vrRacesSettled.value : null;
+    const rawRaces = Array.isArray(vrData) ? vrData : (vrData?.races || vrData?.data || []);
     const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
     const processedRaces: any[] = [];
@@ -664,6 +665,36 @@ async function getWeeklyCalendar() {
       });
     }
 
+    // Merge in The Racing Line events
+    const trlEvents = trlSettled.status === 'fulfilled' && Array.isArray(trlSettled.value) ? trlSettled.value : [];
+    for (const trl of trlEvents) {
+      const trlCat = (trl.category || '').toLowerCase();
+      const trlEventName = (trl.event || '').toLowerCase();
+
+      // Find match in processedRaces
+      const existing = processedRaces.find(r => {
+        const rCat = (r.category || '').toLowerCase();
+        const rShort = (r.categoryShort || '').toLowerCase();
+        const rEvent = (r.event || '').toLowerCase();
+        const catMatch = rCat === trlCat || rShort === (trl.categoryShort || '').toLowerCase() || rCat.includes(trlCat) || trlCat.includes(rCat);
+        const eventMatch = rEvent === trlEventName || rEvent.includes(trlEventName) || trlEventName.includes(rEvent);
+        return catMatch && eventMatch;
+      });
+
+      if (existing) {
+        // If TRL has more or equal schedules, merge them
+        if (trl.schedules.length >= existing.schedules.length) {
+          existing.schedules = trl.schedules;
+          existing.earliestSession = trl.earliestSession;
+        }
+        if (!existing.circuit && trl.circuit) {
+          existing.circuit = trl.circuit;
+        }
+      } else {
+        processedRaces.push(trl);
+      }
+    }
+
     // Deduplicate identical category + event
     const deduplicatedRaces: any[] = [];
     for (const race of processedRaces) {
@@ -708,6 +739,7 @@ async function getWeeklyCalendar() {
 
     const output = {
       status: 'success',
+      sources: ['vueltarapida', 'theracingline'],
       week_range: {
         from: monday.toLocaleDateString('es-AR'),
         to: sunday.toLocaleDateString('es-AR')
@@ -776,6 +808,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (category === 'weekly') {
       const weeklyData = await getWeeklyCalendar();
       return sendJson(200, weeklyData);
+    }
+
+    // ── /api/racingline ────────────────────────────────────────────────────────
+    if (category === 'racingline') {
+      const trlData = await getTheRacingLineCalendar();
+      return sendJson(200, {
+        status: 'success',
+        source: 'theracingline.app',
+        total_events: trlData.length,
+        data: trlData
+      });
     }
 
     // ── /api/categories ────────────────────────────────────────────────────────
