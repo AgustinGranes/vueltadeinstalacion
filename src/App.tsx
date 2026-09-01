@@ -256,6 +256,7 @@ const App = () => {
   const [trlCookieInput, setTrlCookieInput] = useState('');
   const [trlSyncing, setTrlSyncing] = useState(false);
   const [trlSyncSuccess, setTrlSyncSuccess] = useState(false);
+  const [copiedBookmarklet, setCopiedBookmarklet] = useState(false);
 
   const updateSettings = async (updates: Partial<{ hiddenCalCategories: string[], hideWeatherWeekly: boolean, hideWeatherCategory: boolean }>) => {
     // Optimistic UI updates
@@ -1876,6 +1877,37 @@ const App = () => {
                   >
                     {trlSyncing ? 'Sincronizando...' : trlSyncSuccess ? '¡Sincronizado con Éxito! ✓' : 'Guardar y Sincronizar'}
                   </button>
+
+                  <div style={{ borderTop: '1px solid var(--separator, rgba(255,255,255,0.1))', paddingTop: '14px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-blue)' }}>⚡ Sincronización en 1 Toque (iPhone)</span>
+                      <button
+                        onClick={() => {
+                          const bookmarklet = `javascript:(function(){const c=document.cookie;if(!c||!c.includes('sb-auth-auth-token')){alert('Por favor abre sesión en theracingline.app primero');return;}fetch('https://vueltadeinstalacion.vercel.app/api/sync-trl',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie:c})}).then(r=>r.json()).then(d=>{if(d.status==='success'){alert('✅ ¡Sesión sincronizada con éxito!');}else{alert('❌ Error: '+(d.message||'Fallo'));}}).catch(e=>alert('❌ Error: '+e));})();`;
+                          navigator.clipboard.writeText(bookmarklet);
+                          setCopiedBookmarklet(true);
+                          setTimeout(() => setCopiedBookmarklet(false), 2000);
+                        }}
+                        style={{
+                          background: copiedBookmarklet ? '#30d158' : 'var(--accent-blue)',
+                          color: '#000',
+                          fontWeight: 'bold',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '5px 10px',
+                          fontSize: '11px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {copiedBookmarklet ? '¡Código Copiado! ✓' : 'Copiar Marcador 1-Tap'}
+                      </button>
+                    </div>
+                    <ol style={{ margin: 0, paddingLeft: '18px', color: '#aaa', fontSize: '12px', lineHeight: '1.6' }}>
+                      <li>Toca <strong>Copiar Marcador 1-Tap</strong>.</li>
+                      <li>En Safari de tu iPhone, guarda un marcador cualquiera y edítalo pegando este código en el campo de dirección URL.</li>
+                      <li>Cuando abras <strong>theracingline.app</strong> en tu iPhone, simplemente toca ese marcador en tus favoritos y ¡se sincronizará en 1 segundo!</li>
+                    </ol>
+                  </div>
                 </div>
               </motion.div>
             )}
