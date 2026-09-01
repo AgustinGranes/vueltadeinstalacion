@@ -1,3 +1,5 @@
+import { getWeeklyCalendar } from './index.js';
+
 export default async function handler(req: any, res: any) {
   try {
     // --- Parse hidden categories from query ---
@@ -6,49 +8,24 @@ export default async function handler(req: any, res: any) {
       ? hiddenQuery.split(',').map((c: string) => c.trim().toLowerCase())
       : [];
 
-    // --- Date range: current week (Mon) to end of next week (Sun) ---
-    const now = new Date();
-    const day = now.getDay(); // 0=Sun, 1=Mon, ...
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-    monday.setHours(0, 0, 0, 0);
-
-    const nextSunday = new Date(monday);
-    nextSunday.setDate(monday.getDate() + 13); // 2 weeks window
-    nextSunday.setHours(23, 59, 59, 999);
-
-    const from = monday.getTime();
-    const to = nextSunday.getTime();
-
-    // --- Fetch races from VueltaRapida API directly ---
-    let vrRaces: any[] = [];
+    // --- Fetch unified races from getWeeklyCalendar() ---
+    let races: any[] = [];
     try {
-      const apiUrl = `https://api.vueltarapida.com/api/races?minDate=${from}&maxDate=${to}`;
-      const apiRes = await fetch(apiUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'Referer': 'https://vueltarapida.com/',
-          'Origin': 'https://vueltarapida.com',
-        },
-        signal: AbortSignal.timeout(8000),
-      });
-      if (apiRes.ok) {
-        const data = await apiRes.json();
-        vrRaces = Array.isArray(data) ? data : (data?.races || data?.data || []);
-      }
+      const weeklyData = await getWeeklyCalendar();
+      races = Array.isArray(weeklyData?.data) ? weeklyData.data : [];
     } catch (fetchErr) {
-      console.error('[webcal] VueltaRapida fetch error:', fetchErr);
+      console.error('[webcal] getWeeklyCalendar error:', fetchErr);
     }
 
     // --- Filter out hidden categories ---
-    const filteredRaces = vrRaces.filter(race => {
+    const filteredRaces = races.filter(race => {
       if (hiddenCategories.length === 0) return true;
       const cat = (race.category || '').toLowerCase();
       const evt = (race.event || '').toLowerCase();
+      const short = (race.categoryShort || '').toLowerCase();
       
       for (const hidden of hiddenCategories) {
-        if (cat.includes(hidden) || evt.includes(hidden)) {
+        if (cat === hidden || cat.includes(hidden) || hidden.includes(cat) || evt.includes(hidden) || short === hidden) {
           return false;
         }
       }

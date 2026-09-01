@@ -1910,10 +1910,10 @@ const App = () => {
                         <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
                           {trlStatusData
                             ? (trlStatusData.syncSource === 'live'
-                                ? '🟢 Sincronizado en Vivo'
+                                ? 'Sincronizado en Vivo'
                                 : trlStatusData.syncSource === 'cache'
-                                ? '🟢 Activo en Memoria (En Vivo)'
-                                : '🟡 Mostrando desde Caché Persistente (2 Semanas)')
+                                ? 'Activo en Memoria (En Vivo)'
+                                : 'Mostrando desde Caché Persistente (2 Semanas)')
                             : 'Comprobando conexión...'}
                         </div>
                         <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>

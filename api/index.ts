@@ -583,7 +583,7 @@ async function getF1Standings() {
   }
 }
 
-async function getWeeklyCalendar() {
+export async function getWeeklyCalendar() {
   const cached = getCached('weekly');
   if (cached) return cached;
   try {
