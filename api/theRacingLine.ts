@@ -149,8 +149,8 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
   const eventMap = new Map<string, StandardRaceEvent>();
 
   for (const s of filteredSessions) {
-    const seriesName = s.series?.name || 'Motorsport';
-    const seriesShort = s.series?.shortName || seriesName;
+    const seriesName = (s.series?.name || 'Motorsport').trim();
+    const seriesShort = (s.series?.shortName || seriesName).trim();
     const eventName = (s.eventName || seriesName).replace(/\s*[–—-]+\s*$/, '').trim();
     const circuitName = (s.circuit?.name || '').trim();
     const cleanCircuit = circuitName || 'TBA';

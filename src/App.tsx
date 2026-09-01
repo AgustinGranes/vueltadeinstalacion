@@ -1205,15 +1205,18 @@ const App = () => {
     // Merge MASTER_CALENDAR_CATEGORIES with any loaded weekly races categories
     const activeCalendarCategories: Record<string, string[]> = (() => {
       const categoriesByGroup: Record<string, string[]> = JSON.parse(JSON.stringify(MASTER_CALENDAR_CATEGORIES));
-      const allKnown = new Set(Object.values(categoriesByGroup).flat().map(c => c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
+      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+      const allKnownList = Object.values(categoriesByGroup).flat().map(c => norm(c));
+      const allKnownSet = new Set(allKnownList);
 
       const extraCategories: string[] = [];
       for (const r of weeklyRaces) {
         const cat = (r.category || '').trim();
         if (!cat) continue;
-        const normalized = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (!allKnown.has(normalized)) {
-          allKnown.add(normalized);
+        const normalized = norm(cat);
+        const alreadyExists = allKnownSet.has(normalized) || allKnownList.some(k => k === normalized || (k.length > 3 && normalized.length > 3 && (k.includes(normalized) || normalized.includes(k))));
+        if (!alreadyExists) {
+          allKnownSet.add(normalized);
           extraCategories.push(cat);
         }
       }
