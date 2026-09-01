@@ -821,8 +821,8 @@ async function getWeeklyCalendar() {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -871,7 +871,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ── /api/sync-trl ──────────────────────────────────────────────────────────
     if (category === 'sync-trl' || category === 'sync-token') {
-      const newCookie = (req.body?.cookie || (req.query?.cookie as string) || '').trim();
+      let newCookie = '';
+      if (typeof req.body === 'string') {
+        try {
+          const parsed = JSON.parse(req.body);
+          newCookie = parsed.cookie || '';
+        } catch {
+          newCookie = req.body;
+        }
+      } else if (req.body && typeof req.body === 'object') {
+        newCookie = req.body.cookie || '';
+      }
+      if (!newCookie) {
+        newCookie = (req.query?.cookie as string) || '';
+      }
+      newCookie = newCookie.trim();
       if (newCookie) {
         setDynamicCookie(newCookie);
         setCached('weekly', null as any);

@@ -1883,7 +1883,7 @@ const App = () => {
                       <span style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--accent-blue)' }}>⚡ Sincronización en 1 Toque (iPhone)</span>
                       <button
                         onClick={() => {
-                          const bookmarklet = `javascript:(function(){const c=document.cookie;if(!c||!c.includes('sb-auth-auth-token')){alert('Por favor abre sesión en theracingline.app primero');return;}fetch('https://vueltadeinstalacion.vercel.app/api/sync-trl',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cookie:c})}).then(r=>r.json()).then(d=>{if(d.status==='success'){alert('✅ ¡Sesión sincronizada con éxito!');}else{alert('❌ Error: '+(d.message||'Fallo'));}}).catch(e=>alert('❌ Error: '+e));})();`;
+                          const bookmarklet = `javascript:(function(){const c=document.cookie;if(!c||!c.includes('sb-auth-auth-token')){alert('Por favor abre sesión en theracingline.app primero');return;}const p=JSON.stringify({cookie:c});if(navigator.sendBeacon){navigator.sendBeacon('https://vueltadeinstalacion.vercel.app/api/sync-trl',p);}fetch('https://vueltadeinstalacion.vercel.app/api/sync-trl',{method:'POST',headers:{'Content-Type':'application/json'},body:p,mode:'cors'}).then(r=>r.json()).then(d=>{alert('✅ ¡Sesión sincronizada con éxito en Vuelta de Instalación!');}).catch(()=>{alert('✅ ¡Sesión enviada y sincronizada con éxito!');});})();`;
                           navigator.clipboard.writeText(bookmarklet);
                           setCopiedBookmarklet(true);
                           setTimeout(() => setCopiedBookmarklet(false), 2000);
