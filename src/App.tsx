@@ -11,7 +11,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import { resolveCategoryLogo } from './data/categoryLogos';
 
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
-import { MASTER_CALENDAR_CATEGORIES } from './data/calendarCategories';
+import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
 import { PLATFORMS as WTP_PLATFORMS, CATEGORIES as WTP_CATEGORIES, LOGO_MAP as WTP_LOGO_MAP, GROUP_ORDER as WTP_GROUP_ORDER, convertToARS, formatPrice, sortPlatforms } from './data/whereToWatch';
 
@@ -1131,7 +1131,7 @@ const App = () => {
 
   const renderCalendario = () => {
 
-    // Apply category filter (check substrings in category and event name)
+    // Apply category filter (check substrings and aliases in category and event name)
     const visibleRaces = weeklyRaces.filter(r => {
       if (hiddenCalCategories.length === 0) return true;
       const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
@@ -1142,9 +1142,23 @@ const App = () => {
       for (const hiddenCat of hiddenCalCategories) {
         const lowerHidden = norm(hiddenCat);
         if (!lowerHidden) continue;
-        if (raceCat === lowerHidden || raceCat.includes(lowerHidden) || lowerHidden.includes(raceCat) || raceEvent.includes(lowerHidden) || (raceCatShort && raceCatShort === lowerHidden)) {
+        if (
+          raceCat === lowerHidden || 
+          raceCat.includes(lowerHidden) || 
+          lowerHidden.includes(raceCat) || 
+          raceEvent.includes(lowerHidden) || 
+          (raceCatShort && (raceCatShort === lowerHidden || lowerHidden.includes(raceCatShort) || raceCatShort.includes(lowerHidden)))
+        ) {
           return false;
         }
+        // Specific alias handling
+        if ((lowerHidden === 'wrc' || lowerHidden === 'worldrallychampionship') && (raceCat.includes('wrc') || raceCat.includes('worldrally') || raceCatShort === 'wrc')) return false;
+        if ((lowerHidden === 'wec' || lowerHidden === 'fiawec' || lowerHidden === 'worldendurancechampionship') && (raceCat.includes('wec') || raceCat.includes('endurance') || raceCatShort === 'wec')) return false;
+        if ((lowerHidden === 'f1' || lowerHidden === 'formula1') && (raceCat === 'f1' || raceCat === 'formula1' || raceCatShort === 'f1')) return false;
+        if ((lowerHidden === 'f2' || lowerHidden === 'formula2') && (raceCat === 'f2' || raceCat === 'formula2' || raceCatShort === 'f2')) return false;
+        if ((lowerHidden === 'f3' || lowerHidden === 'formula3') && (raceCat === 'f3' || raceCat === 'formula3' || raceCatShort === 'f3')) return false;
+        if ((lowerHidden === 'motogp') && (raceCat.includes('motogp') || raceCatShort === 'motogp')) return false;
+        if ((lowerHidden === 'worldsbk' || lowerHidden === 'wsbk') && (raceCat.includes('sbk') || raceCat.includes('superbike') || raceCatShort === 'wsbk')) return false;
       }
       return true;
     });
@@ -1202,34 +1216,6 @@ const App = () => {
       return `en ${diffDays} día${diffDays === 1 ? '' : 's'}`;
     };
 
-    // Merge MASTER_CALENDAR_CATEGORIES with any loaded weekly races categories
-    const activeCalendarCategories: Record<string, string[]> = (() => {
-      const categoriesByGroup: Record<string, string[]> = JSON.parse(JSON.stringify(MASTER_CALENDAR_CATEGORIES));
-      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
-      const allKnownList = Object.values(categoriesByGroup).flat().map(c => norm(c));
-      const allKnownSet = new Set(allKnownList);
-
-      const extraCategories: string[] = [];
-      for (const r of weeklyRaces) {
-        const cat = (r.category || '').trim();
-        if (!cat) continue;
-        const normalized = norm(cat);
-        const alreadyExists = allKnownSet.has(normalized) || allKnownList.some(k => k === normalized || (k.length > 3 && normalized.length > 3 && (k.includes(normalized) || normalized.includes(k))));
-        if (!alreadyExists) {
-          allKnownSet.add(normalized);
-          extraCategories.push(cat);
-        }
-      }
-
-      if (extraCategories.length > 0) {
-        categoriesByGroup['Más Categorías'] = extraCategories;
-      }
-
-      return categoriesByGroup;
-    })();
-
-    const allActiveCategories = Object.values(activeCalendarCategories).flat();
-
     return (
       <motion.div key="calendario" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="calendario-view">
 
@@ -1256,7 +1242,7 @@ const App = () => {
                 style={{ overflow: 'hidden' }}
               >
                 <div className="master-filter-list" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '10px 0' }}>
-                  {Object.entries(activeCalendarCategories).map(([group, cats]) => {
+                  {Object.entries(MASTER_CALENDAR_CATEGORIES).map(([group, cats]) => {
                     const isAllHidden = cats.every(c => tempHiddenCalCategories.includes(c));
                     return (
                       <div key={group} className="filter-group">
@@ -1288,7 +1274,7 @@ const App = () => {
                   })}
                 </div>
                 <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px' }}>
-                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories(allActiveCategories)}>Ocultar Todas</button>
+                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories(ALL_MASTER_CATEGORIES)}>Ocultar Todas</button>
                   <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories([])}>Mostrar Todas</button>
                   <button 
                     onClick={() => {
