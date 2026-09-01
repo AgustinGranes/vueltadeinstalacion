@@ -8,11 +8,24 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import mediumLargeWidgetCode from './widgets/widget.js?raw';
 import lockscreenWidgetCode from './widgets/lockscreen_widget.js?raw';
 import { dataService, getCategoryColor } from './data/dataService';
+import { resolveCategoryLogo } from './data/categoryLogos';
 
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
 import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
 import './App.css';
 import { PLATFORMS as WTP_PLATFORMS, CATEGORIES as WTP_CATEGORIES, LOGO_MAP as WTP_LOGO_MAP, GROUP_ORDER as WTP_GROUP_ORDER, convertToARS, formatPrice, sortPlatforms } from './data/whereToWatch';
+
+export function cleanCircuitName(circuit?: string, event?: string): string {
+  let c = (circuit || '').trim();
+  if (!c) c = (event || '').trim();
+  c = c.replace(/[\u{1F1E6}-\u{1F1FF}]|[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{27BF}]/gu, '').trim();
+  if (c.includes(' - ')) {
+    const parts = c.split(' - ');
+    c = parts[parts.length - 1].trim();
+  }
+  c = c.replace(/^[\s–—:-]+|[\s–—:-]+$/g, '').trim();
+  return c || 'TBA';
+}
 
 type CategoryType = 'F1' | 'WRC' | 'WRC2' | 'NASCAR' | 'IndyCar' | 'TC' | 'TCP' | 'TCM' | 'TCPM' | 'TCPK' | 'TCPPK' | 'TC2000' | 'TNC3' | 'TNC2' | 'WEC' | 'IMSA' | 'NASCARO' | 'NASCART' | 'F2' | 'F3' | 'FE' | 'F1A' | 'MotoGP' | 'SUPERCARS' | 'GTWC' | 'BTCC' | 'DTM' | 'SF' | 'ELMS' | 'PROCAR4000' | 'WORLD SBK' | 'WTCR' | 'TCRSA';
 type MainTab = 'home' | 'calendario' | 'noticias' | 'configuracion' | 'dondeVer';
@@ -72,6 +85,7 @@ const App = () => {
   const [isCustomizationOpen, setIsCustomizationOpen] = useState(false);
   const [hideWeatherWeekly, setHideWeatherWeekly] = useState(() => localStorage.getItem('hideWeatherWeekly') === 'true');
   const [hideWeatherCategory, setHideWeatherCategory] = useState(() => localStorage.getItem('hideWeatherCategory') === 'true');
+  const [copiedFilterText, setCopiedFilterText] = useState(false);
 
   // Data
   const [weeklyRaces, setWeeklyRaces] = useState<Race[]>([]);
@@ -1076,6 +1090,8 @@ const App = () => {
 
   const getCategoryLogo = (category: string) => {
     if (!category) return null;
+    const resolved = resolveCategoryLogo(category);
+    if (resolved) return resolved;
     const c = category.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
     if (c === 'F1' || c === 'FORMULA 1' || c.includes('FORMULA 1')) return F1_LOGO;
     if (c === 'F2' || c === 'FORMULA 2' || c.includes('FORMULA 2')) return F2_LOGO;
@@ -1118,12 +1134,15 @@ const App = () => {
     // Apply category filter (check substrings in category and event name)
     const visibleRaces = weeklyRaces.filter(r => {
       if (hiddenCalCategories.length === 0) return true;
-      const raceCat = (r.category || '').toLowerCase();
-      const raceEvent = (r.event || '').toLowerCase();
+      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+      const raceCat = norm(r.category || '');
+      const raceCatShort = norm(r.categoryShort || '');
+      const raceEvent = norm(r.event || '');
       
       for (const hiddenCat of hiddenCalCategories) {
-        const lowerHidden = hiddenCat.toLowerCase();
-        if (raceCat.includes(lowerHidden) || raceEvent.includes(lowerHidden)) {
+        const lowerHidden = norm(hiddenCat);
+        if (!lowerHidden) continue;
+        if (raceCat === lowerHidden || raceCat.includes(lowerHidden) || lowerHidden.includes(raceCat) || raceEvent.includes(lowerHidden) || (raceCatShort && raceCatShort === lowerHidden)) {
           return false;
         }
       }
@@ -1134,13 +1153,7 @@ const App = () => {
       race.schedules.map(s => ({
         ...s,
         category: race.category,
-        categoryImage: (() => {
-          const c = (race.category || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-          if (c === 'INDYCAR' || c === 'INDYCAR SERIES' || c === 'NTT INDYCAR SERIES') {
-            return INDYCAR_LOGO;
-          }
-          return race.categoryImage;
-        })(),
+        categoryImage: getCategoryLogo(race.category) || race.categoryImage || '',
         categoryColor: getCategoryColor(race.category),
         event: race.event,
         circuit: race.circuit,
@@ -1322,7 +1335,7 @@ const App = () => {
                           {/* Middle Row: Circuit Name */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
-                              {item.event}{item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}
+                              {cleanCircuitName(item.circuit, item.event)}
                             </h3>
                             {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
                               <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
@@ -1398,7 +1411,7 @@ const App = () => {
                           
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '4px 0 8px 0' }}>
                             <h3 style={{ fontSize: '15px', fontWeight: 'normal', color: '#fff', margin: 0, opacity: 0.9 }}>
-                              {item.event}{item.circuit && item.circuit !== item.event ? ` - ${item.circuit}` : ''}
+                              {cleanCircuitName(item.circuit, item.event)}
                             </h3>
                             {(!hideWeatherWeekly && (item.lat || item.circuit || item.event)) && (
                               <WeatherWidget lat={item.lat} long={item.long} locationName={item.circuit || item.event} timestamp={item.startAt} />
@@ -1690,16 +1703,55 @@ const App = () => {
                   </div>
 
                   <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--accent-blue)' }}>Parámetro de Filtros (Cópialo):</h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--accent-blue)' }}>Categorías Silenciadas / Filtros:</h4>
+                      {hiddenCalCategories.length > 0 && (
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(hiddenCalCategories.join(','));
+                            setCopiedFilterText(true);
+                            setTimeout(() => setCopiedFilterText(false), 2000);
+                          }}
+                          style={{
+                            background: copiedFilterText ? '#30d158' : 'var(--accent-blue)',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 10px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {copiedFilterText ? '¡Copiado!' : 'Copiar Filtros'}
+                        </button>
+                      )}
+                    </div>
                     <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#999' }}>
-                      Este texto contiene las categorías que ocultaste. Pegalo en el campo "Parameter" del widget.
+                      Este texto contiene las categorías que ocultaste. Pegalo en el campo "Parameter" del widget para que no aparezcan en tu pantalla de inicio:
                     </p>
-                    <textarea 
-                      readOnly 
-                      value={hiddenCalCategories.length > 0 ? hiddenCalCategories.join(',') : 'Ningún filtro activo'}
-                      style={{ width: '100%', minHeight: '60px', background: '#111', color: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #333', fontSize: '13px', fontFamily: 'monospace', resize: 'none' }}
-                      onClick={(e) => (e.target as HTMLTextAreaElement).select()}
-                    />
+
+                    {hiddenCalCategories.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
+                          {hiddenCalCategories.map(cat => (
+                            <span key={cat} style={{ background: 'rgba(255, 59, 48, 0.2)', color: '#ff453a', border: '1px solid rgba(255, 59, 48, 0.4)', padding: '2px 8px', borderRadius: '6px', fontSize: '12px' }}>
+                              🚫 {cat}
+                            </span>
+                          ))}
+                        </div>
+                        <textarea 
+                          readOnly 
+                          value={hiddenCalCategories.join(',')}
+                          style={{ width: '100%', minHeight: '50px', background: '#111', color: '#fff', padding: '10px', borderRadius: '8px', border: '1px solid #333', fontSize: '13px', fontFamily: 'monospace', resize: 'none' }}
+                          onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ background: '#111', padding: '12px', borderRadius: '8px', border: '1px solid #333', color: '#888', fontSize: '13px', textAlign: 'center' }}>
+                        No hay ninguna categoría silenciada (el widget mostrará todas las carreras).
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>

@@ -152,9 +152,8 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
     const seriesName = s.series?.name || 'Motorsport';
     const seriesShort = s.series?.shortName || seriesName;
     const eventName = (s.eventName || seriesName).replace(/\s*[–—-]+\s*$/, '').trim();
-    const circuitName = s.circuit?.name || '';
-    const flag = s.circuit?.emoji ? `${s.circuit.emoji} ` : '';
-    const fullCircuit = (flag + circuitName).trim();
+    const circuitName = (s.circuit?.name || '').trim();
+    const cleanCircuit = circuitName || 'TBA';
 
     // Color conversion
     let color = '#ff3b30';
@@ -190,7 +189,7 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
         categoryShort: seriesShort,
         categoryColor: color,
         event: eventName,
-        circuit: fullCircuit,
+        circuit: cleanCircuit,
         circuitId: s.circuit?.name ? s.circuit.name.toLowerCase().replace(/\s+/g, '_') : '',
         earliestSession: startAt,
         schedules: [schedItem],
