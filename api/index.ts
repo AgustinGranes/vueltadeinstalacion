@@ -1,4 +1,19 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+interface VercelRequest {
+  url?: string;
+  method?: string;
+  query?: Record<string, string | string[]>;
+  body?: any;
+  headers: Record<string, string | string[] | undefined>;
+}
+
+interface VercelResponse {
+  status: (statusCode: number) => VercelResponse;
+  json: (jsonBody: any) => VercelResponse;
+  send: (body: any) => VercelResponse;
+  setHeader: (name: string, value: string) => VercelResponse;
+  end: (data?: any) => void;
+}
+
 import { parseHTML } from 'linkedom';
 import { getTheRacingLineCalendar, setDynamicCookie } from './theRacingLine.js';
 
