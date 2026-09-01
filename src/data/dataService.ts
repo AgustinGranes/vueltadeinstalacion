@@ -267,9 +267,47 @@ export interface NascarStandings {
 
 export const dataService = {
 
-  // === WEEKLY CALENDAR (VueltaRapida API) ===
+  // === WEEKLY CALENDAR (Unified API: The Racing Line + VueltaRapida) ===
   async getWeeklyCalendar(skipImages: boolean = false): Promise<Race[]> {
     try {
+      // 1. Primary source: Unified /api/weekly endpoint
+      try {
+        const weeklyRes = await fetch('/api/weekly', {
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(8000)
+        });
+        if (weeklyRes.ok) {
+          const weeklyJson = await weeklyRes.json();
+          const list = Array.isArray(weeklyJson) ? weeklyJson : (weeklyJson?.data || []);
+          if (Array.isArray(list) && list.length > 0) {
+            return list.map((r: any) => ({
+              id: r.id || '',
+              categoryId: r.categoryId || '',
+              categoryColor: r.categoryColor || '#ff3b30',
+              categoryImage: r.categoryImage || '',
+              category: r.category || '',
+              categoryShort: r.categoryShort || r.category || '',
+              event: r.event || '',
+              circuit: r.circuit || '',
+              circuitId: r.circuitId || '',
+              circuitImage: r.circuitImage || '',
+              platforms: r.platforms || [],
+              schedules: (r.schedules || []).map((s: any) => ({
+                id: s.id || Math.random().toString(),
+                name: s.name || '',
+                time: s.time || '',
+                startAt: s.startAt || 0
+              })),
+              time: (r.schedules && r.schedules.length > 0) ? r.schedules[0].time : '--:--',
+              ticketLink: r.ticketLink || '',
+              watchLinks: r.watchLinks || []
+            }));
+          }
+        }
+      } catch (e) {
+        console.warn('[DataService] /api/weekly fetch failed, falling back to direct VR API:', e);
+      }
+
       const now = new Date();
       const day = now.getDay();
       const monday = new Date(now);
