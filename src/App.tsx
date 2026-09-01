@@ -11,7 +11,7 @@ import { dataService, getCategoryColor } from './data/dataService';
 import { resolveCategoryLogo } from './data/categoryLogos';
 
 import type { Race, CalendarRace, NewsItem, F1StandingsRow, F1ConstructorRow, WRCStandings, WRCCalendarEvent, TCStandingRow, NascarStandings, MotoGPStandings, DTMStandings } from './data/dataService';
-import { MASTER_CALENDAR_CATEGORIES, ALL_MASTER_CATEGORIES } from './data/calendarCategories';
+import { MASTER_CALENDAR_CATEGORIES } from './data/calendarCategories';
 import './App.css';
 import { PLATFORMS as WTP_PLATFORMS, CATEGORIES as WTP_CATEGORIES, LOGO_MAP as WTP_LOGO_MAP, GROUP_ORDER as WTP_GROUP_ORDER, convertToARS, formatPrice, sortPlatforms } from './data/whereToWatch';
 
@@ -1202,6 +1202,31 @@ const App = () => {
       return `en ${diffDays} día${diffDays === 1 ? '' : 's'}`;
     };
 
+    // Merge MASTER_CALENDAR_CATEGORIES with any loaded weekly races categories
+    const activeCalendarCategories: Record<string, string[]> = (() => {
+      const categoriesByGroup: Record<string, string[]> = JSON.parse(JSON.stringify(MASTER_CALENDAR_CATEGORIES));
+      const allKnown = new Set(Object.values(categoriesByGroup).flat().map(c => c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
+
+      const extraCategories: string[] = [];
+      for (const r of weeklyRaces) {
+        const cat = (r.category || '').trim();
+        if (!cat) continue;
+        const normalized = cat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (!allKnown.has(normalized)) {
+          allKnown.add(normalized);
+          extraCategories.push(cat);
+        }
+      }
+
+      if (extraCategories.length > 0) {
+        categoriesByGroup['Más Categorías'] = extraCategories;
+      }
+
+      return categoriesByGroup;
+    })();
+
+    const allActiveCategories = Object.values(activeCalendarCategories).flat();
+
     return (
       <motion.div key="calendario" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="calendario-view">
 
@@ -1228,7 +1253,7 @@ const App = () => {
                 style={{ overflow: 'hidden' }}
               >
                 <div className="master-filter-list" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '10px 0' }}>
-                  {Object.entries(MASTER_CALENDAR_CATEGORIES).map(([group, cats]) => {
+                  {Object.entries(activeCalendarCategories).map(([group, cats]) => {
                     const isAllHidden = cats.every(c => tempHiddenCalCategories.includes(c));
                     return (
                       <div key={group} className="filter-group">
@@ -1259,18 +1284,19 @@ const App = () => {
                     );
                   })}
                 </div>
-                <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px', borderBottom: '1px solid var(--separator)' }}>
-                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories(ALL_MASTER_CATEGORIES)}>Ocultar Todas</button>
+                <div className="filter-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', padding: '16px' }}>
+                  <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories(allActiveCategories)}>Ocultar Todas</button>
                   <button className="filter-btn filter-reset-btn" onClick={() => setTempHiddenCalCategories([])}>Mostrar Todas</button>
-                </div>
-                <div className="filter-actions" style={{ padding: '16px', paddingTop: '0' }}>
                   <button 
                     onClick={() => {
                       updateSettings({ hiddenCalCategories: tempHiddenCalCategories });
                       setIsCalFilterOpen(false);
                     }}
-                    className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium py-3 px-4 rounded-xl transition-all shadow-md active:scale-95"
-                  >Aplicar Filtros</button>
+                    className="filter-btn filter-apply-btn"
+                    style={{ gridColumn: 'span 2', width: '100%', padding: '12px' }}
+                  >
+                    Aplicar Filtros
+                  </button>
                 </div>
               </motion.div>
             )}
