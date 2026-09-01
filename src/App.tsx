@@ -252,6 +252,10 @@ const App = () => {
   });
   const [tempHiddenCalCategories, setTempHiddenCalCategories] = useState<string[]>([]);
   const [isCalFilterOpen, setIsCalFilterOpen] = useState(false);
+  const [isTrlSyncOpen, setIsTrlSyncOpen] = useState(false);
+  const [trlCookieInput, setTrlCookieInput] = useState('');
+  const [trlSyncing, setTrlSyncing] = useState(false);
+  const [trlSyncSuccess, setTrlSyncSuccess] = useState(false);
 
   const updateSettings = async (updates: Partial<{ hiddenCalCategories: string[], hideWeatherWeekly: boolean, hideWeatherCategory: boolean }>) => {
     // Optimistic UI updates
@@ -1799,6 +1803,84 @@ const App = () => {
         </div>
 
 
+
+        <div className="news-filter-container">
+          <button className="news-filter-toggle" onClick={() => setIsTrlSyncOpen(!isTrlSyncOpen)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🔄</span>
+              <span>Conexión The Racing Line</span>
+            </div>
+            <ChevronRight size={18} className={`filter-chevron ${isTrlSyncOpen ? 'open' : ''}`} />
+          </button>
+          <AnimatePresence>
+            {isTrlSyncOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="news-filter-dropdown"
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#aaa', lineHeight: '1.5' }}>
+                    Si necesitás renovar la conexión desde tu celular sin tocar la PC, pegá el cURL o la cookie aquí:
+                  </p>
+                  <textarea
+                    rows={3}
+                    placeholder="Pegar curl o cookie aquí..."
+                    value={trlCookieInput}
+                    onChange={(e) => setTrlCookieInput(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--separator, rgba(255,255,255,0.1))',
+                      background: 'var(--bg-card, #282828)',
+                      color: '#fff',
+                      fontSize: '12px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    onClick={async () => {
+                      if (!trlCookieInput.trim()) return;
+                      setTrlSyncing(true);
+                      try {
+                        let c = trlCookieInput.trim();
+                        if (c.includes("-b '")) {
+                          const m = c.match(/-b '([^']+)'/);
+                          if (m) c = m[1];
+                        }
+                        const res = await fetch('/api/sync-trl', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ cookie: c })
+                        });
+                        if (res.ok) {
+                          setTrlSyncSuccess(true);
+                          setTrlCookieInput('');
+                          setTimeout(() => setTrlSyncSuccess(false), 3000);
+                          fetchHomeData();
+                        } else {
+                          alert('Error al sincronizar el token');
+                        }
+                      } catch {
+                        alert('Error de conexión');
+                      } finally {
+                        setTrlSyncing(false);
+                      }
+                    }}
+                    className="filter-btn filter-apply-btn"
+                    style={{ padding: '10px', width: '100%' }}
+                    disabled={trlSyncing}
+                  >
+                    {trlSyncing ? 'Sincronizando...' : trlSyncSuccess ? '¡Sincronizado con Éxito! ✓' : 'Guardar y Sincronizar'}
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div className="news-filter-container">
           <button className="news-filter-toggle" onClick={() => setIsCustomizationOpen(!isCustomizationOpen)}>

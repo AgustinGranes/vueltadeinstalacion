@@ -49,6 +49,15 @@ const DEFAULT_COOKIE = 'trl_consent=all; trl_regime=UNKNOWN; trl_gpc=1; sb-auth-
 
 let trlCache: { data: TRLSession[]; timestamp: number } | null = null;
 const TRL_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
+let lastKnownGoodSessions: TRLSession[] = [];
+let runtimeDynamicCookie: string = '';
+
+export function setDynamicCookie(cookie: string) {
+  if (cookie && cookie.trim()) {
+    runtimeDynamicCookie = cookie.trim();
+    trlCache = null;
+  }
+}
 
 export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
   const now = Date.now();
@@ -56,86 +65,96 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
     return trlCache.data;
   }
 
-  const cookie = process.env.TRL_COOKIE || DEFAULT_COOKIE;
+  try {
+    const cookie = runtimeDynamicCookie || process.env.TRL_COOKIE || DEFAULT_COOKIE;
 
-  const res = await fetch('https://theracingline.app/home', {
-    headers: {
-      'cookie': cookie,
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    },
-    signal: AbortSignal.timeout(12000),
-  });
+    const res = await fetch('https://theracingline.app/home', {
+      headers: {
+        'cookie': cookie,
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(12000),
+    });
 
-  if (!res.ok) {
-    throw new Error(`TheRacingLine fetch failed with status ${res.status}`);
-  }
-
-  const html = await res.text();
-
-  // Extract all RSC payload chunks from self.__next_f.push
-  const rscLines: string[] = [];
-  const pushRegex = /self\.__next_f\.push\(\[1,"([\s\S]*?)"\]\)/g;
-  let m: RegExpExecArray | null;
-  while ((m = pushRegex.exec(html)) !== null) {
-    try {
-      rscLines.push(JSON.parse('"' + m[1] + '"'));
-    } catch {
-      rscLines.push(m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
+    if (!res.ok) {
+      throw new Error(`TheRacingLine fetch failed with status ${res.status}`);
     }
-  }
 
-  const fullPayload = rscLines.join('\n');
-  const sessionBlocks: TRLSession[] = [];
-  let cursor = 0;
+    const html = await res.text();
 
-  while (true) {
-    const startIdx = fullPayload.indexOf('{"id":', cursor);
-    if (startIdx === -1) break;
-
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-    let endIdx = -1;
-
-    for (let i = startIdx; i < fullPayload.length && i < startIdx + 4000; i++) {
-      const ch = fullPayload[i];
-      if (inString) {
-        if (escape) escape = false;
-        else if (ch === '\\') escape = true;
-        else if (ch === '"') inString = false;
-      } else {
-        if (ch === '"') inString = true;
-        else if (ch === '{') depth++;
-        else if (ch === '}') {
-          depth--;
-          if (depth === 0) {
-            endIdx = i + 1;
-            break;
-          }
-        }
+    // Extract all RSC payload chunks from self.__next_f.push
+    const rscLines: string[] = [];
+    const pushRegex = /self\.__next_f\.push\(\[1,"([\s\S]*?)"\]\)/g;
+    let m: RegExpExecArray | null;
+    while ((m = pushRegex.exec(html)) !== null) {
+      try {
+        rscLines.push(JSON.parse('"' + m[1] + '"'));
+      } catch {
+        rscLines.push(m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\'));
       }
     }
 
-    if (endIdx !== -1) {
-      const rawChunk = fullPayload.slice(startIdx, endIdx);
-      try {
-        const obj = JSON.parse(rawChunk);
-        if (obj && obj.id && obj.eventName && obj.sessionName && obj.series && obj.series.name) {
-          sessionBlocks.push(obj);
+    const fullPayload = rscLines.join('\n');
+    const sessionBlocks: TRLSession[] = [];
+    let cursor = 0;
+
+    while (true) {
+      const startIdx = fullPayload.indexOf('{"id":', cursor);
+      if (startIdx === -1) break;
+
+      let depth = 0;
+      let inString = false;
+      let escape = false;
+      let endIdx = -1;
+
+      for (let i = startIdx; i < fullPayload.length && i < startIdx + 4000; i++) {
+        const ch = fullPayload[i];
+        if (inString) {
+          if (escape) escape = false;
+          else if (ch === '\\') escape = true;
+          else if (ch === '"') inString = false;
+        } else {
+          if (ch === '"') inString = true;
+          else if (ch === '{') depth++;
+          else if (ch === '}') {
+            depth--;
+            if (depth === 0) {
+              endIdx = i + 1;
+              break;
+            }
+          }
         }
-      } catch {}
-      cursor = endIdx;
-    } else {
-      cursor = startIdx + 6;
+      }
+
+      if (endIdx !== -1) {
+        const rawChunk = fullPayload.slice(startIdx, endIdx);
+        try {
+          const obj = JSON.parse(rawChunk);
+          if (obj && obj.id && obj.eventName && obj.sessionName && obj.series && obj.series.name) {
+            sessionBlocks.push(obj);
+          }
+        } catch {}
+        cursor = endIdx;
+      } else {
+        cursor = startIdx + 6;
+      }
     }
+
+    if (sessionBlocks.length > 0) {
+      lastKnownGoodSessions = sessionBlocks;
+      trlCache = { data: sessionBlocks, timestamp: now };
+      return sessionBlocks;
+    }
+  } catch (err) {
+    console.warn('[TheRacingLine] fetch error, using lastKnownGoodSessions fallback:', err);
   }
 
-  if (sessionBlocks.length > 0) {
-    trlCache = { data: sessionBlocks, timestamp: now };
+  if (lastKnownGoodSessions.length > 0) {
+    return lastKnownGoodSessions;
   }
 
-  return sessionBlocks;
+  return [];
 }
 
 /**

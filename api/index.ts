@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { parseHTML } from 'linkedom';
-import { getTheRacingLineCalendar } from './theRacingLine.js';
+import { getTheRacingLineCalendar, setDynamicCookie } from './theRacingLine.js';
 
 // ─── Static Data Maps ────────────────────────────────────────────────────────
 
@@ -867,6 +867,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (category === 'weekly') {
       const weeklyData = await getWeeklyCalendar();
       return sendJson(200, weeklyData);
+    }
+
+    // ── /api/sync-trl ──────────────────────────────────────────────────────────
+    if (category === 'sync-trl' || category === 'sync-token') {
+      const newCookie = (req.body?.cookie || (req.query?.cookie as string) || '').trim();
+      if (newCookie) {
+        setDynamicCookie(newCookie);
+        setCached('weekly', null as any);
+        return sendJson(200, { status: 'success', message: 'The Racing Line token updated successfully' });
+      }
+      return sendJson(400, { status: 'error', message: 'No cookie provided' });
     }
 
     // ── /api/racingline ────────────────────────────────────────────────────────
