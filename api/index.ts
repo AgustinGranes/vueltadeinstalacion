@@ -618,8 +618,67 @@ async function getWeeklyCalendar() {
     const rawRaces = Array.isArray(vrData) ? vrData : (vrData?.races || vrData?.data || []);
     const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
+    const ALLOWED_VR_CATEGORIES = [
+      'formula nacional argentina',
+      'formula nacional',
+      'formula 2 argentina',
+      'formula 2 arg',
+      'formula 3 metropolitana',
+      'formula 3 arg',
+      'tc2000',
+      'turismo carretera',
+      'tc',
+      'tc pista',
+      'tcp',
+      'tc mouras',
+      'tcm',
+      'tc pista mouras',
+      'tcpm',
+      'tc pick up',
+      'tcpk',
+      'tc pista pick up',
+      'tcppk',
+      'turismo nacional c3',
+      'turismo nacional clase 3',
+      'tn c3',
+      'turismo nacional c2',
+      'turismo nacional clase 2',
+      'tn c2',
+      'turismo nacional brasil',
+      'copa abarth argentina',
+      'copa abarth',
+      'turismo pista c3',
+      'turismo pista clase 3',
+      'tp c3',
+      'turismo pista c2',
+      'turismo pista clase 2',
+      'tp c2',
+      'turismo pista c1',
+      'turismo pista clase 1',
+      'tp c1',
+      'turismo carretera 2000',
+      'top race',
+      'top race v6',
+      'procar 4000',
+      'procar',
+      'fiat competizione'
+    ];
+
+    const isAllowedVR = (cat: string, catShort?: string) => {
+      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+      const c = norm(cat || '');
+      const cs = norm(catShort || '');
+      return ALLOWED_VR_CATEGORIES.some(allowed => {
+        const a = norm(allowed);
+        return c === a || cs === a || c.includes(a) || a.includes(c);
+      });
+    };
+
     const processedRaces: any[] = [];
     for (const race of rawRaces) {
+      if (!isAllowedVR(race.category, race.categoryShort)) {
+        continue;
+      }
       const catInfo = categoriesMap[race.categoryId] || {};
       const validSchedules = (race.schedules || []).filter((s: any) => {
         if (s.confirmed === false) return false;

@@ -1483,16 +1483,19 @@ const App = () => {
             ).map(([category, races]) => (
               <div key={category} className="cat-event-card">
                 <div className="cat-event-header" style={{ borderColor: getCategoryColor(category) }}>
-                  {races[0]?.categoryImage && (
-                    <img 
-                      src={races[0].categoryImage} 
-                      alt="" 
-                      className="cat-event-logo" 
-                      style={{ filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))' }}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => (e.currentTarget.style.display = 'none')}
-                    />
-                  )}
+                  {(() => {
+                    const logo = getCategoryLogo(category) || races[0]?.categoryImage;
+                    return logo ? (
+                      <img 
+                        src={logo} 
+                        alt="" 
+                        className="cat-event-logo" 
+                        style={{ filter: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8))' }}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
+                      />
+                    ) : null;
+                  })()}
                   <div className="cat-event-title-block" onClick={() => {
                     const hasDetails = races[0]?.circuitImage || (races[0]?.watchLinks ?? []).length > 0 || races[0]?.ticketLink;
                     if (hasDetails) {
@@ -1505,7 +1508,7 @@ const App = () => {
                         <ChevronRight size={16} className={`expand-chevron ${expandedEvent === category ? 'open' : ''}`} />
                       )}
                     </div>
-                    <p className="cat-event-circuit">{races[0]?.circuit}</p>
+                    <p className="cat-event-circuit">{cleanCircuitName(races[0]?.circuit, races[0]?.event)}</p>
                   </div>
                 </div>
                 {expandedEvent === category && (
