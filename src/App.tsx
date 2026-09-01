@@ -257,6 +257,28 @@ const App = () => {
   const [trlSyncing, setTrlSyncing] = useState(false);
   const [trlSyncSuccess, setTrlSyncSuccess] = useState(false);
   const [copiedBookmarklet, setCopiedBookmarklet] = useState(false);
+  const [trlStatusData, setTrlStatusData] = useState<{
+    isLive: boolean;
+    syncSource: 'live' | 'cache' | 'snapshot';
+    lastSyncTimestamp: number;
+    totalSessions: number;
+  } | null>(null);
+  const [trlStatusLoading, setTrlStatusLoading] = useState(false);
+
+  const checkTrlStatus = useCallback(async () => {
+    setTrlStatusLoading(true);
+    try {
+      const res = await fetch('/api/sync-status');
+      if (res.ok) {
+        const data = await res.json();
+        setTrlStatusData(data);
+      }
+    } catch (e) {
+      console.error('Failed to check sync status:', e);
+    } finally {
+      setTrlStatusLoading(false);
+    }
+  }, []);
 
   const updateSettings = async (updates: Partial<{ hiddenCalCategories: string[], hideWeatherWeekly: boolean, hideWeatherCategory: boolean }>) => {
     // Optimistic UI updates
@@ -1806,10 +1828,27 @@ const App = () => {
 
 
         <div className="news-filter-container">
-          <button className="news-filter-toggle" onClick={() => setIsTrlSyncOpen(!isTrlSyncOpen)}>
+          <button className="news-filter-toggle" onClick={() => {
+            const next = !isTrlSyncOpen;
+            setIsTrlSyncOpen(next);
+            if (next) checkTrlStatus();
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '18px' }}>🔄</span>
               <span>Conexión The Racing Line</span>
+              {trlStatusData && (
+                <span style={{
+                  fontSize: '11px',
+                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  fontWeight: 600,
+                  background: trlStatusData.syncSource === 'live' || trlStatusData.syncSource === 'cache' ? 'rgba(48, 209, 88, 0.15)' : 'rgba(255, 159, 10, 0.15)',
+                  color: trlStatusData.syncSource === 'live' || trlStatusData.syncSource === 'cache' ? '#30d158' : '#ff9f0a',
+                  marginLeft: '4px'
+                }}>
+                  {trlStatusData.syncSource === 'live' || trlStatusData.syncSource === 'cache' ? 'En Vivo' : 'Caché'}
+                </span>
+              )}
             </div>
             <ChevronRight size={18} className={`filter-chevron ${isTrlSyncOpen ? 'open' : ''}`} />
           </button>
@@ -1822,7 +1861,94 @@ const App = () => {
                 className="news-filter-dropdown"
                 style={{ overflow: 'hidden' }}
               >
-                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+                  {/* Panel de Estado */}
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid var(--separator, rgba(255, 255, 255, 0.1))',
+                    borderRadius: '12px',
+                    padding: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#888', fontWeight: 700 }}>
+                        Estado de la Conexión
+                      </span>
+                      <button
+                        onClick={checkTrlStatus}
+                        disabled={trlStatusLoading}
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          color: 'var(--accent-blue)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        {trlStatusLoading ? 'Comprobando...' : '🔄 Comprobar'}
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        backgroundColor: (trlStatusData?.syncSource === 'live' || trlStatusData?.syncSource === 'cache') ? '#30d158' : '#ff9f0a',
+                        boxShadow: `0 0 10px ${(trlStatusData?.syncSource === 'live' || trlStatusData?.syncSource === 'cache') ? '#30d158' : '#ff9f0a'}`
+                      }} />
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+                          {trlStatusData
+                            ? (trlStatusData.syncSource === 'live'
+                                ? '🟢 Sincronizado en Vivo'
+                                : trlStatusData.syncSource === 'cache'
+                                ? '🟢 Activo en Memoria (En Vivo)'
+                                : '🟡 Mostrando desde Caché Persistente (2 Semanas)')
+                            : 'Comprobando conexión...'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
+                          {trlStatusData?.syncSource === 'snapshot'
+                            ? 'Usando respaldo estático de 976 sesiones'
+                            : 'Conexión directa activa con The Racing Line'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '8px',
+                      paddingTop: '10px',
+                      borderTop: '1px solid rgba(255,255,255,0.06)',
+                      fontSize: '12px'
+                    }}>
+                      <div>
+                        <span style={{ color: '#777', display: 'block', fontSize: '11px', marginBottom: '2px' }}>Última Sincronización</span>
+                        <strong style={{ color: '#eee' }}>
+                          {trlStatusData?.lastSyncTimestamp
+                            ? new Date(trlStatusData.lastSyncTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' hs'
+                            : 'Reciente'}
+                        </strong>
+                      </div>
+                      <div>
+                        <span style={{ color: '#777', display: 'block', fontSize: '11px', marginBottom: '2px' }}>Sesiones Disponibles</span>
+                        <strong style={{ color: '#eee' }}>
+                          {trlStatusData?.totalSessions || 976} sesiones (127 cats)
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
                   <p style={{ margin: 0, fontSize: '13px', color: '#aaa', lineHeight: '1.5' }}>
                     Si necesitás renovar la conexión desde tu celular sin tocar la PC, pegá el cURL o la cookie aquí:
                   </p>

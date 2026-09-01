@@ -64,17 +64,32 @@ try {
 }
 
 let runtimeDynamicCookie: string = '';
+let lastSyncTimestamp: number = Date.now();
+let lastSyncSource: 'live' | 'cache' | 'snapshot' = 'snapshot';
+
+export function getSyncStatus() {
+  return {
+    lastSyncTimestamp,
+    syncSource: lastSyncSource,
+    isLive: lastSyncSource === 'live' || (trlCache !== null && (Date.now() - trlCache.timestamp < 3600 * 1000)),
+    totalSessions: (trlCache?.data || lastKnownGoodSessions).length,
+    cachedAt: trlCache?.timestamp || lastSyncTimestamp,
+  };
+}
 
 export function setDynamicCookie(cookie: string) {
   if (cookie && cookie.trim()) {
     runtimeDynamicCookie = cookie.trim();
     trlCache = null;
+    lastSyncTimestamp = Date.now();
+    lastSyncSource = 'live';
   }
 }
 
 export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
   const now = Date.now();
   if (trlCache && (now - trlCache.timestamp < TRL_CACHE_TTL) && trlCache.data.length > 0) {
+    lastSyncSource = 'cache';
     return trlCache.data;
   }
 
@@ -156,11 +171,14 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
 
     if (sessionBlocks.length > 0) {
       lastKnownGoodSessions = sessionBlocks;
+      lastSyncTimestamp = now;
+      lastSyncSource = 'live';
       trlCache = { data: sessionBlocks, timestamp: now };
       return sessionBlocks;
     }
   } catch (err) {
     console.warn('[TheRacingLine] fetch error, using lastKnownGoodSessions fallback:', err);
+    lastSyncSource = 'snapshot';
   }
 
   if (lastKnownGoodSessions.length > 0) {

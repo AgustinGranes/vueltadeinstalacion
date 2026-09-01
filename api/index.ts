@@ -15,7 +15,7 @@ interface VercelResponse {
 }
 
 import { parseHTML } from 'linkedom';
-import { getTheRacingLineCalendar, setDynamicCookie } from './theRacingLine.js';
+import { getTheRacingLineCalendar, setDynamicCookie, getSyncStatus } from './theRacingLine.js';
 
 // ─── Static Data Maps ────────────────────────────────────────────────────────
 
@@ -882,6 +882,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (category === 'weekly') {
       const weeklyData = await getWeeklyCalendar();
       return sendJson(200, weeklyData);
+    }
+
+    // ── /api/sync-status ───────────────────────────────────────────────────────
+    if (category === 'sync-status' || (category === 'sync-trl' && req.method === 'GET')) {
+      const syncInfo = getSyncStatus();
+      return sendJson(200, {
+        status: 'success',
+        ...syncInfo
+      });
     }
 
     // ── /api/sync-trl ──────────────────────────────────────────────────────────
