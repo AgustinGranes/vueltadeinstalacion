@@ -1,5 +1,8 @@
 // Service to fetch and parse sessions from The Racing Line (theracingline.app)
 
+import fs from 'fs';
+import path from 'path';
+
 export interface TRLSession {
   id: number | string;
   eventId: number | string;
@@ -22,6 +25,7 @@ export interface TRLSession {
     color?: number[];
   };
   localDate?: string;
+  circuitOffsetMin?: number;
 }
 
 export interface StandardRaceEvent {
@@ -45,10 +49,7 @@ export interface StandardRaceEvent {
   watchLinks: { platform: string; url: string }[];
 }
 
-const DEFAULT_COOKIE = 'trl_consent=all; trl_regime=UNKNOWN; trl_gpc=1; sb-auth-auth-token.0=base64-eyJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSkZVekkxTmlJc0ltdHBaQ0k2SWpZeU5qWXhNakU0TFdKaVpXUXRORFJqT1MxaU1UZ3lMVEZtTmpOaFlUUXlNalEyTWlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaFlXd2lPaUpoWVd3eElpd2lZVzF5SWpwYmV5SnRaWFJvYjJRaU9pSnZZWFYwYUNJc0luUnBiV1Z6ZEdGdGNDSTZNVGM0T0RFME5qQXdNbjFkTENKaGNIQmZiV1YwWVdSaGRHRWlPbnNpY0hKdmRtbGtaWElpT2lKbmIyOW5iR1VpTENKd2NtOTJhV1JsY25NaU9sc2laMjl2WjJ4bElsMTlMQ0poZFdRaU9pSmhkWFJvWlc1MGFXTmhkR1ZrSWl3aVpXMWhhV3dpT2lKaFozVnpkR2x1WjNKaGJtVnpRR2R0WVdsc0xtTnZiU0lzSW1WNGNDSTZNVGM0T0RJNU5EUTFNaXdpYVdGMElqb3hOemc0TWprd09EVXlMQ0pwYzE5aGJtOXVlVzF2ZFhNaU9tWmhiSE5sTENKcGMzTWlPaUpvZEhSd2N6b3ZMMkprZVc5bGRHRm1aRzl2YVdwM2NHOXFaR3AxTG5OMWNHRmlZWE5sTG1OdkwyRjFkR2d2ZGpFaUxDSndhRzl1WlNJNklpSXNJbkp2YkdVaU9pSmhkWFJvWlc1MGFXTmhkR1ZrSWl3aWMyVnpjMmx2Ymw5cFpDSTZJamxrTm1Jd1lUZ3hMVGMwTkRjdE5HUTNPUzA0WlRGaUxUYzRNRE0wTnpkbE9UZ3pPU0lzSW5OMVlpSTZJbUZqWWpVeVlqUTJMVFEwTVdZdE5EbGpOQzA1WlRNd0xUTXhOekpqTWpVM056azROaUlzSW5WelpYSmZiV1YwWVdSaGRHRWlPbnNpWVhaaGRHRnlYM1Z5YkNJNkltaDBkSEJ6T2k4dmJHZ3pMbWR2YjJkc1pYVnpaWEpqYjI1MFpXNTBMbU52YlM5aEwwRkRaemh2WTBsNFFWTmlTVWhDZEVwSmJIbHBRVjkyTm5CMmVWQkpNbEp2UlZSTFYzSk5Vek5LUzBNM1ZFNHdTMDFNY0RKQ2MzTkhQWE01Tmkxaklpd2laVzFoYVd3aU9pSmhaM1Z6ZEdsdVozSmhibVZ6UUdkdFlXbHNMbU52YlNJc0ltVnRZV2xzWDNabGNtbG1hV1ZrSWpwMGNuVmxMQ0psZG1WdWRITmZiM0IwWDJsdUlqcDBjblZsTENKbWRXeHNYMjVoYldVaU9pSkJaM1Z6ZEdsdUlFZHlZVzVsY3lJc0ltbHpjeUk2SW1oMGRIQnpPaTh2WVdOamIzVnVkSE11WjI5dloyeGxMbU52YlNJc0ltMWhjbXRsZEdsdVoxOXZjSFJmYVc0aU9uUnlkV1VzSW01aGJXVWlPaUpCWjNWemRHbHVJRWR5WVc1bGN5SXNJbkJvYjI1bFgzWmxjbWxtYVdWa0lqcG1ZV3h6WlN3aWNHbGpkSFZ5WlNJNkltaDBkSEJ6T2k4dmJHZ3pMbWR2YjJkc1pYVnpaWEpqYjI1MFpXNTBMbU52YlM5aEwwRkRaemh2WTBsNFFWTmlTVWhDZEVwSmJIbHBRVjkyTm5CMmVWQkpNbEp2UlZSTFYzSk5Vek5LUzBNM1ZFNHdTMDFNY0RKQ2MzTkhQWE01Tmkxaklpd2ljSEp2ZG1sa1pYSmZhV1FpT2lJeE1UWTFPRFV3TWpBeU5qWXpORFk0TkRZd09ERWlMQ0p6YVdkdWRYQmZjR3hoZEdadmNtMGlPaUpwYjNNaUxDSnpkV0lpT2lJeE1UWTFPRFV3TWpBeU5qWXpORFk0TkRZd09ERWlMQ0owWlhKdGMxOWhZMk5sY0hSbFpDSTZkSEoxWlgwc0luVnpaWEpmY205c1pTSTZJbUZtWm1sc2FXRjBaU0o5LjIyUDJYRmlZdnVRbG5NcDNEOWplaGVRRzBOWmQ3am5tVkluU1pDeGhoYnEtd3o0ZU1VOENZTU5XbXJpcHFGR1F6aHpSN1FqdjBoaHEwSThjbXRJWmNnIiwidG9rZW5fdHlwZSI6ImJlYXJlciIsImV4cGlyZXNfaW4iOjM2MDAsImV4cGlyZXNfYXQiOjE3ODgyOTQ0NTIsInJlZnJlc2hfdG9rZW4iOiJraG1hN3FkaHRhZWQiLCJ1c2VyIjp7ImlkIjoiYWNiNTJiNDYtNDQxZi00OWM0LTllMzAtMzE3MmMyNTc3OTg2IiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiZW1haWwiOiJhZ3VzdGluZ3JhbmVzQGdtYWlsLmNvbSIsImVtYWlsX2NvbmZpcm1lZF9hdCI6IjIwMjYtMDctMTlUMTg6NDM6NTguMTg3NjgxWiIsInBob25lIjoiIiwiY29uZmlybWVkX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4xODc2ODFaIiwibGFzdF9zaWduX2luX2F0IjoiMjAyNi0wOC0zMVQwMzoxMzoyMi4wMDE4MDFaIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZ29vZ2xlIiwicHJvdmlkZXJzIjpbImdvb2dsZSJdfSwidXNlcl9tZXRhZGF0YSI6eyJhdmF0YXJfdXJsIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSXhBU2JJSEJ0SklseWlBX3Y2cHZ5UEkyUm9FVEtXck1TM0pLQzdUTjBLTUxwMkJzc0c9czk2LWMiLCJlbWFpbCI6ImFndXN0aW5ncmFuZXNAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV2ZW50c19vcHRfaW4iOnRydWUsImZ1bGxfbmFtZSI6IkFndXN0aW4gR3JhbmVzIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwibWFya2V0aW5nX29wdF9pbiI6dHJ1ZSwibmFtZSI6IkFndXN0aW4gR3JhbmVzIiwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvb; sb-auth-auth-token.1=nRlbnQuY29tL2EvQUNnOG9jSXhBU2JJSEJ0SklseWlBX3Y2cHZ5UEkyUm9FVEtXck1TM0pLQzdUTjBLTUxwMkJzc0c9czk2LWMiLCJwcm92aWRlcl9pZCI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInNpZ251cF9wbGF0Zm9ybSI6ImlvcyIsInN1YiI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInRlcm1zX2FjY2VwdGVkIjp0cnVlfSwiaWRlbnRpdGllcyI6W3siaWRlbnRpdHlfaWQiOiI0ODZhN2I0ZC1mZmQ5LTQ3YWItOThiZS1hYjE2ODQ1NjdhZjUiLCJpZCI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInVzZXJfaWQiOiJhY2I1MmI0Ni00NDFmLTQ5YzQtOWUzMC0zMTcyYzI1Nzc5ODYiLCJpZGVudGl0eV9kYXRhIjp7ImF2YXRhcl91cmwiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJeEFTYklIQnRKSWx5aUFfdjZwdnlQSTJSb0VUS1dyTVMzSktDN1ROMEtNTHAyQnNzRz1zOTYtYyIsImVtYWlsIjoiYWd1c3RpbmdyYW5lc0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZnVsbF9uYW1lIjoiQWd1c3RpbiBHcmFuZXMiLCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYW1lIjoiQWd1c3RpbiBHcmFuZXMiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJeEFTYklIQnRKSWx5aUFfdjZwdnlQSTJSb0VUS1dyTVMzSktDN1ROMEtNTHAyQnNzRz1zOTYtYyIsInByb3ZpZGVyX2lkIjoiMTE2NTg1MDIwMjY2MzQ2ODQ2MDgxIiwic3ViIjoiMTE2NTg1MDIwMjY2MzQ2ODQ2MDgxIn0sInByb3ZpZGVyIjoiZ29vZ2xlIiwibGFzdF9zaWduX2luX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4xNjkyNTNaIiwiY3JlYXRlZF9hdCI6IjIwMjYtMDctMTlUMTg6NDM6NTguMTY5MzI4WiIsInVwZGF0ZWRfYXQiOiIyMDI2LTA4LTMxVDAzOjEzOjIxLjY2MTI0MloiLCJlbWFpbCI6ImFndXN0aW5ncmFuZXNAZ21haWwuY29tIn1dLCJjcmVhdGVkX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4wNDA0OTJaIiwidXBkYXRlZF9hdCI6IjIwMjYtMDktMDFUMTk6Mjc6MzIuMDg0NTc3WiIsImlzX2Fub255bW91cyI6ZmFsc2V9fQ';
-
-import fs from 'fs';
-import path from 'path';
+const DEFAULT_COOKIE = 'trl_regime=UNKNOWN; trl_consent=all; trl_aid=0e45db43-75f0-435d-a8e9-fa11fa040042; sb-auth-auth-token.0=base64-eyJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSkZVekkxTmlJc0ltdHBaQ0k2SWpZeU5qWXhNakU0TFdKaVpXUXRORFJqT1MxaU1UZ3lMVEZtTmpOaFlUUXlNalEyTWlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaFlXd2lPaUpoWVd3eElpd2lZVzF5SWpwYmV5SnRaWFJvYjJRaU9pSnZZWFYwYUNJc0luUnBiV1Z6ZEdGdGNDSTZNVGM0T0RNd05ESXpNWDFkTENKaGNIQmZiV1YwWVdSaGRHRWlPbnNpY0hKdmRtbGtaWElpT2lKbmIyOW5iR1VpTENKd2NtOTJhV1JsY25NaU9sc2laMjl2WjJ4bElsMTlMQ0poZFdRaU9pSmhkWFJvWlc1MGFXTmhkR1ZrSWl3aVpXMWhhV3dpT2lKaFozVnpkR2x1WjNKaGJtVnpRR2R0WVdsc0xtTnZiU0lzSW1WNGNDSTZNVGM0T0RNd056Z3pNU3dpYVdGMElqb3hOemc0TXpBME1qTXhMQ0pwYzE5aGJtOXVlVzF2ZFhNaU9tWmhiSE5sTENKcGMzTWlPaUpvZEhSd2N6b3ZMMkprZVc5bGRHRm1aRzl2YVdwM2NHOXFaR3AxTG5OMWNHRmlZWE5sTG1OdkwyRjFkR2d2ZGpFaUxDSndhRzl1WlNJNklpSXNJbkp2YkdVaU9pSmhkWFJvWlc1MGFXTmhkR1ZrSWl3aWMyVnpjMmx2Ymw5cFpDSTZJamN3TUdaa09HWTJMVFU1WmpVdE5HUmhPUzA1TnpReUxUTTROalZoTVRFME5EZ3hPQ0lzSW5OMVlpSTZJbUZqWWpVeVlqUTJMVFEwTVdZdE5EbGpOQzA1WlRNd0xUTXhOekpqTWpVM056azROaUlzSW5WelpYSmZiV1YwWVdSaGRHRWlPbnNpWVhaaGRHRnlYM1Z5YkNJNkltaDBkSEJ6T2k4dmJHZ3pMbWR2YjJkc1pYVnpaWEpqYjI1MFpXNTBMbU52YlM5aEwwRkRaemh2WTBsNFFWTmlTVWhDZEVwSmJIbHBRVjkyTm5CMmVWQkpNbEp2UlZSTFYzSk5Vek5LUzBNM1ZFNHdTMDFNY0RKQ2MzTkhQWE01Tmkxaklpd2laVzFoYVd3aU9pSmhaM1Z6ZEdsdVozSmhibVZ6UUdkdFlXbHNMbU52YlNJc0ltVnRZV2xzWDNabGNtbG1hV1ZrSWpwMGNuVmxMQ0psZG1WdWRITmZiM0IwWDJsdUlqcDBjblZsTENKbWRXeHNYMjVoYldVaU9pSkJaM1Z6ZEdsdUlFZHlZVzVsY3lJc0ltbHpjeUk2SW1oMGRIQnpPaTh2WVdOamIzVnVkSE11WjI5dloyeGxMbU52YlNJc0ltMWhjbXRsZEdsdVoxOXZjSFJmYVc0aU9uUnlkV1VzSW01aGJXVWlPaUpCWjNWemRHbHVJRWR5WVc1bGN5SXNJbkJvYjI1bFgzWmxjbWxtYVdWa0lqcG1ZV3h6WlN3aWNHbGpkSFZ5WlNJNkltaDBkSEJ6T2k4dmJHZ3pMbWR2YjJkc1pYVnpaWEpqYjI1MFpXNTBMbU52YlM5aEwwRkRaemh2WTBsNFFWTmlTVWhDZEVwSmJIbHBRVjkyTm5CMmVWQkpNbEp2UlZSTFYzSk5Vek5LUzBNM1ZFNHdTMDFNY0RKQ2MzTkhQWE01Tmkxaklpd2ljSEp2ZG1sa1pYSmZhV1FpT2lJeE1UWTFPRFV3TWpBeU5qWXpORFk0TkRZd09ERWlMQ0p6YVdkdWRYQmZjR3hoZEdadmNtMGlPaUpwYjNNaUxDSnpkV0lpT2lJeE1UWTFPRFV3TWpBeU5qWXpORFk0TkRZd09ERWlMQ0owWlhKdGMxOWhZMk5sY0hSbFpDSTZkSEoxWlgwc0luVnpaWEpmY205c1pTSTZJbUZtWm1sc2FXRjBaU0o5LlJMemZ4Tm04NzRNbDRmWVFsZDktSzNLUEd2YmtwUVItbUcxNE1FdmlFaTFGRDFtaC0ta3FrRllFbERaaVFaRDhBYVlrMjBpR0NOak5jM2tBQnppOE5RIiwidG9rZW5fdHlwZSI6ImJlYXJlciIsImV4cGlyZXNfaW4iOjM2MDAsImV4cGlyZXNfYXQiOjE3ODgzMDc4MzEsInJlZnJlc2hfdG9rZW4iOiJjYWRtb2Zmc202ZDYiLCJ1c2VyIjp7ImlkIjoiYWNiNTJiNDYtNDQxZi00OWM0LTllMzAtMzE3MmMyNTc3OTg2IiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiZW1haWwiOiJhZ3VzdGluZ3JhbmVzQGdtYWlsLmNvbSIsImVtYWlsX2NvbmZpcm1lZF9hdCI6IjIwMjYtMDctMTlUMTg6NDM6NTguMTg3NjgxWiIsInBob25lIjoiIiwiY29uZmlybWVkX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4xODc2ODFaIiwibGFzdF9zaWduX2luX2F0IjoiMjAyNi0wOS0wMVQyMzoxMDozMS41MTI0NjMwNjNaIiwiYXBwX21ldGFkYXRhIjp7InByb3ZpZGVyIjoiZ29vZ2xlIiwicHJvdmlkZXJzIjpbImdvb2dsZSJdfSwidXNlcl9tZXRhZGF0YSI6eyJhdmF0YXJfdXJsIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSXhBU2JJSEJ0SklseWlBX3Y2cHZ5UEkyUm9FVEtXck1TM0pLQzdUTjBLTUxwMkJzc0c9czk2LWMiLCJlbWFpbCI6ImFndXN0aW5ncmFuZXNAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImV2ZW50c19vcHRfaW4iOnRydWUsImZ1bGxfbmFtZSI6IkFndXN0aW4gR3JhbmVzIiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwibWFya2V0aW5nX29wdF9pbiI6dHJ1ZSwibmFtZSI6IkFndXN0aW4gR3JhbmVzIiwicGhvbmVfdmVyaWZpZWQiOmZhbHNlLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlYzt sb-auth-auth-token.1=mNvbnRlbnQuY29tL2EvQUNnOG9jSXhBU2JJSEJ0SklseWlBX3Y2cHZ5UEkyUm9FVEtXck1TM0pLQzdUTjBLTUxwMkJzc0c9czk2LWMiLCJwcm92aWRlcl9pZCI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInNpZ251cF9wbGF0Zm9ybSI6ImlvcyIsInN1YiI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInRlcm1zX2FjY2VwdGVkIjp0cnVlfSwiaWRlbnRpdGllcyI6W3siaWRlbnRpdHlfaWQiOiI0ODZhN2I0ZC1mZmQ5LTQ3YWItOThiZS1hYjE2ODQ1NjdhZjUiLCJpZCI6IjExNjU4NTAyMDI2NjM0Njg0NjA4MSIsInVzZXJfaWQiOiJhY2I1MmI0Ni00NDFmLTQ5YzQtOWUzMC0zMTcyYzI1Nzc5ODYiLCJpZGVudGl0eV9kYXRhIjp7ImF2YXRhcl91cmwiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJeEFTYklIQnRKSWx5aUFfdjZwdnlQSTJSb0VUS1dyTVMzSktDN1ROMEtNTHAyQnNzRz1zOTYtYyIsImVtYWlsIjoiYWd1c3RpbmdyYW5lc0BnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZnVsbF9uYW1lIjoiQWd1c3RpbiBHcmFuZXMiLCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJuYW1lIjoiQWd1c3RpbiBHcmFuZXMiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJeEFTYklIQnRKSWx5aUFfdjZwdnlQSTJSb0VUS1dyTVMzSktDN1ROMEtNTHAyQnNzRz1zOTYtYyIsInByb3ZpZGVyX2lkIjoiMTE2NTg1MDIwMjY2MzQ2ODQ2MDgxIiwic3ViIjoiMTE2NTg1MDIwMjY2MzQ2ODQ2MDgxIn0sInByb3ZpZGVyIjoiZ29vZ2xlIiwibGFzdF9zaWduX2luX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4xNjkyNTNaIiwiY3JlYXRlZF9hdCI6IjIwMjYtMDctMTlUMTg6NDM6NTguMTY5MzI4WiIsInVwZGF0ZWRfYXQiOiIyMDI2LTA5LTAxVDIzOjEwOjMxLjIxODg2M1oiLCJlbWFpbCI6ImFndXN0aW5ncmFuZXNAZ21haWwuY29tIn1dLCJjcmVhdGVkX2F0IjoiMjAyNi0wNy0xOVQxODo0Mzo1OC4wNDA0OTJaIiwidXBkYXRlZF9hdCI6IjIwMjYtMDktMDFUMjM6MTA6MzEuNTE1MjA3WiIsImlzX2Fub255bW91cyI6ZmFsc2V9LCJwcm92aWRlcl90b2tlbiI6InlhMjkuYTBBZE1ENkVqSDh1Q3V6NUhTQnJhaVBGNDk2LUZEekYxT2t0TVhKRkNPTHFfTmwxcVg2eEFHZnRGc00yQnVmTURkYUlnSVpUOXgyRERNcEtvZkM5b1VfWl9BRXFvbk9iczI4N0lvWWVnWTRIYmZwSENLSXBXbVBEczRjLVZlYWdqU2pmc3g1RWdYY3V5LUhmUkN2ODh4MlZqTGE3WEw4eXAzbFExTEpqRDB3WV9kNHhyRndweTZzX3J5SmlHQkVNWGpRLWQxQngyZ0ZOU1VSYVp0dE5MakRZb0RlOWNBX2N3T1lBbDRCV29xUEtLakpFeWJTVTBsZExnS3c1ejBmeGFpQnkyRXExRm1lWmg0NXpCZUp5aG5EUVNDZ3l2V0dBYUNnWUtBUTRTQVJVU0ZRSEdYMk1pTFd4Y0piV0hQdGRhMk9oaXV4ZFZuZzAyOTMifQ';
 
 let trlCache: { data: TRLSession[]; timestamp: number } | null = null;
 const TRL_CACHE_TTL = 3 * 60 * 1000; // 3 minutes
@@ -102,7 +103,7 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!res.ok) {
@@ -124,6 +125,37 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
     }
 
     const fullPayload = rscLines.join('\n');
+
+    // Build seriesMap from all definitions present in RSC payload
+    const seriesMap = new Map<string, { id: string; name: string; shortName: string; category?: string; color?: number[]; colorLight?: number[] }>();
+    const seriesRegex = /\{"id":"([^"]+)","name":"([^"]+)","shortName":"([^"]+)","category":"([^"]+)"(?:,"color":(\[[^\]]+\]))?(?:,"colorLight":(\[[^\]]+\]))?\}/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = seriesRegex.exec(fullPayload)) !== null) {
+      const [_, sId, sName, sShort, sCategory, sColor, sColorLight] = sm;
+      seriesMap.set(sId, {
+        id: sId,
+        name: sName,
+        shortName: sShort,
+        category: sCategory,
+        color: sColor ? JSON.parse(sColor) : undefined,
+        colorLight: sColorLight ? JSON.parse(sColorLight) : undefined,
+      });
+    }
+
+    // Build circuitMap from RSC definitions
+    const circuitMap = new Map<string, { name: string; layout?: string; country?: string; emoji?: string }>();
+    const circuitRegex = /\{"name":"([^"]+)","layout":"([^"]+)","country":"([^"]+)","emoji":"([^"]+)"\}/g;
+    let cm: RegExpExecArray | null;
+    while ((cm = circuitRegex.exec(fullPayload)) !== null) {
+      const [_, cName, cLayout, cCountry, cEmoji] = cm;
+      circuitMap.set(cName.toLowerCase(), {
+        name: cName,
+        layout: cLayout,
+        country: cCountry,
+        emoji: cEmoji,
+      });
+    }
+
     const sessionBlocks: TRLSession[] = [];
     let cursor = 0;
 
@@ -136,7 +168,7 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
       let escape = false;
       let endIdx = -1;
 
-      for (let i = startIdx; i < fullPayload.length && i < startIdx + 4000; i++) {
+      for (let i = startIdx; i < fullPayload.length; i++) {
         const ch = fullPayload[i];
         if (inString) {
           if (escape) escape = false;
@@ -159,8 +191,25 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
         const rawChunk = fullPayload.slice(startIdx, endIdx);
         try {
           const obj = JSON.parse(rawChunk);
-          if (obj && obj.id && obj.eventName && obj.sessionName && obj.series && obj.series.name) {
-            sessionBlocks.push(obj);
+          if (obj && obj.id && obj.date && (obj.eventName || obj.sessionName)) {
+            // Resolve series if missing or ref
+            if (!obj.series || !obj.series.name) {
+              if (obj.series?.id && seriesMap.has(obj.series.id)) {
+                obj.series = seriesMap.get(obj.series.id);
+              } else if (typeof obj.series === 'string' && seriesMap.has(obj.series)) {
+                obj.series = seriesMap.get(obj.series);
+              }
+            }
+            // Resolve circuit
+            if (typeof obj.circuit === 'string' && circuitMap.has(obj.circuit.toLowerCase())) {
+              obj.circuit = circuitMap.get(obj.circuit.toLowerCase());
+            }
+
+            // Exclude honeypots
+            const isHoneypot = (obj.series?.id || '').includes('fake') || (obj.series?.id || '') === 'zkf' || (obj.series?.id || '') === 'sfs';
+            if (!isHoneypot) {
+              sessionBlocks.push(obj);
+            }
           }
         } catch {}
         cursor = endIdx;
@@ -174,6 +223,14 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
       lastSyncTimestamp = now;
       lastSyncSource = 'live';
       trlCache = { data: sessionBlocks, timestamp: now };
+
+      try {
+        const snapshotPath = path.join(process.cwd(), 'api', 'trl_snapshot.json');
+        fs.writeFileSync(snapshotPath, JSON.stringify(sessionBlocks, null, 2));
+      } catch (e) {
+        // snapshot write non-critical
+      }
+
       return sessionBlocks;
     }
   } catch (err) {
@@ -193,7 +250,19 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
  */
 export async function getTheRacingLineCalendar(options?: { minDate?: number; maxDate?: number }): Promise<StandardRaceEvent[]> {
   const sessions = await fetchTheRacingLineSessions();
-  const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+  const dayFormatter = new Intl.DateTimeFormat('es-AR', {
+    weekday: 'short',
+    day: 'numeric',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  });
+
+  const timeFormatter = new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'America/Argentina/Buenos_Aires',
+  });
 
   const now = Date.now();
   const defaultMin = options?.minDate ?? (now - 24 * 60 * 60 * 1000); // from yesterday
@@ -211,7 +280,7 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
   const eventMap = new Map<string, StandardRaceEvent>();
 
   for (const s of filteredSessions) {
-    const seriesName = (s.series?.name || 'Motorsport').trim();
+    const seriesName = (s.series?.name || s.series?.shortName || s.series?.id || 'Motorsport').trim();
     const seriesShort = (s.series?.shortName || seriesName).trim();
     const eventName = (s.eventName || seriesName).replace(/\s*[–—-]+\s*$/, '').trim();
     const circuitName = (s.circuit?.name || '').trim();
@@ -227,13 +296,11 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
     const key = `${seriesName}::${eventName}`.toLowerCase();
     const d = new Date(s.date);
     const startAt = d.getTime();
-    const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
-    const rawTime = d.toLocaleTimeString('es-AR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'America/Argentina/Buenos_Aires',
-    });
+
+    // Format day and time in Argentina timezone
+    let dayParts = dayFormatter.format(d).replace('.', '').split(' ');
+    let dayStr = dayParts.length >= 2 ? `${dayParts[0]}. ${dayParts[1]}` : dayFormatter.format(d);
+    const rawTime = timeFormatter.format(d);
 
     const schedItem = {
       id: String(s.id),
@@ -260,7 +327,10 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
       });
     } else {
       const existing = eventMap.get(key)!;
-      existing.schedules.push(schedItem);
+      // Avoid duplicate session ID
+      if (!existing.schedules.some(sc => sc.id === schedItem.id)) {
+        existing.schedules.push(schedItem);
+      }
       if (startAt < existing.earliestSession) {
         existing.earliestSession = startAt;
       }

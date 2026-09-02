@@ -5,6 +5,40 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   plugins: [
     react(),
+    {
+      name: 'local-api-endpoints',
+      configureServer(server) {
+        server.middlewares.use(async (req, res, next) => {
+          if (req.url === '/api/weekly' || req.url?.startsWith('/api/weekly?')) {
+            try {
+              const { getWeeklyCalendar } = await import('./api/index');
+              const data = await getWeeklyCalendar();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify(data));
+              return;
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: err.message }));
+              return;
+            }
+          }
+          if (req.url === '/api/racingline' || req.url?.startsWith('/api/racingline?')) {
+            try {
+              const { getTheRacingLineCalendar } = await import('./api/theRacingLine');
+              const data = await getTheRacingLineCalendar();
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ status: 'success', data }));
+              return;
+            } catch (err: any) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: err.message }));
+              return;
+            }
+          }
+          next();
+        });
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

@@ -35,8 +35,11 @@ const CATEGORY_COLORS: Record<string, string> = {
   'WEC': '#0288d1',
   'TN': '#1c7c3b',
   'TC': '#005BAC',
+  'Turismo Carretera': '#005BAC',
   'TCP': '#EAB308',
+  'TC Pista': '#EAB308',
   'TCM': '#CC0000',
+  'TC Mouras': '#CC0000',
   'TC2000': '#e02020',
   'Top Race': '#ff8c00',
   'ACTC': '#00438a',
@@ -47,10 +50,35 @@ const CATEGORY_COLORS: Record<string, string> = {
   'TCPM': '#990000',
   'TCPPK': '#006633',
   'TCPK': '#FFD659',
+  'TC Pick Up': '#FFD659',
   'NASCARO': '#FFD659',
   'NASCART': '#ff0000',
   'TNC3': '#e02020',
+  'Turismo Nacional C3': '#e02020',
   'TNC2': '#0288d1',
+  'Turismo Nacional C2': '#0288d1',
+  'TNBR': '#009c3b',
+  'Turismo Nacional Brasil': '#009c3b',
+  'Copa Abarth Argentina': '#e10600',
+  'Abarth': '#e10600',
+  'CAA': '#e10600',
+  'Turismo Pista C3': '#e02020',
+  'TP3': '#e02020',
+  'Turismo Pista C2': '#0288d1',
+  'TP2': '#0288d1',
+  'Turismo Pista C1': '#ff8c00',
+  'TP1': '#ff8c00',
+  'Turismo Carretera 2000': '#e02020',
+  'TC2K': '#e02020',
+  'Fórmula Nacional Argentina': '#e8002d',
+  'Formula Nacional Argentina': '#e8002d',
+  'FNA': '#e8002d',
+  'Fórmula 2 Argentina': '#0288d1',
+  'Formula 2 Argentina': '#0288d1',
+  'F2A': '#0288d1',
+  'Fórmula 3 Metropolitana': '#ff8c00',
+  'Formula 3 Metropolitana': '#ff8c00',
+  'F3M': '#ff8c00',
   'F1A': '#9c27b0',
   'SUPERCARS': '#e10600',
   'GTWC': '#e10600',
@@ -66,7 +94,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function getCategoryColor(cat: string): string {
-  return CATEGORY_COLORS[cat] || 'var(--accent-blue)';
+  if (!cat) return 'var(--accent-blue)';
+  if (CATEGORY_COLORS[cat]) return CATEGORY_COLORS[cat];
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+  const c = norm(cat);
+  for (const [key, val] of Object.entries(CATEGORY_COLORS)) {
+    if (norm(key) === c) return val;
+  }
+  return 'var(--accent-blue)';
 }
 
 
@@ -352,8 +387,102 @@ export const dataService = {
       monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
       monday.setHours(0, 0, 0, 0);
       const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
+      sunday.setDate(monday.getDate() + 13);
       sunday.setHours(23, 59, 59, 999);
+
+      const ALLOWED_VR_IDS = new Set([
+        'fn',
+        'f2-arg',
+        'f3-metro',
+        'tc2000',
+        'tc',
+        'tcp',
+        'tcm',
+        'tn3',
+        'tnbr',
+        'tn2',
+        'caa',
+        'tp3',
+        'tp2',
+        'tp1',
+        'tcarretera2000',
+        'toprace',
+        'tcpk'
+      ]);
+
+      const ALLOWED_VR_NAMES = new Set([
+        'formulanacionalargentina',
+        'formulanacional',
+        'fna',
+        'formula2argentina',
+        'formula2arg',
+        'f2argentina',
+        'f2arg',
+        'f2a',
+        'formula3metropolitana',
+        'f3metropolitana',
+        'f3metro',
+        'f3m',
+        'tc2000',
+        'turismocarretera',
+        'tc',
+        'tcpista',
+        'tcp',
+        'tcmouras',
+        'tcm',
+        'turismonacionalc3',
+        'turismonacionalclase3',
+        'tnc3',
+        'tn3',
+        'turismonacionalbrasil',
+        'turismonacionalbr',
+        'tnbr',
+        'turismonacionalc2',
+        'turismonacionalclase2',
+        'tnc2',
+        'tn2',
+        'copaabarthargentina',
+        'copaabarth',
+        'abarth',
+        'caa',
+        'turismopistac3',
+        'turismopistaclase3',
+        'tpc3',
+        'tp3',
+        'turismopistac2',
+        'turismopistaclase2',
+        'tpc2',
+        'tp2',
+        'turismopistac1',
+        'turismopistaclase1',
+        'tpc1',
+        'tp1',
+        'turismocarretera2000',
+        'tc2k',
+        'toprace',
+        'topracev6',
+        'trv6',
+        'tcpickup',
+        'tcpk'
+      ]);
+
+      const DISALLOWED_VR_IDS = new Set([
+        'f1', 'f2', 'f3', 'f4brasil', 'f4cez', 'f4-spain', 'f4-italian', 'formulae', 'freca',
+        'gb3', 'gb4', 'gtwce', 'hfc', 'imsa', 'isleofman', 'indycar', 'indylights', 'moto2', 'moto3',
+        'motogp', 'nascarxfinity', 'nascartruck', 'nascarcup', 'nls', 'nascarmex', 'nascarbr',
+        'pm1s', 'roc', 'superformula', 'supergt', 'sr', 'stockcarbrazil', 'stocklightbrazil',
+        'supercars', 'tcrsa', 'tcrwt', 'wc2026', 'wec', 'wrc', 'wsbk', '24hn', 'alms', 'btcc', 'dtm', 'dakar', 'eurocup3'
+      ]);
+
+      const isAllowedVR = (r: any) => {
+        const catId = (r.categoryId || '').toLowerCase().trim();
+        if (ALLOWED_VR_IDS.has(catId)) return true;
+        if (DISALLOWED_VR_IDS.has(catId)) return false;
+        const norm = (s: string) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+        const c = norm(r.category || r.name);
+        const cs = norm(r.categoryShort);
+        return ALLOWED_VR_NAMES.has(c) || ALLOWED_VR_NAMES.has(cs);
+      };
 
       // USE UNIFIED PROXY PATHS (HANDLED BY VITE LOCALLY AND VERCEL REWRITES IN PROD)
       const url = `/api/vueltarapida/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`;
@@ -385,22 +514,40 @@ export const dataService = {
       let races = Array.isArray(data) ? data : (data?.races || data?.data || []);
       
       if (races && Array.isArray(races) && races.length > 0) {
-        const racesWithImages = await Promise.all(races.map(async (r: any) => {
+        const filteredRaces = races.filter(isAllowedVR);
+        const racesWithImages = await Promise.all(filteredRaces.map(async (r: any) => {
           const catInfo = categoriesMap[r.categoryId] || {};
-          const schedulesList = (r.schedules || []).map((s: any) => {
-            const d = new Date(s.startAt || s.start);
-            const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+          const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+          let schedulesList = (r.schedules || []).map((s: any) => {
+            const ts = s.startAt || s.start || r.start || r.startAt;
+            if (!ts || isNaN(new Date(ts).getTime())) return null;
+            const d = new Date(ts);
             const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
             const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const timeStr = (s.confirmed === false || s.time === '-' || s.time === '' || s.time === '--:--' || isNaN(d.getTime())) ? (s.time === '--:--' || s.confirmed === false ? '--:--' : '') : rawTime;
+            const isTimeUnconfirmed = s.confirmed === false || s.time === '-' || s.time === '' || s.time === '--:--' || isNaN(d.getTime());
+            const timeStr = isTimeUnconfirmed ? `${dayStr}, --:--` : `${dayStr}, ${rawTime}`;
             
             return {
               id: s._id || s.id || Math.random().toString(),
-              name: s.name || s.title || '',
-              time: timeStr ? `${dayStr}, ${timeStr}` : dayStr,
-              startAt: s.startAt || s.start || d.getTime()
+              name: s.name || s.title || 'Sesión',
+              time: timeStr,
+              startAt: d.getTime()
             };
-          });
+          }).filter(Boolean);
+
+          if (schedulesList.length === 0 && (r.start || r.startAt)) {
+            const ts = r.start || r.startAt;
+            const d = new Date(ts);
+            const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+            schedulesList.push({
+              id: r._id || r.id || Math.random().toString(),
+              name: r.completeName || r.name || 'Carrera',
+              time: `${dayStr}, --:--`,
+              startAt: d.getTime()
+            });
+          }
+
+          schedulesList.sort((a: any, b: any) => a.startAt - b.startAt);
 
           const watchLinks = (r.links || [])
             .filter((l: any) => l.url || l.link)
@@ -414,7 +561,7 @@ export const dataService = {
           if (!skipImages) {
             const possibleIds = [r.circuit?._id, r.circuitId].filter(Boolean);
             if (!circuitImage && possibleIds.length > 0) {
-              for (const cid of possibleIds) {                // Use unified proxy path
+              for (const cid of possibleIds) {
                   const circuitRes = await this.fetchWithProxy(`/api/vueltarapida/circuits/by-circuit-id/${cid}`);
                   if (circuitRes && circuitRes.trim() && !circuitRes.startsWith('<!DOCTYPE')) {
                     const circuitData = JSON.parse(circuitRes);
@@ -436,17 +583,17 @@ export const dataService = {
           return {
             id: r._id || r.id || '',
             categoryId: r.categoryId || '',
-            categoryColor: catInfo.categoryColor || r.categoryColor,
+            categoryColor: catInfo.categoryColor || r.categoryColor || getCategoryColor(r.category || ''),
             categoryImage: catInfo.categoryImage || r.categoryImage || (r.categoryId ? `https://api.vueltarapida.com/logos/${r.categoryId}.png` : ''),
-            category: r.category || r.name || '',
-            categoryShort: r.categoryShort || r.category || r.name || '',
+            category: catInfo.category || r.category || r.name || '',
+            categoryShort: catInfo.categoryShort || r.categoryShort || r.category || r.name || '',
             event: (r.completeName || r.name || '').replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuit: circuitName.replace(/\s*[\u2013\u2014-]+\s*$/, '').trim(),
             circuitId: r.circuitId,
             circuitImage,
             platforms: (r.links || []).filter((l: any) => l.platform || l.name).map((l: any) => l.platform || l.name || ''),
             schedules: schedulesList,
-            time: schedulesList.length > 0 ? (schedulesList[0].time === '--:--' ? '--:--' : schedulesList[0].time) : '--:--',
+            time: schedulesList.length > 0 ? schedulesList[0].time : '--:--',
             ticketLink: r.ticketLink || '',
             watchLinks,
           };
@@ -470,6 +617,8 @@ export const dataService = {
       eventEls.forEach((el, idx) => {
         const img = el.querySelector('img');
         const category = img?.getAttribute('alt') || img?.getAttribute('title') || el.querySelector('.rd-cat-name')?.textContent?.trim() || 'Otros';
+        if (!isAllowedVR({ category })) return;
+
         const eventName = el.querySelector('.rd-event-name, h3, h4')?.textContent?.trim() || category;
         const time = el.querySelector('p, .rd-s-time, .rd-time')?.textContent?.trim() || '';
         const logoUrl = img?.getAttribute('src') || '';

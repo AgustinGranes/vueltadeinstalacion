@@ -542,7 +542,7 @@ async function getF1Calendar() {
   if (cached) return cached;
   try {
     const r = await fetch('https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard');
-    const d = await r.json();
+    const d: any = await r.json();
     const now = new Date();
     const races = (d?.leagues?.[0]?.calendar || []).map((entry: any, i: number) => ({
       round: i + 1,
@@ -563,7 +563,7 @@ async function getF1Standings() {
   if (cached) return cached;
   try {
     const r = await fetch('https://site.api.espn.com/apis/v2/sports/racing/f1/standings');
-    const d = await r.json();
+    const d: any = await r.json();
     const drivers = (d?.children?.[0]?.standings?.entries || []).map((e: any) => ({
       pos: e.stats?.find((s: any) => s.type === 'rank' || s.name === 'rank')?.displayValue || '',
       driver: e.athlete?.displayName || e.athlete?.shortName || '',
@@ -629,91 +629,145 @@ export async function getWeeklyCalendar() {
       vrCatSettled.value.forEach((c: any) => { if (c.categoryId) categoriesMap[c.categoryId] = c; });
     }
 
-    const vrData = vrRacesSettled.status === 'fulfilled' ? vrRacesSettled.value : null;
+    const vrData: any = vrRacesSettled.status === 'fulfilled' ? vrRacesSettled.value : null;
     const rawRaces = Array.isArray(vrData) ? vrData : (vrData?.races || vrData?.data || []);
     const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
-    const ALLOWED_VR_CATEGORIES = [
-      'formula nacional argentina',
-      'formula nacional',
-      'formula 2 argentina',
-      'formula 2 arg',
-      'formula 3 metropolitana',
-      'formula 3 arg',
+    const ALLOWED_VR_IDS = new Set([
+      'fn',
+      'f2-arg',
+      'f3-metro',
       'tc2000',
-      'turismo carretera',
       'tc',
-      'tc pista',
       'tcp',
-      'tc mouras',
       'tcm',
-      'tc pista mouras',
-      'tcpm',
-      'tc pick up',
-      'tcpk',
-      'tc pista pick up',
-      'tcppk',
-      'turismo nacional c3',
-      'turismo nacional clase 3',
-      'tn c3',
-      'turismo nacional c2',
-      'turismo nacional clase 2',
-      'tn c2',
-      'turismo nacional brasil',
-      'copa abarth argentina',
-      'copa abarth',
-      'turismo pista c3',
-      'turismo pista clase 3',
-      'tp c3',
-      'turismo pista c2',
-      'turismo pista clase 2',
-      'tp c2',
-      'turismo pista c1',
-      'turismo pista clase 1',
-      'tp c1',
-      'turismo carretera 2000',
-      'top race',
-      'top race v6',
-      'procar 4000',
-      'procar',
-      'fiat competizione'
-    ];
+      'tn3',
+      'tnbr',
+      'tn2',
+      'caa',
+      'tp3',
+      'tp2',
+      'tp1',
+      'tcarretera2000',
+      'toprace',
+      'tcpk'
+    ]);
 
-    const isAllowedVR = (cat: string, catShort?: string) => {
-      const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
-      const c = norm(cat || '');
-      const cs = norm(catShort || '');
-      return ALLOWED_VR_CATEGORIES.some(allowed => {
-        const a = norm(allowed);
-        return c === a || cs === a || c.includes(a) || a.includes(c);
-      });
+    const ALLOWED_VR_NAMES = new Set([
+      'formulanacionalargentina',
+      'formulanacional',
+      'fna',
+      'formula2argentina',
+      'formula2arg',
+      'f2argentina',
+      'f2arg',
+      'f2a',
+      'formula3metropolitana',
+      'f3metropolitana',
+      'f3metro',
+      'f3m',
+      'tc2000',
+      'turismocarretera',
+      'tc',
+      'tcpista',
+      'tcp',
+      'tcmouras',
+      'tcm',
+      'turismonacionalc3',
+      'turismonacionalclase3',
+      'tnc3',
+      'tn3',
+      'turismonacionalbrasil',
+      'turismonacionalbr',
+      'tnbr',
+      'turismonacionalc2',
+      'turismonacionalclase2',
+      'tnc2',
+      'tn2',
+      'copaabarthargentina',
+      'copaabarth',
+      'abarth',
+      'caa',
+      'turismopistac3',
+      'turismopistaclase3',
+      'tpc3',
+      'tp3',
+      'turismopistac2',
+      'turismopistaclase2',
+      'tpc2',
+      'tp2',
+      'turismopistac1',
+      'turismopistaclase1',
+      'tpc1',
+      'tp1',
+      'turismocarretera2000',
+      'tc2k',
+      'toprace',
+      'topracev6',
+      'trv6',
+      'tcpickup',
+      'tcpk'
+    ]);
+
+    const DISALLOWED_VR_IDS = new Set([
+      'f1', 'f2', 'f3', 'f4brasil', 'f4cez', 'f4-spain', 'f4-italian', 'formulae', 'freca',
+      'gb3', 'gb4', 'gtwce', 'hfc', 'imsa', 'isleofman', 'indycar', 'indylights', 'moto2', 'moto3',
+      'motogp', 'nascarxfinity', 'nascartruck', 'nascarcup', 'nls', 'nascarmex', 'nascarbr',
+      'pm1s', 'roc', 'superformula', 'supergt', 'sr', 'stockcarbrazil', 'stocklightbrazil',
+      'supercars', 'tcrsa', 'tcrwt', 'wc2026', 'wec', 'wrc', 'wsbk', '24hn', 'alms', 'btcc', 'dtm', 'dakar', 'eurocup3'
+    ]);
+
+    const isAllowedVR = (race: any) => {
+      const catId = (race.categoryId || '').toLowerCase().trim();
+      if (ALLOWED_VR_IDS.has(catId)) return true;
+      if (DISALLOWED_VR_IDS.has(catId)) return false;
+      const norm = (s: string) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+      const c = norm(race.category);
+      const cs = norm(race.categoryShort);
+      return ALLOWED_VR_NAMES.has(c) || ALLOWED_VR_NAMES.has(cs);
     };
 
     const processedRaces: any[] = [];
     for (const race of rawRaces) {
-      if (!isAllowedVR(race.category, race.categoryShort)) {
+      if (!isAllowedVR(race)) {
         continue;
       }
       const catInfo = categoriesMap[race.categoryId] || {};
-      const validSchedules = (race.schedules || []).filter((s: any) => {
-        if (s.confirmed === false) return false;
-        if (s.time === '--:--' || s.time === '-' || s.time === '') return false;
-        const ts = s.startAt || s.start;
-        if (!ts || isNaN(new Date(ts).getTime())) return false;
-        return true;
-      }).map((s: any) => {
-        const d = new Date(s.startAt || s.start);
+      let validSchedules = (race.schedules || []).map((s: any) => {
+        const ts = s.startAt || s.start || race.start || race.startAt;
+        if (!ts || isNaN(new Date(ts).getTime())) return null;
+        const d = new Date(ts);
         const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
-        const rawTime = d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Argentina/Buenos_Aires' });
+        const rawTime = d.toLocaleTimeString('es-AR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Argentina/Buenos_Aires'
+        });
+        const isTimeUnconfirmed = s.confirmed === false || s.time === '--:--' || s.time === '-' || s.time === '';
         return {
-          id: s._id || s.id || '',
+          id: s._id || s.id || Math.random().toString(),
           name: s.name || s.title || 'Sesión',
-          time: `${dayStr}, ${rawTime}`,
-          rawTime: rawTime,
+          time: isTimeUnconfirmed ? `${dayStr}, --:--` : `${dayStr}, ${rawTime}`,
+          rawTime: isTimeUnconfirmed ? '--:--' : rawTime,
           startAt: d.getTime(),
-          confirmed: true
+          confirmed: !isTimeUnconfirmed
         };
-      });
+      }).filter(Boolean);
+
+      if (validSchedules.length === 0 && (race.start || race.startAt)) {
+        const ts = race.start || race.startAt;
+        const d = new Date(ts);
+        const dayStr = `${dayNames[d.getDay()]}. ${d.getDate()}`;
+        validSchedules.push({
+          id: race._id || race.id || Math.random().toString(),
+          name: race.completeName || race.name || 'Carrera',
+          time: `${dayStr}, --:--`,
+          rawTime: '--:--',
+          startAt: d.getTime(),
+          confirmed: false
+        });
+      }
 
       if (validSchedules.length === 0) continue;
       validSchedules.sort((a: any, b: any) => a.startAt - b.startAt);
@@ -723,14 +777,17 @@ export async function getWeeklyCalendar() {
 
       processedRaces.push({
         id: race._id || race.id || '',
-        category: race.category || '',
-        categoryShort: race.categoryShort || race.category || '',
+        categoryId: race.categoryId || '',
+        category: catInfo.category || race.category || '',
+        categoryShort: catInfo.categoryShort || race.categoryShort || race.category || '',
         categoryColor: catInfo.categoryColor || race.categoryColor || '#ff3b30',
+        categoryImage: catInfo.categoryImage || race.categoryImage || (race.categoryId ? `https://api.vueltarapida.com/logos/${race.categoryId}.png` : ''),
         event: eventName,
         circuit: circuitName,
         circuitId: race.circuitId || '',
         earliestSession: validSchedules[0].startAt,
         schedules: validSchedules,
+        time: validSchedules[0].time || '--:--',
         platforms: (race.links || []).filter((l: any) => l.displayName || l.platform || l.name).map((l: any) => l.displayName || l.platform || l.name || ''),
         watchLinks: (race.links || []).filter((l: any) => l.link || l.url).map((l: any) => ({
           platform: l.displayName || l.platform || l.name || 'Ver',
