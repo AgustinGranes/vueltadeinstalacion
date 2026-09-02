@@ -272,52 +272,73 @@ export function recoverExactSchedule(rawDateStr: string, circuitOffsetMin: numbe
     return { cleanIso: rawDateStr, trackTime, localDayStr };
   }
 
-  // Known specific session offsets
+  const sName = sLower;
   let cleanH = h;
   let cleanM = 0;
 
-  if (sLower.includes('sox & martin') && rawMins >= 13 * 60 && rawMins <= 13 * 60 + 30) {
-    cleanH = 12;
-    cleanM = 45;
-  } else if (sLower.includes('sox & martin') && rawMins >= 18 * 60 && rawMins <= 18 * 60 + 40) {
-    cleanH = 17;
-    cleanM = 30;
-  } else if (sLower.includes('top dragster') && rawMins >= 16 * 60 && rawMins <= 16 * 60 + 30) {
-    cleanH = 16;
-    cleanM = 30;
-  } else if (sLower.includes('f3') && sLower.includes('practice') && rawMins >= 9 * 60 && rawMins <= 9 * 60 + 30) {
-    cleanH = 9;
-    cleanM = 30;
-  } else if (sLower.includes('world sbk') && sLower.includes('practice 1') && rawMins >= 11 * 60 && rawMins <= 11 * 60 + 50) {
-    cleanH = 10;
-    cleanM = 30;
-  } else if (sLower.includes('practice 1') && sLower.includes('formula 1') && rawMins >= 14 * 60 && rawMins <= 14 * 60 + 30) {
-    cleanH = 13;
-    cleanM = 30;
-  } else if (sLower.includes('super gas') && rawMins >= 18 * 60 && rawMins <= 18 * 60 + 45) {
-    cleanH = 18;
-    cleanM = 30;
-  } else if (m >= 0 && m < 12) {
-    cleanH = h;
-    cleanM = 0;
-  } else if (m >= 12 && m < 25) {
-    cleanH = h;
-    cleanM = 0;
-  } else if (m >= 25 && m < 38) {
-    if (m >= 30) {
-      cleanH = h;
-      cleanM = 30;
-    } else {
-      cleanH = h;
-      cleanM = 0;
-    }
-  } else if (m >= 38 && m < 52) {
-    cleanH = h;
-    cleanM = 0;
-  } else {
-    // 52..59 -> next hour :00
+  // 1. NHRA US Nationals
+  if (sName.includes('sportsman') && rawMins >= 8 * 60 && rawMins <= 10 * 60) {
+    cleanH = 9; cleanM = 0;
+  } else if (sName.includes('sox & martin') && rawMins >= 16 * 60 && rawMins <= 18 * 60) {
+    cleanH = 17; cleanM = 0;
+  } else if (sName.includes('stock & super') && rawMins >= 8 * 60 && rawMins <= 10 * 60) {
+    cleanH = 9; cleanM = 0;
+  } else if (sName.includes('super comp') && sName.includes('round 1') && rawMins >= 9 * 60 && rawMins <= 11 * 60) {
+    cleanH = 10; cleanM = 0;
+  } else if (sName.includes('sox & martin') && rawMins >= 12 * 60 && rawMins <= 14 * 60) {
+    cleanH = 12; cleanM = 45;
+  } else if (sName.includes('top dragster') && rawMins >= 12 * 60 && rawMins <= 14 * 60 + 30) {
+    cleanH = 13; cleanM = 0;
+  } else if (sName.includes('top dragster') && rawMins >= 15 * 60 && rawMins <= 17 * 60 + 30) {
+    cleanH = 16; cleanM = 30;
+  } else if (sName.includes('sox & martin') && rawMins >= 17 * 60 && rawMins <= 19 * 60) {
+    cleanH = 17; cleanM = 30;
+  } else if (sName.includes('super gas') && rawMins >= 18 * 60 && rawMins <= 19 * 60 + 30) {
+    cleanH = 18; cleanM = 30;
+  }
+  // 2. High Limit Racing at Skagit Speedway
+  else if (sName.includes('racing') && (rawDateStr.includes('03/09/2026') || rawDateStr.includes('2026-09-04T03'))) {
+    cleanH = 23; cleanM = 0;
+  } else if (sName.includes('hot laps')) {
+    cleanH = 19; cleanM = 30;
+  }
+  // 3. Formula 1 at Monza
+  else if (sName.includes('practice 1') && (sName.includes('f1') || sName.includes('formula 1') || rawMins >= 13 * 60)) {
+    cleanH = 13; cleanM = 30;
+  } else if (sName.includes('practice 2') && (sName.includes('f1') || sName.includes('formula 1') || rawMins >= 16 * 60)) {
+    cleanH = 17; cleanM = 0;
+  } else if (sName.includes('practice 3') && (sName.includes('f1') || sName.includes('formula 1'))) {
+    cleanH = 12; cleanM = 30;
+  } else if (sName.includes('qualifying') && (sName.includes('f1') || sName.includes('formula 1') || (rawMins >= 15 * 60 && rawMins <= 17 * 60))) {
+    cleanH = 16; cleanM = 0;
+  }
+  // 4. Formula 3 at Monza
+  else if (sName.includes('f3') || sName.includes('formula 3')) {
+    if (sName.includes('practice')) { cleanH = 9; cleanM = 30; }
+    else if (sName.includes('qualifying')) { cleanH = 15; cleanM = 0; }
+    else { cleanH = h; cleanM = 0; }
+  }
+  // 5. World SBK at Magny-Cours
+  else if (sName.includes('sbk') || sName.includes('superbike')) {
+    if (sName.includes('practice 1')) { cleanH = 10; cleanM = 30; }
+    else if (sName.includes('practice 2')) { cleanH = 15; cleanM = 0; }
+    else if (sName.includes('superpole')) { cleanH = 11; cleanM = 0; }
+    else if (sName.includes('race')) { cleanH = 14; cleanM = 0; }
+    else { cleanH = h; cleanM = 0; }
+  }
+  // 6. Standard heuristic
+  else if (m >= 52) {
     cleanH = (h + 1) % 24;
     cleanM = 0;
+  } else if (m < 15) {
+    cleanH = h;
+    cleanM = 0;
+  } else if (m >= 15 && m < 40) {
+    cleanH = h;
+    cleanM = 30;
+  } else {
+    cleanH = h;
+    cleanM = 30;
   }
 
   localD.setUTCHours(cleanH, cleanM, 0, 0);
