@@ -307,8 +307,13 @@ export const dataService = {
     try {
       // 1. Primary source: Unified /api/weekly endpoint
       try {
-        const weeklyRes = await fetch('/api/weekly', {
-          headers: { 'Accept': 'application/json' },
+        const weeklyRes = await fetch(`/api/weekly?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          },
           signal: AbortSignal.timeout(15000)
         });
         if (weeklyRes.ok) {
