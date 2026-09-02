@@ -246,6 +246,86 @@ export async function fetchTheRacingLineSessions(): Promise<TRLSession[]> {
 }
 
 /**
+ * Cleans the randomized anti-scraping minute jitter from The Racing Line dates.
+ * Motorsport sessions worldwide are scheduled at clean standard slots (:00, :15, :30, :45, or :05, :10, :20, :25, :35, :40, :50, :55).
+ */
+export function cleanTRLDate(dateStr: string, circuitOffsetMin: number = 0, _sessionName: string = ''): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+
+  const ts = d.getTime();
+  const localTs = ts + circuitOffsetMin * 60 * 1000;
+  const localDate = new Date(localTs);
+
+  const localHours = localDate.getUTCHours();
+  const localMins = localDate.getUTCMinutes();
+  const localSecs = localDate.getUTCSeconds();
+  const rawLocalTotalMins = localHours * 60 + localMins + localSecs / 60;
+
+  const possibleSlots: number[] = [];
+  for (let h = Math.max(0, localHours - 1); h <= localHours + 1; h++) {
+    possibleSlots.push(h * 60);      // :00
+    possibleSlots.push(h * 60 + 15); // :15
+    possibleSlots.push(h * 60 + 30); // :30
+    possibleSlots.push(h * 60 + 45); // :45
+    possibleSlots.push(h * 60 + 5);
+    possibleSlots.push(h * 60 + 10);
+    possibleSlots.push(h * 60 + 20);
+    possibleSlots.push(h * 60 + 25);
+    possibleSlots.push(h * 60 + 35);
+    possibleSlots.push(h * 60 + 40);
+    possibleSlots.push(h * 60 + 50);
+    possibleSlots.push(h * 60 + 55);
+  }
+
+  let bestSlot = localHours * 60;
+  let smallestPositiveDiff = 9999;
+  let nearestAnyDiff = 9999;
+  let nearestAnySlot = localHours * 60;
+
+  for (const slot of possibleSlots) {
+    const diff = rawLocalTotalMins - slot;
+    if (Math.abs(diff) < Math.abs(nearestAnyDiff)) {
+      nearestAnyDiff = diff;
+      nearestAnySlot = slot;
+    }
+    if (diff >= -1 && diff < smallestPositiveDiff) {
+      smallestPositiveDiff = diff;
+      bestSlot = slot;
+    }
+  }
+
+  let chosenSlot = bestSlot;
+  if (Math.abs(nearestAnyDiff) <= 7) {
+    chosenSlot = nearestAnySlot;
+  } else if (smallestPositiveDiff <= 48) {
+    const primary15Slot = Math.floor(rawLocalTotalMins / 15) * 15;
+    const hourSlot = localHours * 60;
+    if (rawLocalTotalMins - hourSlot >= 20 && rawLocalTotalMins - hourSlot <= 46) {
+      if (Math.abs(rawLocalTotalMins - (hourSlot + 30)) <= 5) {
+        chosenSlot = hourSlot + 30;
+      } else if (Math.abs(rawLocalTotalMins - (hourSlot + 45)) <= 4) {
+        chosenSlot = hourSlot + 45;
+      } else if (Math.abs(rawLocalTotalMins - (hourSlot + 15)) <= 5) {
+        chosenSlot = hourSlot + 15;
+      } else {
+        chosenSlot = hourSlot;
+      }
+    } else {
+      chosenSlot = primary15Slot;
+    }
+  }
+
+  const cleanHours = Math.floor(chosenSlot / 60);
+  const cleanMins = chosenSlot % 60;
+
+  localDate.setUTCHours(cleanHours, cleanMins, 0, 0);
+  const cleanUtcTs = localDate.getTime() - circuitOffsetMin * 60 * 1000;
+
+  return new Date(cleanUtcTs).toISOString();
+}
+
+/**
  * Normalizes and maps The Racing Line sessions into our app's StandardRaceEvent format
  */
 export async function getTheRacingLineCalendar(options?: { minDate?: number; maxDate?: number }): Promise<StandardRaceEvent[]> {
@@ -294,7 +374,8 @@ export async function getTheRacingLineCalendar(options?: { minDate?: number; max
     }
 
     const key = `${seriesName}::${eventName}`.toLowerCase();
-    const d = new Date(s.date);
+    const cleanDateStr = cleanTRLDate(s.date, s.circuitOffsetMin || 0, s.sessionName || '');
+    const d = new Date(cleanDateStr);
     const startAt = d.getTime();
 
     // Format day and time in Argentina timezone
