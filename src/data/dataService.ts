@@ -345,45 +345,7 @@ export const dataService = {
           }
         }
       } catch (e) {
-        console.warn('[DataService] /api/weekly fetch failed, trying /api/racingline:', e);
-      }
-
-      // 2. Secondary fallback: direct /api/racingline endpoint
-      try {
-        const trlRes = await fetch('/api/racingline', {
-          headers: { 'Accept': 'application/json' },
-          signal: AbortSignal.timeout(15000)
-        });
-        if (trlRes.ok) {
-          const trlJson = await trlRes.json();
-          const list = Array.isArray(trlJson) ? trlJson : (trlJson?.data || []);
-          if (Array.isArray(list) && list.length > 0) {
-            return list.map((r: any) => ({
-              id: r.id || '',
-              categoryId: r.categoryId || '',
-              categoryColor: r.categoryColor || '#ff3b30',
-              categoryImage: r.categoryImage || '',
-              category: r.category || '',
-              categoryShort: r.categoryShort || r.category || '',
-              event: r.event || '',
-              circuit: r.circuit || '',
-              circuitId: r.circuitId || '',
-              circuitImage: r.circuitImage || '',
-              platforms: r.platforms || [],
-              schedules: (r.schedules || []).map((s: any) => ({
-                id: s.id || Math.random().toString(),
-                name: s.name || '',
-                time: s.time || '',
-                startAt: s.startAt || 0
-              })),
-              time: (r.schedules && r.schedules.length > 0) ? r.schedules[0].time : '--:--',
-              ticketLink: r.ticketLink || '',
-              watchLinks: r.watchLinks || []
-            }));
-          }
-        }
-      } catch (e) {
-        console.warn('[DataService] /api/racingline fallback also failed:', e);
+        console.warn('[DataService] /api/weekly fetch failed:', e);
       }
 
       const now = new Date();

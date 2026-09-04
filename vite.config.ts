@@ -22,19 +22,6 @@ export default defineConfig({
               return;
             }
           }
-          if (req.url === '/api/racingline' || req.url?.startsWith('/api/racingline?')) {
-            try {
-              const { getTheRacingLineCalendar } = await import('./api/theRacingLine');
-              const data = await getTheRacingLineCalendar();
-              res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ status: 'success', data }));
-              return;
-            } catch (err: any) {
-              res.statusCode = 500;
-              res.end(JSON.stringify({ error: err.message }));
-              return;
-            }
-          }
           next();
         });
       }

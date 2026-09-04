@@ -15,7 +15,6 @@ interface VercelResponse {
 }
 
 import { parseHTML } from 'linkedom';
-import { getTheRacingLineCalendar, setDynamicCookie, getSyncStatus } from './theRacingLine.js';
 
 // ─── Static Data Maps ────────────────────────────────────────────────────────
 
@@ -596,7 +595,7 @@ export async function getWeeklyCalendar() {
     sunday.setDate(monday.getDate() + 13); // 2-week window (this week + next week)
     sunday.setHours(23, 59, 59, 999);
 
-    const [vrRacesSettled, vrCatSettled, trlSettled] = await Promise.allSettled([
+    const [vrRacesSettled, vrCatSettled] = await Promise.allSettled([
       fetch(
         `https://api.vueltarapida.com/api/races?minDate=${monday.getTime()}&maxDate=${sunday.getTime()}`,
         {
@@ -620,8 +619,7 @@ export async function getWeeklyCalendar() {
           },
           signal: AbortSignal.timeout(6000)
         }
-      ).then(r => r.json()).catch(() => null),
-      getTheRacingLineCalendar({ minDate: monday.getTime(), maxDate: sunday.getTime() })
+      ).then(r => r.json()).catch(() => null)
     ]);
 
     let categoriesMap: Record<string, any> = {};
@@ -633,105 +631,8 @@ export async function getWeeklyCalendar() {
     const rawRaces = Array.isArray(vrData) ? vrData : (vrData?.races || vrData?.data || []);
     const dayNames = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 
-    const ALLOWED_VR_IDS = new Set([
-      'fn',
-      'f2-arg',
-      'f3-metro',
-      'tc2000',
-      'tc',
-      'tcp',
-      'tcm',
-      'tn3',
-      'tnbr',
-      'tn2',
-      'caa',
-      'tp3',
-      'tp2',
-      'tp1',
-      'tcarretera2000',
-      'toprace',
-      'tcpk'
-    ]);
-
-    const ALLOWED_VR_NAMES = new Set([
-      'formulanacionalargentina',
-      'formulanacional',
-      'fna',
-      'formula2argentina',
-      'formula2arg',
-      'f2argentina',
-      'f2arg',
-      'f2a',
-      'formula3metropolitana',
-      'f3metropolitana',
-      'f3metro',
-      'f3m',
-      'tc2000',
-      'turismocarretera',
-      'tc',
-      'tcpista',
-      'tcp',
-      'tcmouras',
-      'tcm',
-      'turismonacionalc3',
-      'turismonacionalclase3',
-      'tnc3',
-      'tn3',
-      'turismonacionalbrasil',
-      'turismonacionalbr',
-      'tnbr',
-      'turismonacionalc2',
-      'turismonacionalclase2',
-      'tnc2',
-      'tn2',
-      'copaabarthargentina',
-      'copaabarth',
-      'abarth',
-      'caa',
-      'turismopistac3',
-      'turismopistaclase3',
-      'tpc3',
-      'tp3',
-      'turismopistac2',
-      'turismopistaclase2',
-      'tpc2',
-      'tp2',
-      'turismopistac1',
-      'turismopistaclase1',
-      'tpc1',
-      'tp1',
-      'turismocarretera2000',
-      'tc2k',
-      'toprace',
-      'topracev6',
-      'trv6',
-      'tcpickup',
-      'tcpk'
-    ]);
-
-    const DISALLOWED_VR_IDS = new Set([
-      'f1', 'f2', 'f3', 'f4brasil', 'f4cez', 'f4-spain', 'f4-italian', 'formulae', 'freca',
-      'gb3', 'gb4', 'gtwce', 'hfc', 'imsa', 'isleofman', 'indycar', 'indylights', 'moto2', 'moto3',
-      'motogp', 'nascarxfinity', 'nascartruck', 'nascarcup', 'nls', 'nascarmex', 'nascarbr',
-      'pm1s', 'roc', 'superformula', 'supergt', 'sr', 'stockcarbrazil', 'stocklightbrazil',
-      'supercars', 'tcrsa', 'tcrwt', 'wc2026', 'wec', 'wrc', 'wsbk', '24hn', 'alms', 'btcc', 'dtm', 'dakar', 'eurocup3'
-    ]);
-
-    const isAllowedVR = (race: any) => {
-      const catId = (race.categoryId || '').toLowerCase().trim();
-      if (ALLOWED_VR_IDS.has(catId)) return true;
-      if (DISALLOWED_VR_IDS.has(catId)) return false;
-      const norm = (s: string) => (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
-      const c = norm(race.category);
-      const cs = norm(race.categoryShort);
-      return ALLOWED_VR_NAMES.has(c) || ALLOWED_VR_NAMES.has(cs);
-    };
-
     const processedRaces: any[] = [];
     for (const race of rawRaces) {
-      if (!isAllowedVR(race)) {
-        continue;
-      }
       const catInfo = categoriesMap[race.categoryId] || {};
       let validSchedules = (race.schedules || []).map((s: any) => {
         const ts = s.startAt || s.start || race.start || race.startAt;
@@ -796,36 +697,6 @@ export async function getWeeklyCalendar() {
       });
     }
 
-    // Merge in The Racing Line events
-    const trlEvents = trlSettled.status === 'fulfilled' && Array.isArray(trlSettled.value) ? trlSettled.value : [];
-    for (const trl of trlEvents) {
-      const trlCat = (trl.category || '').toLowerCase();
-      const trlEventName = (trl.event || '').toLowerCase();
-
-      // Find match in processedRaces
-      const existing = processedRaces.find(r => {
-        const rCat = (r.category || '').toLowerCase();
-        const rShort = (r.categoryShort || '').toLowerCase();
-        const rEvent = (r.event || '').toLowerCase();
-        const catMatch = rCat === trlCat || rShort === (trl.categoryShort || '').toLowerCase() || rCat.includes(trlCat) || trlCat.includes(rCat);
-        const eventMatch = rEvent === trlEventName || rEvent.includes(trlEventName) || trlEventName.includes(rEvent);
-        return catMatch && eventMatch;
-      });
-
-      if (existing) {
-        // If TRL has more or equal schedules, merge them
-        if (trl.schedules.length >= existing.schedules.length) {
-          existing.schedules = trl.schedules;
-          existing.earliestSession = trl.earliestSession;
-        }
-        if (!existing.circuit && trl.circuit) {
-          existing.circuit = trl.circuit;
-        }
-      } else {
-        processedRaces.push(trl);
-      }
-    }
-
     // Deduplicate identical category + event
     const deduplicatedRaces: any[] = [];
     for (const race of processedRaces) {
@@ -870,7 +741,7 @@ export async function getWeeklyCalendar() {
 
     const output = {
       status: 'success',
-      sources: ['vueltarapida', 'theracingline'],
+      sources: ['vueltarapida'],
       week_range: {
         from: monday.toLocaleDateString('es-AR'),
         to: sunday.toLocaleDateString('es-AR')
@@ -942,51 +813,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (category === 'weekly') {
       const weeklyData = await getWeeklyCalendar();
       return sendJson(200, weeklyData);
-    }
-
-    // ── /api/sync-status ───────────────────────────────────────────────────────
-    if (category === 'sync-status' || (category === 'sync-trl' && req.method === 'GET')) {
-      const syncInfo = getSyncStatus();
-      return sendJson(200, {
-        status: 'success',
-        ...syncInfo
-      });
-    }
-
-    // ── /api/sync-trl ──────────────────────────────────────────────────────────
-    if (category === 'sync-trl' || category === 'sync-token') {
-      let newCookie = '';
-      if (typeof req.body === 'string') {
-        try {
-          const parsed = JSON.parse(req.body);
-          newCookie = parsed.cookie || '';
-        } catch {
-          newCookie = req.body;
-        }
-      } else if (req.body && typeof req.body === 'object') {
-        newCookie = req.body.cookie || '';
-      }
-      if (!newCookie) {
-        newCookie = (req.query?.cookie as string) || '';
-      }
-      newCookie = newCookie.trim();
-      if (newCookie) {
-        setDynamicCookie(newCookie);
-        setCached('weekly', null as any);
-        return sendJson(200, { status: 'success', message: 'The Racing Line token updated successfully' });
-      }
-      return sendJson(400, { status: 'error', message: 'No cookie provided' });
-    }
-
-    // ── /api/racingline ────────────────────────────────────────────────────────
-    if (category === 'racingline') {
-      const trlData = await getTheRacingLineCalendar();
-      return sendJson(200, {
-        status: 'success',
-        source: 'theracingline.app',
-        total_events: trlData.length,
-        data: trlData
-      });
     }
 
     // ── /api/categories ────────────────────────────────────────────────────────
